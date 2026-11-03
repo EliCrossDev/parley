@@ -380,3 +380,6 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .voice-row .lang-check { display: none; }
 .lang-row.voice-row.is-selected { background: rgba(255,255,255,.14); outline: 1px solid rgba(255,255,255,.22); }
 #voice-preview { gap: 8px; } #voice-preview.playing { color: #0e0e16; background: #f7f7fb; animation: blink 1s infinite; }
+
+/* symmetrical language chips */
+.who-btn { min-width: 104px; justify-content: center; }

@@ -12,18 +12,23 @@
   // Hero is visible at rest
   document.querySelectorAll('.hero .reveal').forEach((n) => n.classList.add('in'));
 
-  /* ---------- Language flip on the headline ---------- */
+  /* ---------- Language flip on the headline: eases in, blurs through, eases out ---------- */
   (function flip() {
     const el = document.getElementById('flip-word'); if (!el || reduce) return;
-    const words = ['Traducción', 'Tradução', '翻訳', '번역', 'Übersetzung', 'Traduction', 'अनुवाद', 'การแปล', 'Traduzione', '翻译', 'Перевод', 'ترجمة', 'Translation'];
+    const pool = ['Traducción', 'Tradução', '翻訳', '번역', 'Übersetzung', 'Traduction', 'अनुवाद', 'การแปล', 'Traduzione', '翻译', 'Перевод', 'ترجمة', 'Vertaling', 'Çeviri', 'Terjemahan', 'Dịch', 'Μετάφραση', 'Tłumaczenie'];
+    const N = 22; // frames before settling
+    const words = []; for (let k = 0; k < N; k++) words.push(pool[k % pool.length]);
+    words.push('Translation');
+    // delay per frame: slow at both ends, fast in the middle (cosine ease)
+    const delay = (k) => { const t = k / (N - 1); const ease = 0.5 - 0.5 * Math.cos(t * Math.PI * 2); return 320 - 270 * ease; };
     let i = 0; el.textContent = words[0]; el.classList.add('flipping');
     const step = () => {
       i++; const last = i === words.length - 1;
       el.classList.remove('in'); void el.offsetWidth; el.textContent = words[i]; el.classList.add('in');
       if (last) { el.classList.remove('flipping'); el.classList.add('settled'); return; }
-      setTimeout(step, 90 + i * 14);
+      setTimeout(step, delay(i));
     };
-    setTimeout(step, 260);
+    setTimeout(step, 420);
   })();
 
   /* ---------- Header scrim once scrolled ---------- */
