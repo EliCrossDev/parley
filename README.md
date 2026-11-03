@@ -36,6 +36,12 @@ Or drag the folder onto vercel.com/new. Any static host works (Netlify, Cloudfla
 - **Natural endpointing**: once the words stop changing, Parley watches the mic level. It ends the line after ~0.95 s of real silence, or ~1.5 s when the sentence is clearly unfinished (trailing "and", "pero", "que", a comma, fewer than 3 words). If the same person resumes within 2.5 s, the new words extend their last bubble instead of starting a new one. The mic stays in their language for ~2 s before expecting the other person.
 - Speaker is decided from the first two words (offline word list → translator detection), and the mic switches language mid-sentence if needed.
 
+## Pro (license keys)
+- Create a product in Lemon Squeezy (one-time, "generate license keys" on). Paste its checkout link into `PRO_CHECKOUT_URL` in `app.js` (and the store id into `PRO_STORE_ID`).
+- Upgrade → opens checkout → buyer gets a key by email → enters it in the app → validated against Lemon Squeezy's public license API → Pro unlocked on that device (no backend needed). Same key unlocks other devices.
+- Pro = no 5-conversation cap, recordings kept until deleted, transcript export (.txt) from Playback.
+- Cross-device *sync* of history needs accounts + storage; not built yet.
+
 ## Production notes
 - The Google endpoint is unofficial and can rate-limit. For a launch, run LibreTranslate (Docker, one command) and set it as the engine, or proxy translations through a tiny serverless function so you can swap providers without shipping an update.
 - For a self-hosted speech engine (better accuracy, works on Firefox, no Google), stream audio to a server running whisper.cpp or Handy's model and return text over a WebSocket. The front end only needs `handleFinal(text)` fed from that socket.

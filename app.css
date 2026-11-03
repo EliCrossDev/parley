@@ -371,3 +371,6 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 :root[data-palette="night"] .bubble.b { background: rgba(8,10,20,.78); }
 :root[data-palette="night"] .speaker-card { background: rgba(6,8,16,.7); }
 .speaker-cards { gap: 10px; }
+
+#pro-buy { text-decoration: none; }
+#pro-sheet .engine-list { gap: 12px; }

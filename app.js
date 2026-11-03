@@ -43,7 +43,7 @@
   const PREF_KEY = 'parley.prefs.v1';
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
-    name: 'Traveler', avatar: 0, engine: 'auto', libreUrl: '', libreKey: '', pro: false,
+    name: 'Traveler', avatar: 0, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '',
     voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'aurora',
   };
   let prefs = Object.assign({}, defaults);
@@ -95,6 +95,24 @@
   async function dbPut(obj) { try { const db = await openDB(); await new Promise((res, rej) => { const t = db.transaction(STORE, 'readwrite'); t.objectStore(STORE).put(obj); t.oncomplete = res; t.onerror = () => rej(t.error); }); return true; } catch (e) { return false; } }
   async function dbDel(id) { try { const db = await openDB(); await new Promise((res, rej) => { const t = db.transaction(STORE, 'readwrite'); t.objectStore(STORE).delete(id); t.oncomplete = res; t.onerror = () => rej(t.error); }); } catch (e) {} }
   async function dbClear() { try { const db = await openDB(); await new Promise((res, rej) => { const t = db.transaction(STORE, 'readwrite'); t.objectStore(STORE).clear(); t.oncomplete = res; t.onerror = () => rej(t.error); }); } catch (e) {} }
+  /* ---------------- Pro (license key) ----------------
+     Checkout: a Lemon Squeezy (or Stripe) product that issues a license key. Set PRO_CHECKOUT_URL to the
+     product's checkout link. Activation validates the key against Lemon Squeezy's public license API
+     (no secret needed) and unlocks Pro on this device. Re-enter the key on another device to unlock it there. */
+  const PRO_CHECKOUT_URL = '';            // e.g. https://parley.lemonsqueezy.com/checkout/buy/xxxxxxxx
+  const PRO_STORE_ID = '';                // optional: Lemon Squeezy store id, checked on validate when set
+  const PRO_PRICE_LABEL = '$9 one-time';
+  async function validateLicense(key) {
+    const body = new URLSearchParams({ license_key: key.trim() });
+    const r = await fetch('https://api.lemonsqueezy.com/v1/licenses/validate', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.valid) throw new Error((j && j.error) || 'That key is not valid.');
+    if (PRO_STORE_ID && j.meta && String(j.meta.store_id) !== String(PRO_STORE_ID)) throw new Error('That key is for a different product.');
+    if (j.license_key && j.license_key.status === 'disabled') throw new Error('That key has been disabled.');
+    return j;
+  }
+  function setPro(on, key) { prefs.pro = !!on; prefs.license = on ? key : ''; savePrefs(); renderProfile(); renderHistory(); }
+
   const FREE_LIMIT = 5;
   async function enforceLimit() {
     if (prefs.pro) return;
@@ -627,7 +645,32 @@
       list.appendChild(item);
     });
   }
-  $('go-pro').addEventListener('click', () => { toast('Pro is coming soon. Free keeps your last 5.'); });
+  function openPro() {
+    const buy = $('pro-buy');
+    if (PRO_CHECKOUT_URL) { buy.href = PRO_CHECKOUT_URL; buy.textContent = 'Get Parley Pro · ' + PRO_PRICE_LABEL; buy.hidden = false; }
+    else { buy.hidden = true; }
+    $('pro-key').value = prefs.license || ''; $('pro-status').textContent = PRO_CHECKOUT_URL ? '' : 'Checkout isn\'t connected yet. If you have a key, enter it below.';
+    sheetOpen('pro-sheet');
+  }
+  $('go-pro').addEventListener('click', openPro);
+  $('pro-btn').addEventListener('click', () => { if (prefs.pro) confirmSheet('Deactivate Pro on this device?', 'You can re-enter your key any time.', () => { setPro(false); toast('Pro deactivated'); }); else openPro(); });
+  $('pro-cancel').addEventListener('click', sheetClose);
+  $('pro-activate').addEventListener('click', async () => {
+    const key = $('pro-key').value.trim(); if (!key) { $('pro-status').textContent = 'Paste your license key first.'; return; }
+    $('pro-status').textContent = 'Checking…';
+    try { await validateLicense(key); setPro(true, key); sheetClose(); toast('Parley Pro is on'); }
+    catch (e) { $('pro-status').textContent = e.message || 'Could not validate that key.'; }
+  });
+  // Export transcript (Pro)
+  $('pb-export').addEventListener('click', () => {
+    if (!pb.c) return;
+    if (!prefs.pro) { openPro(); return; }
+    const lines = pb.c.lines.map((l) => '[' + fmtTime(l.t / 1000) + '] ' + byCode(l.from).short + ': ' + l.orig + '\n    ' + byCode(l.to).short + ': ' + l.trans).join('\n\n');
+    const head = 'Parley — ' + new Date(pb.c.startedAt).toLocaleString() + '\n' + byCode(pb.c.langA).name + ' ↔ ' + byCode(pb.c.langB).name + '\n\n';
+    const blob = new Blob([head + lines], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'parley-' + new Date(pb.c.startedAt).toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Transcript exported');
+  });
 
   /* ---------------- Playback ---------------- */
   const pb = { c: null, audio: null, url: null, raf: null, playing: false, start: 0, elapsed: 0 };
@@ -682,6 +725,7 @@
     $('profile-avatar').innerHTML = avatarSVG(prefs.avatar);
     $('profile-name-display').textContent = prefs.name || 'Traveler';
     $('profile-plan').textContent = prefs.pro ? 'Pro plan · unlimited history' : 'Free plan · 5 saved conversations';
+    const ps = $('pro-sub'), pbt = $('pro-btn'); if (ps) ps.textContent = prefs.pro ? 'Active · unlimited history, export on' : 'Free · last 5 conversations kept'; if (pbt) pbt.textContent = prefs.pro ? 'Deactivate' : 'Upgrade';
     $('profile-lang-btn').textContent = byCode(prefs.langA).name;
     const sub = { auto: 'Auto (Google · MyMemory fallback)', mymemory: 'MyMemory', libre: 'LibreTranslate · ' + (prefs.libreUrl || 'not set') };
     $('engine-sub').textContent = sub[prefs.engine] || sub.auto;

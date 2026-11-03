@@ -149,3 +149,11 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .step-n, .step:nth-child(3) .step-n { color: #f7f7fb; }
 .lang-tile:nth-child(3n) b, .lang-tile:nth-child(3n+1) b { color: #f7f7fb; }
 .brand-mark { display: none; }
+
+/* readability over the sky */
+.hero-title { text-shadow: 0 2px 24px rgba(0,0,0,.35); }
+.hero-sub { color: #f7f7fb; text-shadow: 0 1px 14px rgba(0,0,0,.4); }
+.hero-note, .hero .eyebrow { color: rgba(247,247,251,.85); text-shadow: 0 1px 10px rgba(0,0,0,.4); }
+.site-nav a { color: #f7f7fb; text-shadow: 0 1px 10px rgba(0,0,0,.35); }
+.demo-copy p:not(.eyebrow), .step p, .feature p, .plan ul, .credit-desc, .open-sub { color: rgba(247,247,251,.88); }
+.eyebrow { color: rgba(247,247,251,.75); }

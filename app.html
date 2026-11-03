@@ -155,6 +155,9 @@
           <p class="eyebrow" id="pb-date"></p>
           <h1 class="page-title" id="pb-title"></h1>
         </div>
+        <button class="icon-btn" id="pb-export" aria-label="Export transcript">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>
+        </button>
         <button class="icon-btn danger" id="pb-delete" aria-label="Delete conversation">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
         </button>
@@ -238,6 +241,10 @@
           <button class="field-select small" id="install-btn">Install</button>
         </div>
         <div class="setting-row">
+          <div><p class="setting-title">Parley Pro</p><p class="setting-sub" id="pro-sub">Free · last 5 conversations kept</p></div>
+          <button class="field-select small" id="pro-btn">Upgrade</button>
+        </div>
+        <div class="setting-row">
           <div><p class="setting-title">Clear all conversations</p><p class="setting-sub">Removes transcripts and audio from this device.</p></div>
           <button class="field-select small danger" id="clear-all">Clear</button>
         </div>
@@ -297,6 +304,25 @@
   <div class="edit-actions voice-actions">
     <button class="btn btn-ghost" id="voice-preview">Preview</button>
     <button class="btn btn-volt" id="voice-done">Done</button>
+  </div>
+</div>
+
+<!-- Pro sheet -->
+<div class="sheet" id="pro-sheet" role="dialog" aria-modal="true" aria-label="Parley Pro" hidden>
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2 class="sheet-title">Parley Pro</h2>
+    <p class="confirm-sub">Unlimited conversation history on this device, recordings kept until you delete them, and transcript export. One-time purchase. Your key works on every device you use.</p>
+  </div>
+  <div class="engine-list">
+    <a class="btn btn-volt" id="pro-buy" href="#" target="_blank" rel="noopener">Get Parley Pro</a>
+    <p class="field-label" style="margin-top:6px">Already bought it? Enter your license key</p>
+    <label class="field"><span class="field-label">License key</span><input type="text" id="pro-key" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false"></label>
+    <p class="voice-status" id="pro-status"></p>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" id="pro-cancel">Not now</button>
+      <button class="btn btn-volt" id="pro-activate">Activate</button>
+    </div>
   </div>
 </div>
 
