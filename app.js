@@ -574,7 +574,7 @@
     if (live.lines.length) {
       const first = live.lines[0];
       const title = (first.orig.length > 42 ? first.orig.slice(0, 42).trim() + '…' : first.orig);
-      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
+      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t, dur: l.dur })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
       if (ok) { await enforceLimit(); toast('Conversation saved'); } else toast('Could not save on this device');
     }
     $('live-stage').hidden = true; $('live-setup').hidden = false; document.body.classList.remove('live'); pickGuest(); renderAvatarsUI();
@@ -722,7 +722,7 @@
     $('pb-date').textContent = new Date(c.startedAt).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     $('pb-title').textContent = c.title || 'Conversation';
     $('pb-noaudio').hidden = !!c.audio;
-    $('pb-dur').textContent = fmtTime(c.duration);
+    $('pb-dur').textContent = fmtTime(c.duration); $('pb-convo').innerHTML = ''; renderPlaybackTrack(c);
     if (c.audio) { pb.url = URL.createObjectURL(c.audio); pb.audio = new Audio(pb.url); pb.audio.addEventListener('ended', () => { pb.playing = false; $('pb-play').classList.remove('playing'); }); }
     renderPlaybackLines(0);
     showView('playback');
@@ -735,7 +735,27 @@
         const b = el('div', 'bubble ' + l.who); b.appendChild(el('div', 'orig', l.orig)); b.appendChild(el('div', 'trans', l.trans)); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = l.t; box.appendChild(b);
       });
     }
-    box.querySelectorAll('.bubble').forEach((b) => { b.classList.toggle('hidden-replay', liveMode && Number(b.dataset.t) > timeMs); });
+    // Which line is being said right now? (saved lines carry t and dur; older ones get dur from the next line)
+    const lines = pb.c.lines; let nowIdx = -1;
+    lines.forEach((l, i) => { const end = l.t + (l.dur || ((lines[i + 1] ? lines[i + 1].t : pb.c.duration * 1000) - l.t)); if (timeMs >= l.t && timeMs < end) nowIdx = i; });
+    const bubbles = box.querySelectorAll('.bubble'); let newest = null;
+    bubbles.forEach((b, i) => {
+      const hidden = liveMode && Number(b.dataset.t) > timeMs;
+      if (b.classList.contains('hidden-replay') && !hidden && liveMode) { b.classList.add('arrive'); newest = b; }
+      b.classList.toggle('hidden-replay', hidden);
+      b.classList.toggle('now', liveMode && i === nowIdx);
+      b.classList.toggle('past', liveMode && !hidden && i !== nowIdx);
+    });
+    if (newest) newest.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    const who = nowIdx >= 0 ? lines[nowIdx].who : null;
+    $('pbw-a').classList.toggle('is-live', liveMode && who === 'a'); $('pbw-b').classList.toggle('is-live', liveMode && who === 'b');
+  }
+  function renderPlaybackTrack(c) {
+    const tr = $('pb-track'); tr.innerHTML = ''; const total = Math.max(1, c.duration * 1000);
+    c.lines.forEach((l, i) => { const end = l.t + (l.dur || ((c.lines[i + 1] ? c.lines[i + 1].t : total) - l.t)); const seg = el('i', l.who); seg.style.left = (100 * l.t / total) + '%'; seg.style.width = Math.max(0.8, 100 * (end - l.t) / total) + '%'; tr.appendChild(seg); });
+    const da = $('pbw-a').querySelector('.who-dot'), db = $('pbw-b').querySelector('.who-dot');
+    da.innerHTML = avatarSVG(c.avatarA ?? prefs.avatar); db.innerHTML = avatarSVG(c.avatarB ?? 5);
+    $('pbw-a-label').textContent = byCode(c.langA).short; $('pbw-b-label').textContent = byCode(c.langB).short;
   }
   function tickPlayback() {
     const cur = pb.audio ? pb.audio.currentTime : (Date.now() - pb.start) / 1000;

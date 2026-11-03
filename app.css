@@ -405,3 +405,17 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .text-btn:hover { opacity: .8; }
 .setup-lang { width: max-content; align-self: flex-start; height: 34px; padding: 0 30px 0 12px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); color: var(--fg-2); font-size: 13px; font-weight: 500; gap: 7px; margin-bottom: 18px; }
 .setup-lang svg { width: 15px; height: 15px; opacity: .85; }
+
+/* Replay: the back-and-forth drawn on the timeline, the speaker lit while they talk, bubbles arriving as they did */
+.pb-track { position: relative; height: 8px; border-radius: 999px; background: rgba(255,255,255,.1); margin: 8px 0 6px; overflow: hidden; }
+.pb-track i { position: absolute; top: 0; bottom: 0; border-radius: 999px; min-width: 3px; }
+.pb-track i.a { background: rgba(240,240,248,.9); }
+.pb-track i.b { background: rgba(120,140,190,.9); }
+.pb-who { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 10px; }
+.pb-who .who-btn { opacity: .45; transition: opacity .25s, transform .25s; }
+.pb-who .who-btn.is-live { opacity: 1; transform: scale(1.04); }
+.pb-convo .bubble { transition: opacity .35s, transform .35s; }
+.pb-convo .bubble.past { opacity: .7; }
+.pb-convo .bubble.now { box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 16px 48px -18px rgba(255,255,255,.5); }
+@keyframes pb-pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+.pb-convo .bubble.arrive { animation: pb-pop .35s ease-out; }

@@ -182,7 +182,12 @@
         </button>
         <div class="scrub">
           <input type="range" id="pb-scrub" min="0" max="1000" value="0" aria-label="Scrub">
+          <div class="pb-track" id="pb-track" aria-hidden="true"></div>
           <div class="scrub-times"><span id="pb-cur">0:00</span><span id="pb-dur">0:00</span></div>
+        </div>
+        <div class="pb-who" id="pb-who">
+          <span class="who-btn who-a" id="pbw-a"><span class="who-dot"></span><span class="who-lang" id="pbw-a-label">EN</span></span>
+          <span class="who-btn who-b" id="pbw-b"><span class="who-dot"></span><span class="who-lang" id="pbw-b-label">ES</span></span>
         </div>
         <label class="toggle small">
           <input type="checkbox" id="pb-livemode" checked>
