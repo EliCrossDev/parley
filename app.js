@@ -303,7 +303,7 @@
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const live = {
     on: false, rec: null, stream: null, recorder: null, chunks: [], startedAt: 0, timerId: null,
-    avatars: { a: 3, b: 5 }, soft: null,
+    avatars: { a: 3, b: 5 },
     expected: 'a', lines: [], interimEl: null, forced: null, netErrors: 0, levelId: null, epId: null, epQuiet: 0, turnId: null, interimTid: null, detected: null, detectPending: null, carry: null, convoId: null,
   };
   const langOf = (who) => who === 'a' ? prefs.langA : prefs.langB;
@@ -408,30 +408,28 @@
   function startRecognizer(lang) {
     if (!SR || !live.on) return;
     try { if (live.rec) { live.rec.onend = null; live.rec.abort(); } } catch (e) {}
-    live.soft = null; // the old engine will never finalize what it was hearing
     const r = new SR(); live.rec = r;
     r.lang = byCode(lang).sr; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
     r.onresult = (ev) => {
       let interim = '', finals = [];
       for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) finals.push(res[0].transcript.trim()); else interim += res[0].transcript; }
       interim = interim.trim();
-      // A line we already committed (soft final) is still open inside the engine: only the words beyond it are new.
-      if (live.soft && interim) {
-        const extra = softExtra(live.carry ? (live.carry + ' ' + interim) : interim);
-        if (extra === null) interim = '';                  // engine is revising the committed line; wait for its final
-        else interim = extra;                              // continuation after the commit (may be empty)
-      }
       if (interim) {
         const shown = live.carry ? (live.carry + ' ' + interim) : interim;
-        if (!live.interimEl) live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true));
-        else { live.interimEl.querySelector('.trans').textContent = shown; $('convo').scrollTop = $('convo').scrollHeight; }
+        if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true)); live.interimEl.dataset.words = shown; }
+        else if (live.interimEl.dataset.words !== shown) {
+          const n = live.interimEl; n.dataset.words = shown;
+          // Big text holds the latest translation once one exists; the raw words live in the small line above it.
+          if (n.dataset.tr) n.querySelector('.orig').textContent = shown; else n.querySelector('.trans').textContent = shown;
+          $('convo').scrollTop = $('convo').scrollHeight;
+        }
         if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus(T('live.listening'), live.expected); }
         Wave.setTalking(true); scheduleInterimTranslate(shown);
         // Snappy turns: if the interim text stops changing, force the final now instead of waiting for the engine.
         armEndpoint(r, shown);
       }
       if (finals.length) Wave.setTalking(false);
-      for (const f of finals) if (f) { if (live.soft) reconcileSoft(f); else handleFinal(live.carry ? (live.carry + ' ' + f) : f); }
+      for (const f of finals) if (f) handleFinal(live.carry ? (live.carry + ' ' + f) : f);
     };
     r.onerror = (ev) => {
       const e = ev.error;
@@ -456,9 +454,10 @@
       try {
         const r = await translate(text, langOf(who), to);
         interimCache.set(key, r);
-        if (live.interimEl && live.interimEl.querySelector('.trans').textContent.startsWith(text.slice(0, 12))) {
-          live.interimEl.querySelector('.orig').textContent = text;
-          const t = live.interimEl.querySelector('.trans'); t.textContent = r.text; t.classList.add('pending');
+        const n = live.interimEl;
+        if (n && (n.dataset.words || '').startsWith(text.slice(0, 12))) {
+          n.dataset.tr = '1'; n.querySelector('.orig').textContent = n.dataset.words;
+          const t = n.querySelector('.trans'); t.textContent = r.text; t.classList.add('pending');
           $('convo').scrollTop = $('convo').scrollHeight;
         }
       } catch (e) {}
@@ -485,7 +484,7 @@
 
   async function handleFinal(text, opts) {
     opts = opts || {};
-    clearInterval(live.epId); clearTimeout(live.interimTid); clearTimeout(live.turnId); live.turnPoll && clearInterval(live.turnPoll);
+    clearInterval(live.epId); clearTimeout(live.interimTid); clearTimeout(live.turnId); 
     // Speaker priority: manual tap > early detection (first two words) > offline guess on full text > turn-taking
     let guess = live.forced || opts.who || live.detected || guessOffline(text) || live.expected;
     // Same person kept talking after a short pause → extend their last bubble instead of starting a new one.
@@ -520,59 +519,15 @@
     setBubbleWho(node, who);
     $('convo').scrollTop = $('convo').scrollHeight;
     live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : t0, dur: (Date.now() - live.startedAt) - (cont ? last.t : t0), node });
-    if (opts.soft) live.soft = { text: opts.soft, who, line: live.lines[live.lines.length - 1] };
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     live.forced = null;
     // Don't assume the other person is next. Keep listening in the same language for a beat (they may
     // continue); if nobody starts within ~2 s, expect the other person. Early detection corrects either way.
-    if (live.expected !== who) { setExpected(who); if (!opts.soft) startRecognizer(langOf(who)); } else setExpected(who);
-    scheduleTurnSwap(who);
+    // The line ended in silence, so this is the cheapest moment to switch the engine to the other language:
+    // the ~0.4 s restart happens while nobody is talking. If the same person carries on, early detection flips back.
+    const next = other(who); setExpected(next); startRecognizer(langOf(next));
   }
-  // After a line, expect the other person next. The engine can only listen in one language, so we must restart it
-  // to switch, and a restart is ~half a second of deafness. So: wait ~2 s, then swap only in a quiet moment, never
-  // while someone is mid-word, and not at all if the same person is already talking again.
-  function scheduleTurnSwap(who) {
-    clearTimeout(live.turnId); live.turnPoll && clearInterval(live.turnPoll);
-    live.turnId = setTimeout(() => {
-      let quietFor = 0;
-      live.turnPoll = setInterval(() => {
-        if (!live.on) { clearInterval(live.turnPoll); return; }
-        if (live.interimEl) { clearInterval(live.turnPoll); return; }          // same person continued; early detection handles a switch
-        quietFor = Wave.level() < 0.045 ? quietFor + 100 : 0;
-        if (quietFor >= 300) { clearInterval(live.turnPoll); const next = other(who); setExpected(next); startRecognizer(langOf(next)); }
-      }, 100);
-    }, 2000);
-  }
-  /* ---- Soft finals ----
-     Stopping the engine to force a final costs a restart (~0.5 s of lost audio) on every single line. Instead, when the
-     words have stopped changing and the room is quiet, commit the line ourselves and keep the engine running. When
-     the engine later finalizes the same stretch, reconcile: take its (usually better) text, or treat any extra words
-     as the person continuing. */
-  const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
-  function softExtra(interim) {
-    const a = norm(live.soft.text), b = norm(interim);
-    if (b.startsWith(a)) { const words = interim.trim().split(/\s+/), n = live.soft.text.trim().split(/\s+/).length; return words.slice(n).join(' '); }
-    if (a.startsWith(b)) return '';                               // engine briefly shows less than we committed
-    return null;
-  }
-  function softCommit(text) {
-    if (!live.interimEl) return;
-    handleFinal(text, { soft: text });
-  }
-  async function reconcileSoft(finalText) {
-    const soft = live.soft; live.soft = null;
-    const f = live.carry ? (live.carry + ' ' + finalText) : finalText;
-    const a = norm(soft.text), b = norm(f);
-    if (b.startsWith(a)) {
-      const extra = f.trim().split(/\s+/).slice(soft.text.trim().split(/\s+/).length).join(' ');
-      if (extra) handleFinal(extra, { who: soft.who });
-      return;
-    }
-    // The engine rewrote the sentence: update the committed line in place.
-    const line = soft.line; if (!line || !live.lines.includes(line)) return;
-    line.orig = f; line.node.querySelector('.orig').textContent = f;
-    try { const r = await translate(f, langOf(line.who), langOf(other(line.who))); line.trans = r.text; line.node.querySelector('.trans').textContent = r.text; } catch (e) {}
-  }
+  function softCommit(text) { if (live.interimEl) handleFinal(text, { soft: true }); }
 
   async function startLive() {
     if (!SR) { toast('This browser has no speech recognition. Use Chrome or Safari.'); return; }
@@ -598,7 +553,7 @@
 
   async function stopLive() {
     if (!live.on) return;
-    live.on = false; live.soft = null; clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId); live.turnPoll && clearInterval(live.turnPoll); clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
+    live.on = false; clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId);  clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
     try { if (live.rec) { live.rec.onend = null; live.rec.stop(); } } catch (e) {}
     let audioBlob = null;
     if (live.recorder && live.recorder.state !== 'inactive') {
