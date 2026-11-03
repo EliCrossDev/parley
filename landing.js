@@ -2,6 +2,8 @@
 (function () {
   'use strict';
   document.documentElement.classList.add('js');
+  // Honor the palette chosen in the app (same origin, same localStorage).
+  try { const p = JSON.parse(localStorage.getItem('parley.prefs.v1') || '{}').palette; if (p && p !== 'sea') document.documentElement.setAttribute('data-palette', p); } catch (e) {}
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- Reveal on scroll ---------- */
