@@ -1,4 +1,4 @@
-/* Parley — live two-way conversation translation
+/* Parley - live two-way conversation translation
    Speech: Web Speech API (browser engine). Translation: pluggable providers.
    Storage: localStorage (prefs) + IndexedDB (conversations + audio). */
 (function () {
@@ -99,7 +99,6 @@
      /api/checkout → Stripe Checkout (one-time). Success redirects back with ?session_id, /api/verify confirms
      payment and returns a signed token for this device. /api/restore unlocks another device from the purchase
      email. No database: Stripe is the source of truth. Env vars: see .env.example. */
-  const PRO_PRICE_LABEL = '$9 one-time';
   let proConfigured = null;
   async function proStatus() { if (proConfigured != null) return proConfigured; try { const r = await fetch('/api/status'); proConfigured = !!(await r.json()).configured; } catch (e) { proConfigured = false; } return proConfigured; }
   async function proApi(path, body) {
@@ -232,7 +231,7 @@
       const voice = voiceId || voiceFor(lang); if (!voice) return browserSpeak(text, lang);
       let model;
       try { model = await load((p) => { setBusy(true, 'Downloading voice ' + Math.round(p) + '%'); const b = $('voice-dl'); if (b) b.style.width = p + '%'; }); }
-      catch (e) { lastErr = e; console.warn('Kokoro load failed', e); toast('Studio voice unavailable — using device voice'); setVoiceStatus(); return browserSpeak(text, lang); }
+      catch (e) { lastErr = e; console.warn('Kokoro load failed', e); toast('Studio voice unavailable, using device voice'); setVoiceStatus(); return browserSpeak(text, lang); }
       try {
         setVoiceStatus('Generating…');
         const audio = await model.generate(text, { voice });
@@ -351,7 +350,7 @@
   };
   const LEXSET = {}; Object.keys(LEX).forEach((k) => { LEXSET[k] = new Set(LEX[k].split(' ')); });
   function lexScore(words, code) { const s = LEXSET[base(code)]; if (!s) return 0; let n = 0; for (const w of words) if (s.has(w)) n++; return n; }
-  // Returns 'a' | 'b' | null — null means "can't tell offline".
+  // Returns 'a' | 'b' | null - null means "can't tell offline".
   function guessOffline(text) {
     const sA = langScript(prefs.langA), sB = langScript(prefs.langB), sT = scriptOf(text);
     if (sA !== sB) { if (sT === sA) return 'a'; if (sT === sB) return 'b'; return null; }
@@ -491,7 +490,7 @@
         if (d === base(langOf(other(who))) && d !== base(langOf(who))) { who = other(who); result = await translate(text, langOf(who), langOf(other(who))); }
       }
     } catch (e) {
-      node.className = 'bubble ' + who; node.querySelector('.orig').textContent = text; node.querySelector('.trans').textContent = '(translation unavailable — check your connection)';
+      node.className = 'bubble ' + who; node.querySelector('.orig').textContent = text; node.querySelector('.trans').textContent = '(translation unavailable, check your connection)';
       setExpected(other(who)); return;
     }
     node.className = 'bubble ' + who;
@@ -519,7 +518,7 @@
     setExpected('a'); startRecognizer(prefs.langA);
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
-    catch (e) { live.stream = null; toast('Mic stream unavailable — transcription still runs, no waveform or recording.'); }
+    catch (e) { live.stream = null; toast('Mic stream unavailable. Transcription still runs, no waveform or recording.'); }
     live.levelId = setInterval(() => { const lv = Math.min(1, Wave.level() * 2.2); if (BG) BG.setEnergy(lv); document.documentElement.style.setProperty('--lv', lv.toFixed(3)); }, 80);
     // Recording
     if (live.stream && prefs.record && 'MediaRecorder' in window) {
@@ -644,7 +643,7 @@
     $('pro-email').value = prefs.proEmail || ''; $('pro-status').textContent = '';
     const buy = $('pro-buy'); buy.hidden = true; sheetOpen('pro-sheet');
     const ok = await proStatus();
-    if (ok) { buy.hidden = false; buy.textContent = 'Get Parley Pro · ' + PRO_PRICE_LABEL; }
+    if (ok) { buy.hidden = false; }
     else $('pro-status').textContent = 'Checkout isn\'t connected yet.';
   }
   $('go-pro').addEventListener('click', openPro);
@@ -658,14 +657,14 @@
   $('pro-activate').addEventListener('click', async () => {
     const email = $('pro-email').value.trim(); if (!email) { $('pro-status').textContent = 'Enter the email you paid with.'; return; }
     $('pro-status').textContent = 'Looking up your purchase…';
-    try { const j = await proApi('/api/restore', { email }); setPro(true, j.token, j.email); sheetClose(); toast('Parley Pro restored'); }
+    try { const j = await proApi('/api/restore', { email }); setPro(true, j.token, j.email); sheetClose(); toast('Supporter perks restored'); }
     catch (e) { $('pro-status').textContent = e.message; }
   });
   // Back from Stripe Checkout: ?session_id=cs_…
   (async () => {
     const sid = new URLSearchParams(location.search).get('session_id'); if (!sid) return;
     history.replaceState(null, '', location.pathname + (location.hash || '#profile'));
-    try { const j = await proApi('/api/verify?session_id=' + encodeURIComponent(sid)); setPro(true, j.token, j.email); showView('profile'); toast('Welcome to Parley Pro'); }
+    try { const j = await proApi('/api/verify?session_id=' + encodeURIComponent(sid)); setPro(true, j.token, j.email); showView('profile'); toast('Thank you for supporting Parley'); }
     catch (e) { toast('Could not confirm payment: ' + e.message); }
   })();
   // Re-check a stored token once per day; if the server rejects it, fall back to free.
@@ -679,7 +678,7 @@
     if (!pb.c) return;
     if (!prefs.pro) { openPro(); return; }
     const lines = pb.c.lines.map((l) => '[' + fmtTime(l.t / 1000) + '] ' + byCode(l.from).short + ': ' + l.orig + '\n    ' + byCode(l.to).short + ': ' + l.trans).join('\n\n');
-    const head = 'Parley — ' + new Date(pb.c.startedAt).toLocaleString() + '\n' + byCode(pb.c.langA).name + ' ↔ ' + byCode(pb.c.langB).name + '\n\n';
+    const head = 'Parley · ' + new Date(pb.c.startedAt).toLocaleString() + '\n' + byCode(pb.c.langA).name + ' ↔ ' + byCode(pb.c.langB).name + '\n\n';
     const blob = new Blob([head + lines], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'parley-' + new Date(pb.c.startedAt).toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
     toast('Transcript exported');
@@ -737,8 +736,8 @@
   function renderProfile() {
     $('profile-avatar').innerHTML = avatarSVG(prefs.avatar);
     $('profile-name-display').textContent = prefs.name || 'Traveler';
-    $('profile-plan').textContent = prefs.pro ? 'Pro plan · unlimited history' : 'Free plan · 5 saved conversations';
-    const ps = $('pro-sub'), pbt = $('pro-btn'); if (ps) ps.textContent = prefs.pro ? 'Active · unlimited history, export on' : 'Free · last 5 conversations kept'; if (pbt) pbt.textContent = prefs.pro ? 'Deactivate' : 'Upgrade';
+    $('profile-plan').textContent = prefs.pro ? 'Supporter · unlimited history' : 'Free · 5 saved conversations';
+    const ps = $('pro-sub'), pbt = $('pro-btn'); if (ps) ps.textContent = prefs.pro ? 'Thank you · unlimited history, export on' : 'Free · last 5 conversations kept'; if (pbt) pbt.textContent = prefs.pro ? 'Deactivate' : 'Support';
     $('profile-lang-btn').textContent = byCode(prefs.langA).name;
     const sub = { auto: 'Auto (Google · MyMemory fallback)', mymemory: 'MyMemory', libre: 'LibreTranslate · ' + (prefs.libreUrl || 'not set') };
     $('engine-sub').textContent = sub[prefs.engine] || sub.auto;
@@ -759,7 +758,7 @@
     const parts = [prefs.langA, prefs.langB].map((c) => { const id = Voice.voiceFor(c); const v = KVOICES.find((x) => x[0] === id); return byCode(c).short + ' ' + (v ? v[1] : 'device voice'); });
     return parts.join(' · ');
   }
-  let lastPick = null; // { lang, voice } — what Preview plays
+  let lastPick = null; // { lang, voice } - what Preview plays
   function renderVoiceSheet() {
     prefs.voiceEngine = 'kokoro';
     const note = $('voice-engine-note'), list = $('voice-list'); list.innerHTML = '';
@@ -823,7 +822,7 @@
   renderSetup(); renderProfile();
   const hash = (location.hash || '').replace('#', '');
   if (['history', 'profile'].includes(hash)) showView(hash);
-  // ?demo=1 — preview the live screen with sample lines, no microphone
+  // ?demo=1 - preview the live screen with sample lines, no microphone
   if (/[?&]demo=1/.test(location.search)) {
     $('live-setup').hidden = true; $('live-stage').hidden = false; $('rec-dot').classList.add('off'); document.body.classList.add('live');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;

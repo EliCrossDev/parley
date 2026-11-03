@@ -1,4 +1,4 @@
-/* Parley landing — voxel hero, scroll reveal, looping demo */
+/* Parley landing - voxel hero, scroll reveal, looping demo */
 (function () {
   'use strict';
   document.documentElement.classList.add('js');
@@ -28,7 +28,7 @@
     ];
     let i = 0, timer;
     function setWho(who) {
-      status.textContent = who === 'a' ? 'Listening · English' : 'Listening · Español'; status.className = 'mono right ' + who;
+      status.textContent = 'Listening'; status.className = 'mono right ' + who;
       pillA.classList.toggle('live', who === 'a'); pillB.classList.toggle('live', who === 'b'); demoSpeaker = who;
     }
     function push(line) {

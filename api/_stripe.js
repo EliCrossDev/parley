@@ -2,7 +2,9 @@
 const crypto = require('crypto');
 
 const SK = process.env.STRIPE_SECRET_KEY || '';
-const PRICE = process.env.STRIPE_PRICE_ID || '';
+const PRICES = (process.env.STRIPE_PRICE_ID || '').split(',').map((s) => s.trim()).filter(Boolean);
+const PRICE = PRICES[0] || '';
+const isOurPrice = (id) => PRICES.includes(id);
 const SIGN = process.env.PRO_SIGNING_SECRET || '';
 
 function configured() { return !!(SK && PRICE && SIGN); }
@@ -43,7 +45,7 @@ async function emailHasPaid(email) {
     for (const s of sessions.data || []) {
       if (s.payment_status !== 'paid') continue;
       const items = (s.line_items && s.line_items.data) || [];
-      if (items.some((li) => li.price && li.price.id === PRICE)) return true;
+      if (items.some((li) => li.price && isOurPrice(li.price.id))) return true;
     }
   }
   // Guest checkouts (no customer object) still carry customer_details.email on the session.
@@ -52,7 +54,7 @@ async function emailHasPaid(email) {
     const se = s.customer_details && s.customer_details.email;
     if (s.payment_status === 'paid' && se && se.toLowerCase() === e) {
       const items = (s.line_items && s.line_items.data) || [];
-      if (items.some((li) => li.price && li.price.id === PRICE)) return true;
+      if (items.some((li) => li.price && isOurPrice(li.price.id))) return true;
     }
   }
   return false;
@@ -62,4 +64,4 @@ function json(res, status, obj) { res.status(status).setHeader('Content-Type', '
 async function readBody(req) { if (req.body && typeof req.body === 'object') return req.body; const chunks = []; for await (const c of req) chunks.push(c); try { return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch (e) { return {}; } }
 function origin(req) { const proto = req.headers['x-forwarded-proto'] || 'https'; const host = req.headers['x-forwarded-host'] || req.headers.host; return proto + '://' + host; }
 
-module.exports = { configured, stripe, makeToken, checkToken, emailHasPaid, json, readBody, origin, PRICE };
+module.exports = { configured, stripe, makeToken, checkToken, emailHasPaid, json, readBody, origin, PRICE, isOurPrice };
