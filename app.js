@@ -624,7 +624,7 @@
   $('pick-b').addEventListener('click', () => openLangPicker('b', T('sheet.lang2')));
 
   function renderSetup() {
-    renderAvatarsUI();
+    renderAvatarsUI(); renderRecent();
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
     $('label-b').textContent = b.native; $('native-b').textContent = b.name;
@@ -662,15 +662,29 @@
     let lastGroup = null;
     all.forEach((c) => {
       const g = groupLabel(c.startedAt); if (g !== lastGroup) { list.appendChild(el('div', 'history-group', g)); lastGroup = g; }
-      const item = el('button', 'history-item');
-      const pair = el('span', 'hi-pair'); pair.appendChild(el('span', 'pa')); pair.appendChild(el('span', 'pb')); item.appendChild(pair);
-      const mid = el('span'); mid.appendChild(el('div', 'hi-title', c.title || 'Conversation'));
-      mid.appendChild(el('div', 'hi-sub', byCode(c.langA).short + ' ↔ ' + byCode(c.langB).short + ' · ' + c.lines.length + ' ' + T('hist.lines') + (c.audio ? ' · ' + T('hist.audio') : ''))); item.appendChild(mid);
-      item.appendChild(el('span', 'hi-time', new Date(c.startedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })));
-      item.addEventListener('click', () => openPlayback(c));
-      list.appendChild(item);
+      list.appendChild(historyRow(c));
     });
+    renderRecent(all);
   }
+  function historyRow(c, withDate) {
+    const item = el('button', 'history-item');
+    const pair = el('span', 'hi-pair'); pair.appendChild(el('span', 'pa')); pair.appendChild(el('span', 'pb')); item.appendChild(pair);
+    const mid = el('span'); mid.appendChild(el('div', 'hi-title', c.title || 'Conversation'));
+    mid.appendChild(el('div', 'hi-sub', byCode(c.langA).short + ' ↔ ' + byCode(c.langB).short + ' · ' + c.lines.length + ' ' + T('hist.lines') + (c.audio ? ' · ' + T('hist.audio') : ''))); item.appendChild(mid);
+    const d = new Date(c.startedAt);
+    item.appendChild(el('span', 'hi-time', withDate ? groupLabel(c.startedAt) + ' · ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })));
+    item.addEventListener('click', () => openPlayback(c));
+    return item;
+  }
+  // The same conversations, folded under the Start button so replaying never means leaving the main screen.
+  async function renderRecent(all) {
+    if (!all) all = (await dbAll()).sort((a, b) => b.startedAt - a.startedAt);
+    const box = $('recent-list'); box.innerHTML = ''; $('recent-count').textContent = all.length;
+    if (!all.length) { box.appendChild(el('div', 'history-empty', T('hist.empty'))); return; }
+    all.slice(0, 5).forEach((c) => box.appendChild(historyRow(c, true)));
+    if (all.length > 5) { const more = el('button', 'recent-more', '+' + (all.length - 5)); more.addEventListener('click', () => showView('history')); box.appendChild(more); }
+  }
+  $('recent-toggle').addEventListener('click', () => { const open = $('recent-list').hidden; $('recent-list').hidden = !open; $('recent-toggle').setAttribute('aria-expanded', String(open)); if (open) renderRecent(); });
   async function openPro() {
     $('pro-email').value = prefs.proEmail || ''; $('pro-status').textContent = '';
     const buy = $('pro-buy'); buy.hidden = true; sheetOpen('pro-sheet');
