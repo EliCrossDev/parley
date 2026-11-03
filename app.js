@@ -43,7 +43,7 @@
   const PREF_KEY = 'parley.prefs.v1';
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
-    name: 'Traveler', avatar: 0, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '',
+    name: 'Traveler', avatar: 0, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
     voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'aurora',
   };
   let prefs = Object.assign({}, defaults);
@@ -95,23 +95,18 @@
   async function dbPut(obj) { try { const db = await openDB(); await new Promise((res, rej) => { const t = db.transaction(STORE, 'readwrite'); t.objectStore(STORE).put(obj); t.oncomplete = res; t.onerror = () => rej(t.error); }); return true; } catch (e) { return false; } }
   async function dbDel(id) { try { const db = await openDB(); await new Promise((res, rej) => { const t = db.transaction(STORE, 'readwrite'); t.objectStore(STORE).delete(id); t.oncomplete = res; t.onerror = () => rej(t.error); }); } catch (e) {} }
   async function dbClear() { try { const db = await openDB(); await new Promise((res, rej) => { const t = db.transaction(STORE, 'readwrite'); t.objectStore(STORE).clear(); t.oncomplete = res; t.onerror = () => rej(t.error); }); } catch (e) {} }
-  /* ---------------- Pro (license key) ----------------
-     Checkout: a Lemon Squeezy (or Stripe) product that issues a license key. Set PRO_CHECKOUT_URL to the
-     product's checkout link. Activation validates the key against Lemon Squeezy's public license API
-     (no secret needed) and unlocks Pro on this device. Re-enter the key on another device to unlock it there. */
-  const PRO_CHECKOUT_URL = '';            // e.g. https://parley.lemonsqueezy.com/checkout/buy/xxxxxxxx
-  const PRO_STORE_ID = '';                // optional: Lemon Squeezy store id, checked on validate when set
+  /* ---------------- Pro (Stripe) ----------------
+     /api/checkout → Stripe Checkout (one-time). Success redirects back with ?session_id, /api/verify confirms
+     payment and returns a signed token for this device. /api/restore unlocks another device from the purchase
+     email. No database: Stripe is the source of truth. Env vars: see .env.example. */
   const PRO_PRICE_LABEL = '$9 one-time';
-  async function validateLicense(key) {
-    const body = new URLSearchParams({ license_key: key.trim() });
-    const r = await fetch('https://api.lemonsqueezy.com/v1/licenses/validate', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.valid) throw new Error((j && j.error) || 'That key is not valid.');
-    if (PRO_STORE_ID && j.meta && String(j.meta.store_id) !== String(PRO_STORE_ID)) throw new Error('That key is for a different product.');
-    if (j.license_key && j.license_key.status === 'disabled') throw new Error('That key has been disabled.');
-    return j;
+  let proConfigured = null;
+  async function proStatus() { if (proConfigured != null) return proConfigured; try { const r = await fetch('/api/status'); proConfigured = !!(await r.json()).configured; } catch (e) { proConfigured = false; } return proConfigured; }
+  async function proApi(path, body) {
+    const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined);
+    const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.error || 'Something went wrong.'); return j;
   }
-  function setPro(on, key) { prefs.pro = !!on; prefs.license = on ? key : ''; savePrefs(); renderProfile(); renderHistory(); }
+  function setPro(on, token, email) { prefs.pro = !!on; prefs.license = on ? token : ''; prefs.proEmail = on ? (email || '') : ''; savePrefs(); renderProfile(); renderHistory(); }
 
   const FREE_LIMIT = 5;
   async function enforceLimit() {
@@ -645,22 +640,40 @@
       list.appendChild(item);
     });
   }
-  function openPro() {
-    const buy = $('pro-buy');
-    if (PRO_CHECKOUT_URL) { buy.href = PRO_CHECKOUT_URL; buy.textContent = 'Get Parley Pro · ' + PRO_PRICE_LABEL; buy.hidden = false; }
-    else { buy.hidden = true; }
-    $('pro-key').value = prefs.license || ''; $('pro-status').textContent = PRO_CHECKOUT_URL ? '' : 'Checkout isn\'t connected yet. If you have a key, enter it below.';
-    sheetOpen('pro-sheet');
+  async function openPro() {
+    $('pro-email').value = prefs.proEmail || ''; $('pro-status').textContent = '';
+    const buy = $('pro-buy'); buy.hidden = true; sheetOpen('pro-sheet');
+    const ok = await proStatus();
+    if (ok) { buy.hidden = false; buy.textContent = 'Get Parley Pro · ' + PRO_PRICE_LABEL; }
+    else $('pro-status').textContent = 'Checkout isn\'t connected yet.';
   }
   $('go-pro').addEventListener('click', openPro);
-  $('pro-btn').addEventListener('click', () => { if (prefs.pro) confirmSheet('Deactivate Pro on this device?', 'You can re-enter your key any time.', () => { setPro(false); toast('Pro deactivated'); }); else openPro(); });
+  $('pro-btn').addEventListener('click', () => { if (prefs.pro) confirmSheet('Turn off Pro on this device?', 'You can restore it any time with your email.', () => { setPro(false); toast('Pro turned off'); }); else openPro(); });
   $('pro-cancel').addEventListener('click', sheetClose);
-  $('pro-activate').addEventListener('click', async () => {
-    const key = $('pro-key').value.trim(); if (!key) { $('pro-status').textContent = 'Paste your license key first.'; return; }
-    $('pro-status').textContent = 'Checking…';
-    try { await validateLicense(key); setPro(true, key); sheetClose(); toast('Parley Pro is on'); }
-    catch (e) { $('pro-status').textContent = e.message || 'Could not validate that key.'; }
+  $('pro-buy').addEventListener('click', async () => {
+    $('pro-status').textContent = 'Opening checkout…'; $('pro-buy').disabled = true;
+    try { const j = await proApi('/api/checkout', {}); location.href = j.url; }
+    catch (e) { $('pro-status').textContent = e.message; $('pro-buy').disabled = false; }
   });
+  $('pro-activate').addEventListener('click', async () => {
+    const email = $('pro-email').value.trim(); if (!email) { $('pro-status').textContent = 'Enter the email you paid with.'; return; }
+    $('pro-status').textContent = 'Looking up your purchase…';
+    try { const j = await proApi('/api/restore', { email }); setPro(true, j.token, j.email); sheetClose(); toast('Parley Pro restored'); }
+    catch (e) { $('pro-status').textContent = e.message; }
+  });
+  // Back from Stripe Checkout: ?session_id=cs_…
+  (async () => {
+    const sid = new URLSearchParams(location.search).get('session_id'); if (!sid) return;
+    history.replaceState(null, '', location.pathname + (location.hash || '#profile'));
+    try { const j = await proApi('/api/verify?session_id=' + encodeURIComponent(sid)); setPro(true, j.token, j.email); showView('profile'); toast('Welcome to Parley Pro'); }
+    catch (e) { toast('Could not confirm payment: ' + e.message); }
+  })();
+  // Re-check a stored token once per day; if the server rejects it, fall back to free.
+  (async () => {
+    if (!prefs.pro || !prefs.license) return; const last = Number(prefs.proChecked || 0); if (Date.now() - last < 86400000) return;
+    try { await proApi('/api/validate', { token: prefs.license }); prefs.proChecked = Date.now(); savePrefs(); }
+    catch (e) { if (/401|not|invalid/i.test(e.message)) { setPro(false); toast('Pro needs to be restored on this device'); } }
+  })();
   // Export transcript (Pro)
   $('pb-export').addEventListener('click', () => {
     if (!pb.c) return;
