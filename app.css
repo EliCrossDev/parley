@@ -367,3 +367,11 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .toggle-label { color: rgba(245,245,242,.9); }
 .eyebrow { color: rgba(245,245,242,.7); }
 .setting-sub, .hi-sub, .profile-plan { color: rgba(245,245,242,.65); }
+
+/* Night palette: darker everything */
+:root[data-palette="night"] .app-bg::after { background: linear-gradient(180deg, rgba(3,4,10,.35) 0%, rgba(3,4,10,.3) 50%, rgba(3,4,10,.55) 100%); }
+:root[data-palette="night"] .frost { backdrop-filter: blur(44px) saturate(1.2) brightness(.75); -webkit-backdrop-filter: blur(44px) saturate(1.2) brightness(.75); }
+:root[data-palette="night"] .bubble.a { background: rgba(233,233,242,.92); }
+:root[data-palette="night"] .bubble.b { background: rgba(8,10,20,.78); }
+:root[data-palette="night"] .speaker-card { background: rgba(6,8,16,.7); }
+.speaker-cards { gap: 10px; }

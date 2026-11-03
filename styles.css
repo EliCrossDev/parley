@@ -39,6 +39,7 @@
 /* Palettes — set data-palette on <html>. */
 :root[data-palette="dawn"] { --bg-c1: #2a1f4a; --bg-c2: #c97aa0; --bg-c3: #ffd9a8; --mid: #e39ab0; }
 :root[data-palette="sea"] { --bg-c1: #0f2f3f; --bg-c2: #3fb8a8; --bg-c3: #d8f3e6; --mid: #5fd0b8; }
+:root[data-palette="night"] { --bg-c1: #070a14; --bg-c2: #1b2a44; --bg-c3: #3a3550; --mid: #2a3a5a; --glass: rgba(6, 8, 16, 0.6); --glass-2: rgba(6, 8, 16, 0.72); --glass-line: rgba(255, 255, 255, 0.16); --volt: #e9e9f2; --blue: #0b0d18; }
 :root[data-palette="tide"] { --volt: #4ed8e8; --volt-ink: #00262b; --volt-dim: rgba(78,216,232,.16); --blue: #f2efe6; --blue-ink: #0b0b0d; --blue-dim: rgba(242,239,230,.12); --mid: #2b4bff; --bg-c1: #0b1a4a; --bg-c2: #2b6bff; --bg-c3: #8fe3f0; }
 :root[data-palette="dusk"] { --volt: #fff4e0; --volt-ink: #1a0b1f; --volt-dim: rgba(255,244,224,.14); --blue: #ff6a3d; --blue-ink: #2a0e00; --blue-dim: rgba(255,106,61,.2); --mid: #ff3d7a; --bg-c1: #2b0a3d; --bg-c2: #ff3d7a; --bg-c3: #ffd36b; }
 :root[data-palette="volt"] { --volt: #d9ff3b; --volt-ink: #0a0b00; --volt-dim: rgba(217,255,59,.14); --blue: #2f6bff; --blue-ink: #ffffff; --blue-dim: rgba(47,107,255,.18); --mid: #3a7bff; --bg-c1: #d9ff3b; --bg-c2: #2f6bff; --bg-c3: #1b2a80; }
