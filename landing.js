@@ -20,7 +20,7 @@
     const words = []; for (let k = 0; k < N; k++) words.push(pool[k % pool.length]);
     words.push('Translation');
     // delay per frame: slow at both ends, fast in the middle (cosine ease)
-    const delay = (k) => { const t = k / (N - 1); const ease = 0.5 - 0.5 * Math.cos(t * Math.PI * 2); return 320 - 270 * ease; };
+    const delay = (k) => { const t = k / (N - 1); const ease = 0.5 - 0.5 * Math.cos(t * Math.PI * 2); return (320 - 270 * ease) / 3; };
     let i = 0; el.textContent = words[0]; el.classList.add('flipping');
     const step = () => {
       i++; const last = i === words.length - 1;
@@ -28,7 +28,7 @@
       if (last) { el.classList.remove('flipping'); el.classList.add('settled'); return; }
       setTimeout(step, delay(i));
     };
-    setTimeout(step, 420);
+    setTimeout(step, 140);
   })();
 
   /* ---------- Header scrim once scrolled ---------- */
