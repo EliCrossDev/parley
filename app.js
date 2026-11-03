@@ -860,9 +860,9 @@
   applyPalette(prefs.palette);
   (function uiLang() {
     if (!window.I18N) return;
-    const sel = $('uilang-select'); if (sel && !sel.options.length) I18N.LANGS.forEach(([c, n]) => { const o = document.createElement('option'); o.value = c; o.textContent = n; sel.appendChild(o); });
+    document.querySelectorAll('select[data-ui-lang]').forEach((sel) => { if (!sel.options.length) I18N.LANGS.forEach(([c, n]) => { const o = document.createElement('option'); o.value = c; o.textContent = n; sel.appendChild(o); }); sel.addEventListener('change', () => I18N.set(sel.value)); });
+    const sel = null;
     const sub = () => { const e = $('uilang-sub'); if (e) e.textContent = (I18N.LANGS.find((l) => l[0] === I18N.lang) || ['', 'English'])[1]; };
-    if (sel) sel.addEventListener('change', () => I18N.set(sel.value));
     document.addEventListener('i18n:change', () => { sub(); renderProfile(); if (typeof renderHistory === 'function') renderHistory(); });
     I18N.apply(); sub();
   })();

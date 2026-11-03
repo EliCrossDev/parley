@@ -403,3 +403,5 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .text-btn { font-size: 13px; font-weight: 600; color: var(--fg-2); padding: 8px 2px; }
 .text-btn.danger { color: var(--danger); }
 .text-btn:hover { opacity: .8; }
+.setup-lang { width: max-content; align-self: flex-start; height: 34px; padding: 0 30px 0 12px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); color: var(--fg-2); font-size: 13px; font-weight: 500; gap: 7px; margin-bottom: 18px; }
+.setup-lang svg { width: 15px; height: 15px; opacity: .85; }
