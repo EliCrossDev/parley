@@ -424,7 +424,7 @@
       interim = interim.trim();
       if (interim) {
         const shown = live.carry ? (live.carry + ' ' + interim) : interim;
-        if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true)); live.interimEl.dataset.words = shown; }
+        if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true)); live.interimEl.dataset.words = shown; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 600); }
         else if (live.interimEl.dataset.words !== shown) {
           const n = live.interimEl; n.dataset.words = shown;
           // Big text holds the latest translation once one exists; the raw words live in the small line above it.
@@ -507,6 +507,7 @@
     node.querySelector('.trans').textContent = text;
     setStatus(T('live.translating'), guess);
     const t0 = Date.now() - live.startedAt;
+    const start = node.dataset.start ? Number(node.dataset.start) : t0; // when the person started talking, not when the line was finalized
 
     let who = guess, result = null;
     const cached = interimCache.get(text + '|' + langOf(other(who)));
@@ -526,7 +527,7 @@
     node.querySelector('.trans').textContent = result.text; node.querySelector('.trans').classList.remove('pending');
     setBubbleWho(node, who);
     $('convo').scrollTop = $('convo').scrollHeight;
-    live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : t0, dur: (Date.now() - live.startedAt) - (cont ? last.t : t0), node });
+    live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node });
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     live.forced = null;
     // Don't assume the other person is next. Keep listening in the same language for a beat (they may
@@ -574,7 +575,7 @@
     if (live.lines.length) {
       const first = live.lines[0];
       const title = (first.orig.length > 42 ? first.orig.slice(0, 42).trim() + '…' : first.orig);
-      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t, dur: l.dur })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
+      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t, dur: l.dur, s: 1 })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
       if (ok) { await enforceLimit(); toast('Conversation saved'); } else toast('Could not save on this device');
     }
     $('live-stage').hidden = true; $('live-setup').hidden = false; document.body.classList.remove('live'); pickGuest(); renderAvatarsUI();
@@ -728,16 +729,18 @@
     showView('playback');
   }
   function closeAudio() { if (pb.audio) { try { pb.audio.pause(); } catch (e) {} } if (pb.url) URL.revokeObjectURL(pb.url); pb.audio = null; pb.url = null; pb.playing = false; cancelAnimationFrame(pb.raf); pb.elapsed = 0; $('pb-play').classList.remove('playing'); $('pb-scrub').value = 0; $('pb-cur').textContent = '0:00'; }
+  // Lines saved before v31 carry the time the line was finalized, not when speech began; estimate the start from length.
+  function lineStart(c, i) { const l = c.lines[i]; if (l.s) return l.t; const est = l.t - Math.min(12000, 300 + l.orig.split(/\s+/).length * 330); const prev = i ? lineStart(c, i - 1) + 800 : 0; return Math.max(prev, est, 0); }
   function renderPlaybackLines(timeMs) {
     const box = $('pb-convo'); const liveMode = $('pb-livemode').checked;
     if (!box.childElementCount) {
       pb.c.lines.forEach((l) => {
-        const b = el('div', 'bubble ' + l.who); b.appendChild(el('div', 'orig', l.orig)); b.appendChild(el('div', 'trans', l.trans)); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = l.t; box.appendChild(b);
+        const b = el('div', 'bubble ' + l.who); b.appendChild(el('div', 'orig', l.orig)); b.appendChild(el('div', 'trans', l.trans)); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = lineStart(pb.c, pb.c.lines.indexOf(l)); box.appendChild(b);
       });
     }
     // Which line is being said right now? (saved lines carry t and dur; older ones get dur from the next line)
     const lines = pb.c.lines; let nowIdx = -1;
-    lines.forEach((l, i) => { const end = l.t + (l.dur || ((lines[i + 1] ? lines[i + 1].t : pb.c.duration * 1000) - l.t)); if (timeMs >= l.t && timeMs < end) nowIdx = i; });
+    lines.forEach((l, i) => { const st = lineStart(pb.c, i); const end = lines[i + 1] ? lineStart(pb.c, i + 1) : pb.c.duration * 1000; if (timeMs >= st && timeMs < end) nowIdx = i; });
     const bubbles = box.querySelectorAll('.bubble'); let newest = null;
     bubbles.forEach((b, i) => {
       const hidden = liveMode && Number(b.dataset.t) > timeMs;
@@ -752,7 +755,7 @@
   }
   function renderPlaybackTrack(c) {
     const tr = $('pb-track'); tr.innerHTML = ''; const total = Math.max(1, c.duration * 1000);
-    c.lines.forEach((l, i) => { const end = l.t + (l.dur || ((c.lines[i + 1] ? c.lines[i + 1].t : total) - l.t)); const seg = el('i', l.who); seg.style.left = (100 * l.t / total) + '%'; seg.style.width = Math.max(0.8, 100 * (end - l.t) / total) + '%'; tr.appendChild(seg); });
+    c.lines.forEach((l, i) => { const st = lineStart(c, i); const end = Math.min(c.lines[i + 1] ? lineStart(c, i + 1) : total, st + (l.s && l.dur ? l.dur : 300 + l.orig.split(/\s+/).length * 330)); const seg = el('i', l.who); seg.style.left = (100 * st / total) + '%'; seg.style.width = Math.max(0.8, 100 * (end - st) / total) + '%'; tr.appendChild(seg); });
     const da = $('pbw-a').querySelector('.who-dot'), db = $('pbw-b').querySelector('.who-dot');
     da.innerHTML = avatarSVG(c.avatarA ?? prefs.avatar); db.innerHTML = avatarSVG(c.avatarB ?? 5);
     $('pbw-a-label').textContent = byCode(c.langA).short; $('pbw-b-label').textContent = byCode(c.langB).short;
