@@ -75,9 +75,6 @@
 .speaker-lang { grid-column: 1; font-family: var(--font-display); font-size: 28px; font-weight: 700; line-height: 1.1; }
 .speaker-native { grid-column: 1; color: var(--fg-2); font-size: 14px; }
 .speaker-change { grid-column: 2; grid-row: 1 / 4; align-self: center; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); border: 1px solid var(--line-2); border-radius: 999px; padding: 6px 12px; }
-.swap-wrap { display: flex; justify-content: center; margin: -6px 0; position: relative; z-index: 1; }
-.swap-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-3); border: 1px solid var(--line-2); display: flex; align-items: center; justify-content: center; color: var(--fg-2); transition: transform .3s, color .2s; }
-.swap-btn:hover { color: var(--fg); transform: rotate(180deg); }
 .setup-options { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
 .toggle { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
 .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -260,7 +257,7 @@
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 @media (min-width: 720px) {
-  .speaker-cards { grid-template-columns: 1fr auto 1fr; align-items: stretch; }
+  .speaker-cards { grid-template-columns: 1fr 1fr; align-items: stretch; }
   .swap-wrap { margin: 0; align-items: center; }
   .live-stage { max-width: 760px; margin: 0 auto; width: 100%; }
   .page { max-width: 760px; margin: 0 auto; }
@@ -329,7 +326,6 @@ body.live .app-bg::after { background: linear-gradient(180deg, rgba(5,5,5,.1) 0%
 .speaker-card::before { display: none; }
 .speaker-a:hover, .speaker-b:hover { border-color: rgba(255,255,255,.35); }
 .speaker-change { background: var(--glass); border-color: var(--glass-line); color: var(--fg-2); }
-.swap-btn { background: var(--glass-2); border-color: var(--glass-line); }
 .toggle-track { background: var(--glass); border-color: var(--glass-line); }
 .toggle input:checked + .toggle-track { background: rgba(255,255,255,.85); border-color: rgba(255,255,255,.9); }
 .toggle input:checked + .toggle-track .toggle-knob { background: #0e0e16; }
