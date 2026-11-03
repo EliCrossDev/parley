@@ -383,3 +383,9 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 
 /* symmetrical language chips */
 .who-btn { min-width: 104px; justify-content: center; }
+
+/* App language select, styled like the other small field-select buttons */
+.ui-lang-select { display: inline-flex; align-items: center; position: relative; padding-right: 30px; cursor: pointer; }
+.ui-lang-select select { appearance: none; -webkit-appearance: none; background: transparent; border: 0; color: inherit; font: inherit; cursor: pointer; outline: none; padding: 0; }
+.ui-lang-select select option { color: #111; }
+.ui-lang-select::after { content: ""; position: absolute; right: 13px; top: 50%; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-70%) rotate(45deg); pointer-events: none; opacity: .8; }

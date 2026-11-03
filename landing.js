@@ -5,6 +5,17 @@
   // Honor the palette chosen in the app (same origin, same localStorage).
   try { const p = JSON.parse(localStorage.getItem('parley.prefs.v1') || '{}').palette; if (p && p !== 'sea') document.documentElement.setAttribute('data-palette', p); } catch (e) {}
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = (k) => (window.I18N ? I18N.t(k) : k);
+
+  /* ---------- UI language ---------- */
+  (function uiLang() {
+    if (!window.I18N) return;
+    document.querySelectorAll('select[data-ui-lang]').forEach((sel) => {
+      if (!sel.options.length) I18N.LANGS.forEach(([c, n]) => { const o = document.createElement('option'); o.value = c; o.textContent = n; sel.appendChild(o); });
+      sel.addEventListener('change', () => I18N.set(sel.value));
+    });
+    I18N.apply();
+  })();
 
   /* ---------- Reveal on scroll ---------- */
   const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.12 });
@@ -15,16 +26,18 @@
   /* ---------- Language flip on the headline: eases in, blurs through, eases out ---------- */
   (function flip() {
     const el = document.getElementById('flip-word'); if (!el || reduce) return;
-    const pool = ['Traducción', 'Tradução', '翻訳', '번역', 'Übersetzung', 'Traduction', 'अनुवाद', 'การแปล', 'Traduzione', '翻译', 'Перевод', 'ترجمة', 'Vertaling', 'Çeviri', 'Terjemahan', 'Dịch', 'Μετάφραση', 'Tłumaczenie'];
+    const home = T('hero.word');
+    const pool = ['Translation', 'Traducción', 'Tradução', '翻訳', '번역', 'Übersetzung', 'Traduction', 'अनुवाद', 'การแปล', 'Traduzione', '翻译', 'Перевод', 'ترجمة', 'Vertaling', 'Çeviri', 'Terjemahan', 'Dịch', 'Μετάφραση', 'Tłumaczenie'].filter((w) => w !== home);
     const N = 22; // frames before settling
     const words = []; for (let k = 0; k < N; k++) words.push(pool[k % pool.length]);
-    words.push('Translation');
+    words.push(home);
+    document.addEventListener('i18n:change', () => { if (el.classList.contains('settled') || reduce) el.textContent = T('hero.word'); });
     // delay per frame: slow at both ends, fast in the middle (cosine ease)
     const delay = (k) => { const t = k / (N - 1); const ease = 0.5 - 0.5 * Math.cos(t * Math.PI * 2); return (320 - 270 * ease) / 3; };
     let i = 0; el.textContent = words[0]; el.classList.add('flipping');
     const step = () => {
       i++; const last = i === words.length - 1;
-      el.classList.remove('in'); void el.offsetWidth; el.textContent = words[i]; el.classList.add('in');
+      el.classList.remove('in'); void el.offsetWidth; el.textContent = last ? T('hero.word') : words[i]; el.classList.add('in');
       if (last) { el.classList.remove('flipping'); el.classList.add('settled'); return; }
       setTimeout(step, delay(i));
     };
@@ -56,7 +69,7 @@
     ];
     let i = 0, timer;
     function setWho(who) {
-      status.textContent = 'Listening'; status.className = 'mono right ' + who;
+      status.textContent = T('demo.listening'); status.className = 'mono right ' + who;
       pillA.classList.toggle('live', who === 'a'); pillB.classList.toggle('live', who === 'b'); demoSpeaker = who;
     }
     function push(line) {

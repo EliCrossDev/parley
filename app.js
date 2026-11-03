@@ -48,6 +48,7 @@
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
+  const T = (k) => (window.I18N ? I18N.t(k) : k);
   function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {} }
 
   /* ---------------- DOM helpers ---------------- */
@@ -317,7 +318,7 @@
     $('who-a').classList.toggle('is-live', who === 'a'); $('who-b').classList.toggle('is-live', who === 'b');
     Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--bg-c1' : '--bg-c3'), 0.5);
     const sg = $('siri'); sg.className = 'siri on ' + who;
-    setStatus('Listening', who);
+    setStatus(T('live.listening'), who);
   }
 
   function makeBubble(who, orig, trans, interim) {
@@ -389,7 +390,7 @@
       // Wrong speaker guessed: switch recognizer to the right language now, keeping what we already heard.
       live.carry = interim.trim();
       setExpected(who); startRecognizer(langOf(who));
-    } else setStatus('Listening', who);
+    } else setStatus(T('live.listening'), who);
   }
 
   function startRecognizer(lang) {
@@ -405,7 +406,7 @@
         const shown = live.carry ? (live.carry + ' ' + interim) : interim;
         if (!live.interimEl) live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true));
         else { live.interimEl.querySelector('.trans').textContent = shown; $('convo').scrollTop = $('convo').scrollHeight; }
-        if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus('Listening', live.expected); }
+        if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus(T('live.listening'), live.expected); }
         Wave.setTalking(true); scheduleInterimTranslate(shown);
         // Snappy turns: if the interim text stops changing, force the final now instead of waiting for the engine.
         armEndpoint(r, shown);
@@ -477,7 +478,7 @@
     live.interimEl = null; live.carry = null; live.detected = null; live.detectPending = null;
     node.className = 'bubble ' + guess + ' interim';
     node.querySelector('.trans').textContent = text;
-    setStatus('Translating…', guess);
+    setStatus(T('live.translating'), guess);
     const t0 = Date.now() - live.startedAt;
 
     let who = guess, result = null;
@@ -512,7 +513,7 @@
     if (prefs.langA === prefs.langB) { toast('Pick two different languages.'); return; }
     live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null;
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
-    $('convo').innerHTML = '<p class="convo-hint" id="convo-hint">Start talking. Either of you.</p>';
+    $('convo').innerHTML = '<p class="convo-hint" id="convo-hint"></p>'; $('convo-hint').textContent = T('live.hint');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
     Wave.start($('ribbon')); renderSpeakBtn(); Voice.warm();
     setExpected('a'); startRecognizer(prefs.langA);
@@ -589,8 +590,8 @@
   }
   function openLangPicker(target, title) { pickTarget = target; $('sheet-title').textContent = title; $('lang-search').value = ''; renderLangList(''); sheetOpen('lang-sheet'); setTimeout(() => { if (window.innerWidth > 720) $('lang-search').focus(); }, 50); }
   $('lang-search').addEventListener('input', (e) => renderLangList(e.target.value));
-  $('pick-a').addEventListener('click', () => openLangPicker('a', 'Person 1 speaks…'));
-  $('pick-b').addEventListener('click', () => openLangPicker('b', 'Person 2 speaks…'));
+  $('pick-a').addEventListener('click', () => openLangPicker('a', T('sheet.lang1')));
+  $('pick-b').addEventListener('click', () => openLangPicker('b', T('sheet.lang2')));
 
   function renderSetup() {
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
@@ -619,21 +620,21 @@
     const d = new Date(ts), now = new Date(); const day = 86400000;
     const sd = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), sn = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const diff = Math.round((sn - sd) / day);
-    if (diff === 0) return 'Today'; if (diff === 1) return 'Yesterday'; if (diff < 7) return 'This week'; if (diff < 31) return 'This month'; return 'Earlier';
+    if (diff === 0) return T('hist.today'); if (diff === 1) return T('hist.yesterday'); if (diff < 7) return T('hist.week'); if (diff < 31) return T('hist.month'); return T('hist.earlier');
   }
   async function renderHistory() {
     const list = $('history-list'); list.innerHTML = '';
     const all = (await dbAll()).sort((a, b) => b.startedAt - a.startedAt);
-    $('history-count').textContent = prefs.pro ? all.length + ' saved' : all.length + ' / ' + FREE_LIMIT + ' saved';
+    $('history-count').textContent = (prefs.pro ? all.length : all.length + ' / ' + FREE_LIMIT) + ' ' + T('hist.saved');
     $('pro-card').hidden = !!prefs.pro;
-    if (!all.length) { list.appendChild(el('div', 'history-empty', 'No conversations yet. Your next one shows up here.')); return; }
+    if (!all.length) { list.appendChild(el('div', 'history-empty', T('hist.empty'))); return; }
     let lastGroup = null;
     all.forEach((c) => {
       const g = groupLabel(c.startedAt); if (g !== lastGroup) { list.appendChild(el('div', 'history-group', g)); lastGroup = g; }
       const item = el('button', 'history-item');
       const pair = el('span', 'hi-pair'); pair.appendChild(el('span', 'pa')); pair.appendChild(el('span', 'pb')); item.appendChild(pair);
       const mid = el('span'); mid.appendChild(el('div', 'hi-title', c.title || 'Conversation'));
-      mid.appendChild(el('div', 'hi-sub', byCode(c.langA).short + ' ↔ ' + byCode(c.langB).short + ' · ' + c.lines.length + ' lines' + (c.audio ? ' · audio' : ''))); item.appendChild(mid);
+      mid.appendChild(el('div', 'hi-sub', byCode(c.langA).short + ' ↔ ' + byCode(c.langB).short + ' · ' + c.lines.length + ' ' + T('hist.lines') + (c.audio ? ' · ' + T('hist.audio') : ''))); item.appendChild(mid);
       item.appendChild(el('span', 'hi-time', new Date(c.startedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })));
       item.addEventListener('click', () => openPlayback(c));
       list.appendChild(item);
@@ -736,8 +737,8 @@
   function renderProfile() {
     $('profile-avatar').innerHTML = avatarSVG(prefs.avatar);
     $('profile-name-display').textContent = prefs.name || 'Traveler';
-    $('profile-plan').textContent = prefs.pro ? 'Supporter · unlimited history' : 'Free · 5 saved conversations';
-    const ps = $('pro-sub'), pbt = $('pro-btn'); if (ps) ps.textContent = prefs.pro ? 'Thank you · unlimited history, export on' : 'Free · last 5 conversations kept'; if (pbt) pbt.textContent = prefs.pro ? 'Deactivate' : 'Support';
+    $('profile-plan').textContent = prefs.pro ? T('prof.supporter') : T('prof.free');
+    const ps = $('pro-sub'), pbt = $('pro-btn'); if (ps) ps.textContent = prefs.pro ? T('set.proon') : T('set.profree'); if (pbt) pbt.textContent = prefs.pro ? T('set.deactivate') : T('set.support');
     $('profile-lang-btn').textContent = byCode(prefs.langA).name;
     const sub = { auto: 'Auto (Google · MyMemory fallback)', mymemory: 'MyMemory', libre: 'LibreTranslate · ' + (prefs.libreUrl || 'not set') };
     $('engine-sub').textContent = sub[prefs.engine] || sub.auto;
@@ -750,7 +751,7 @@
   $('edit-profile').addEventListener('click', () => { $('profile-name-input').value = prefs.name || ''; renderAvatarGrid(); $('edit-panel').hidden = false; });
   $('cancel-profile').addEventListener('click', () => { $('edit-panel').hidden = true; try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {} renderProfile(); });
   $('save-profile').addEventListener('click', () => { prefs.name = $('profile-name-input').value.trim() || 'Traveler'; savePrefs(); $('edit-panel').hidden = true; renderProfile(); toast('Profile saved'); });
-  $('profile-lang-btn').addEventListener('click', () => openLangPicker('p', 'Your default language'));
+  $('profile-lang-btn').addEventListener('click', () => openLangPicker('p', T('prof.default')));
   $('clear-all').addEventListener('click', () => confirmSheet('Clear all conversations?', 'Every transcript and recording on this device is removed.', async () => { await dbClear(); toast('Cleared'); renderHistory(); }));
 
   // Voice sheet
@@ -818,6 +819,14 @@
   /* ---------------- Boot ---------------- */
   if ('speechSynthesis' in window) { try { speechSynthesis.getVoices(); } catch (e) {} }
   applyPalette(prefs.palette);
+  (function uiLang() {
+    if (!window.I18N) return;
+    const sel = $('uilang-select'); if (sel && !sel.options.length) I18N.LANGS.forEach(([c, n]) => { const o = document.createElement('option'); o.value = c; o.textContent = n; sel.appendChild(o); });
+    const sub = () => { const e = $('uilang-sub'); if (e) e.textContent = (I18N.LANGS.find((l) => l[0] === I18N.lang) || ['', 'English'])[1]; };
+    if (sel) sel.addEventListener('change', () => I18N.set(sel.value));
+    document.addEventListener('i18n:change', () => { sub(); renderProfile(); if (typeof renderHistory === 'function') renderHistory(); });
+    I18N.apply(); sub();
+  })();
   document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.addEventListener('click', () => { applyPalette(b.dataset.pal); savePrefs(); }));
   renderSetup(); renderProfile();
   const hash = (location.hash || '').replace('#', '');

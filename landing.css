@@ -115,7 +115,7 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .plan-name { font-family: var(--font-mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--fg-3); }
 .plan-price { font-family: var(--font-display); font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -0.03em; text-wrap: balance; }
 .plan.pro .plan-price { font-size: 38px; }
-.plan-price span { display: block; font-size: 14px; color: rgba(247,247,251,.7); letter-spacing: 0; font-family: var(--font-mono); margin-top: 8px; text-transform: uppercase; }
+.plan-price span + span { display: block; font-size: 14px; color: rgba(247,247,251,.7); letter-spacing: 0; font-family: var(--font-mono); margin-top: 8px; text-transform: uppercase; }
 .plan ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; color: var(--fg-2); font-size: 15px; }
 .plan li::before { content: "—"; color: var(--fg-3); margin-right: 10px; }
 .plan .btn { margin-top: auto; align-self: flex-start; }
@@ -183,3 +183,11 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 
 .pill { min-width: 92px; justify-content: center; }
 .pill.a { justify-self: start; }
+
+/* UI language switcher */
+.ui-lang { position: relative; display: inline-flex; align-items: center; height: 42px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); color: #f7f7fb; font-size: 13px; font-family: var(--font-body); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); margin-left: 8px; }
+.ui-lang svg { width: 16px; height: 16px; margin-right: 6px; opacity: .9 }
+.ui-lang select { appearance: none; -webkit-appearance: none; background: transparent; border: 0; color: inherit; font: inherit; padding-right: 14px; cursor: pointer; outline: none; }
+.ui-lang select option { color: #111; }
+.ui-lang::after { content: ""; position: absolute; right: 12px; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); pointer-events: none; opacity: .8 }
+@media (max-width: 819px) { .ui-lang { padding: 0 10px; } .ui-lang select { font-size: 0; width: 18px; } .ui-lang::after { display: none } .ui-lang svg { margin-right: 0 } }

@@ -33,9 +33,9 @@
     <span class="brand-mark"></span><span>Parley</span>
   </a>
   <nav class="topnav" aria-label="App sections">
-    <button class="nav-btn is-active" data-view="live" id="nav-live">Live</button>
-    <button class="nav-btn" data-view="history" id="nav-history">History</button>
-    <button class="nav-btn" data-view="profile" id="nav-profile">Profile</button>
+    <button class="nav-btn is-active" data-view="live" id="nav-live" data-i18n="tab.live">Live</button>
+    <button class="nav-btn" data-view="history" id="nav-history" data-i18n="tab.history">History</button>
+    <button class="nav-btn" data-view="profile" id="nav-profile" data-i18n="tab.profile">Profile</button>
   </nav>
 </header>
 
@@ -46,23 +46,23 @@
 
     <!-- Setup state -->
     <div class="live-setup" id="live-setup">
-      <p class="eyebrow">Live translation</p>
-      <h1 class="setup-title">Two languages.<br>One conversation.</h1>
-      <p class="setup-sub">Pick the two languages in the room. Doesn't matter who's who. Parley hears which one is being spoken and translates it into the other, live.</p>
+      <p class="eyebrow" data-i18n="setup.eyebrow">Live translation</p>
+      <h1 class="setup-title" data-i18n-html="setup.title">Two languages.<br>One conversation.</h1>
+      <p class="setup-sub" data-i18n="setup.sub">Pick the two languages in the room. Doesn't matter who's who. Parley hears which one is being spoken and translates it into the other, live.</p>
 
       <div class="speaker-cards">
         <button class="speaker-card speaker-a" id="pick-a" aria-label="Choose first language">
-          <span class="speaker-tag"><i class="sw a"></i>Language</span>
+          <span class="speaker-tag"><i class="sw a"></i><span data-i18n="setup.lang">Language</span></span>
           <span class="speaker-lang" id="label-a">English</span>
           <span class="speaker-native" id="native-a">English</span>
-          <span class="speaker-change">Change</span>
+          <span class="speaker-change" data-i18n="setup.change">Change</span>
         </button>
 
         <button class="speaker-card speaker-b" id="pick-b" aria-label="Choose second language">
-          <span class="speaker-tag"><i class="sw b"></i>Language</span>
+          <span class="speaker-tag"><i class="sw b"></i><span data-i18n="setup.lang">Language</span></span>
           <span class="speaker-lang" id="label-b">Español</span>
           <span class="speaker-native" id="native-b">Spanish</span>
-          <span class="speaker-change">Change</span>
+          <span class="speaker-change" data-i18n="setup.change">Change</span>
         </button>
       </div>
 
@@ -70,12 +70,12 @@
         <label class="toggle">
           <input type="checkbox" id="opt-speak">
           <span class="toggle-track"><span class="toggle-knob"></span></span>
-          <span class="toggle-label">Read translations out loud</span>
+          <span class="toggle-label" data-i18n="setup.speak">Read translations out loud</span>
         </label>
         <label class="toggle">
           <input type="checkbox" id="opt-record" checked>
           <span class="toggle-track"><span class="toggle-knob"></span></span>
-          <span class="toggle-label">Record audio for playback</span>
+          <span class="toggle-label" data-i18n="setup.record">Record audio for playback</span>
         </label>
       </div>
 
@@ -92,7 +92,7 @@
       <div class="stage-top">
         <span class="rec-dot" id="rec-dot"></span>
         <span class="stage-timer" id="stage-timer">00:00</span>
-        <span class="stage-status" id="stage-status">Listening</span>
+        <span class="stage-status" id="stage-status" data-i18n="live.listening">Listening</span>
         <button class="kb-btn speak-toggle" id="speak-btn" aria-label="Talk back out loud" aria-pressed="false">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="sp-w1" d="M16 9a4 4 0 0 1 0 6"/><path class="sp-w2" d="M19 6a8 8 0 0 1 0 12"/><path class="sp-x" d="M16 9l5 6M21 9l-5 6"/></svg>
         </button>
@@ -104,11 +104,11 @@
       </div>
 
       <div class="convo" id="convo" aria-live="polite">
-        <p class="convo-hint" id="convo-hint">Start talking. Either of you.</p>
+        <p class="convo-hint" id="convo-hint" data-i18n="live.hint">Start talking. Either of you.</p>
       </div>
 
       <form class="type-row" id="type-row" hidden>
-        <input type="text" id="type-input" placeholder="Type instead…" autocomplete="off">
+        <input type="text" id="type-input" placeholder="Type instead…" data-i18n-ph="live.type" autocomplete="off">
         <button type="submit" class="type-send" aria-label="Translate typed text">→</button>
       </form>
       <div class="stage-bottom">
@@ -130,19 +130,19 @@
     <div class="page">
       <div class="page-head">
         <div>
-          <p class="eyebrow">History</p>
-          <h1 class="page-title">Conversations</h1>
+          <p class="eyebrow" data-i18n="hist.eyebrow">History</p>
+          <h1 class="page-title" data-i18n="hist.title">Conversations</h1>
         </div>
         <span class="chip" id="history-count">0 / 5 saved</span>
       </div>
       <div class="history-list" id="history-list"></div>
       <div class="pro-card" id="pro-card">
         <div>
-          <p class="pro-tag">Support Parley</p>
-          <h3>Keep every conversation.</h3>
-          <p class="pro-sub">Free keeps your 5 most recent. Chip in whatever you want and keep all of them, with audio, plus export.</p>
+          <p class="pro-tag" data-i18n="pro.tag">Support Parley</p>
+          <h3 data-i18n="pro.title">Keep every conversation.</h3>
+          <p class="pro-sub" data-i18n="pro.sub">Free keeps your 5 most recent. Chip in whatever you want and keep all of them, with audio, plus export.</p>
         </div>
-        <button class="btn btn-blue" id="go-pro">Support</button>
+        <button class="btn btn-blue" id="go-pro" data-i18n="pro.btn">Support</button>
       </div>
     </div>
   </section>
@@ -150,7 +150,7 @@
   <!-- ============ PLAYBACK ============ -->
   <section class="view" id="view-playback">
     <div class="page">
-      <button class="back-btn" id="pb-back">← Conversations</button>
+      <button class="back-btn" id="pb-back" data-i18n="pb.back">← Conversations</button>
       <div class="page-head">
         <div>
           <p class="eyebrow" id="pb-date"></p>
@@ -175,10 +175,10 @@
         <label class="toggle small">
           <input type="checkbox" id="pb-livemode" checked>
           <span class="toggle-track"><span class="toggle-knob"></span></span>
-          <span class="toggle-label">Live replay</span>
+          <span class="toggle-label" data-i18n="pb.live">Live replay</span>
         </label>
       </div>
-      <p class="pb-noaudio" id="pb-noaudio" hidden>No audio was recorded for this conversation. Transcript only.</p>
+      <p class="pb-noaudio" id="pb-noaudio" hidden data-i18n="pb.noaudio">No audio was recorded for this conversation. Transcript only.</p>
       <div class="convo pb-convo" id="pb-convo"></div>
     </div>
   </section>
@@ -188,8 +188,8 @@
     <div class="page">
       <div class="page-head">
         <div>
-          <p class="eyebrow">Profile</p>
-          <h1 class="page-title">You</h1>
+          <p class="eyebrow" data-i18n="prof.eyebrow">Profile</p>
+          <h1 class="page-title" data-i18n="prof.title">You</h1>
         </div>
       </div>
       <div class="profile-card">
@@ -198,33 +198,37 @@
           <p class="profile-name" id="profile-name-display">Traveler</p>
           <p class="profile-plan" id="profile-plan">Free plan · 5 saved conversations</p>
         </div>
-        <button class="btn btn-ghost" id="edit-profile">Edit profile</button>
+        <button class="btn btn-ghost" id="edit-profile" data-i18n="prof.edit">Edit profile</button>
       </div>
 
       <div class="edit-panel" id="edit-panel" hidden>
         <label class="field">
-          <span class="field-label">Name</span>
+          <span class="field-label" data-i18n="prof.name">Name</span>
           <input type="text" id="profile-name-input" maxlength="24" placeholder="Your name" autocomplete="off">
         </label>
-        <p class="field-label">Pick a character</p>
+        <p class="field-label" data-i18n="prof.pick">Pick a character</p>
         <div class="avatar-grid" id="avatar-grid"></div>
         <label class="field">
-          <span class="field-label">Default language</span>
+          <span class="field-label" data-i18n="prof.default">Default language</span>
           <button class="field-select" id="profile-lang-btn">English</button>
         </label>
         <div class="edit-actions">
-          <button class="btn btn-ghost" id="cancel-profile">Cancel</button>
-          <button class="btn btn-volt" id="save-profile">Save</button>
+          <button class="btn btn-ghost" id="cancel-profile" data-i18n="prof.cancel">Cancel</button>
+          <button class="btn btn-volt" id="save-profile" data-i18n="prof.save">Save</button>
         </div>
       </div>
 
       <div class="settings-list">
         <div class="setting-row">
-          <div><p class="setting-title">Translation engine</p><p class="setting-sub" id="engine-sub">Auto (Google · MyMemory fallback)</p></div>
-          <button class="field-select small" id="engine-btn">Change</button>
+          <div><p class="setting-title" data-i18n="set.engine">Translation engine</p><p class="setting-sub" id="engine-sub">Auto (Google · MyMemory fallback)</p></div>
+          <button class="field-select small" id="engine-btn" data-i18n="set.change">Change</button>
         </div>
         <div class="setting-row">
-          <div><p class="setting-title">Colors</p><p class="setting-sub" id="palette-sub">Sea</p></div>
+          <div><p class="setting-title" data-i18n="set.uilang">App language</p><p class="setting-sub" id="uilang-sub">English</p></div>
+          <label class="field-select small ui-lang-select"><select data-ui-lang id="uilang-select" aria-label="App language"></select></label>
+        </div>
+        <div class="setting-row">
+          <div><p class="setting-title" data-i18n="set.colors">Colors</p><p class="setting-sub" id="palette-sub">Sea</p></div>
           <div class="seg palette-seg" id="palette-seg">
             <button class="seg-btn" data-pal="sea" aria-label="Sea"><i style="background:linear-gradient(180deg,#0f2f3f,#3fb8a8 55%,#d8f3e6)"></i></button>
             <button class="seg-btn" data-pal="aurora" aria-label="Sky"><i style="background:linear-gradient(180deg,#5b93d6,#8fc6d8 55%,#f3cdb0)"></i></button>
@@ -234,20 +238,20 @@
           </div>
         </div>
         <div class="setting-row">
-          <div><p class="setting-title">Talk-back voice</p><p class="setting-sub" id="voice-sub">Studio · Heart (EN)</p></div>
-          <button class="field-select small" id="voice-btn">Change</button>
+          <div><p class="setting-title" data-i18n="set.voice">Talk-back voice</p><p class="setting-sub" id="voice-sub">Studio · Heart (EN)</p></div>
+          <button class="field-select small" id="voice-btn" data-i18n="set.change">Change</button>
         </div>
         <div class="setting-row">
-          <div><p class="setting-title">Install Parley</p><p class="setting-sub">Add it to your home screen for full-screen use.</p></div>
-          <button class="field-select small" id="install-btn">Install</button>
+          <div><p class="setting-title" data-i18n="set.install">Install Parley</p><p class="setting-sub" data-i18n="set.installsub">Add it to your home screen for full-screen use.</p></div>
+          <button class="field-select small" id="install-btn" data-i18n="set.installbtn">Install</button>
         </div>
         <div class="setting-row">
-          <div><p class="setting-title">Supporter</p><p class="setting-sub" id="pro-sub">Free · last 5 conversations kept</p></div>
-          <button class="field-select small" id="pro-btn">Support</button>
+          <div><p class="setting-title" data-i18n="set.pro">Supporter</p><p class="setting-sub" id="pro-sub" data-i18n="set.profree">Free · last 5 conversations kept</p></div>
+          <button class="field-select small" id="pro-btn" data-i18n="set.support">Support</button>
         </div>
         <div class="setting-row">
-          <div><p class="setting-title">Clear all conversations</p><p class="setting-sub">Removes transcripts and audio from this device.</p></div>
-          <button class="field-select small danger" id="clear-all">Clear</button>
+          <div><p class="setting-title" data-i18n="set.clear">Clear all conversations</p><p class="setting-sub" data-i18n="set.clearsub">Removes transcripts and audio from this device.</p></div>
+          <button class="field-select small danger" id="clear-all" data-i18n="set.clearbtn">Clear</button>
         </div>
       </div>
       <p class="credits">
@@ -267,7 +271,7 @@
   <div class="sheet-handle"></div>
   <div class="sheet-head">
     <h2 class="sheet-title" id="sheet-title">Language</h2>
-    <input type="search" class="sheet-search" id="lang-search" placeholder="Search" autocomplete="off">
+    <input type="search" class="sheet-search" id="lang-search" placeholder="Search" data-i18n-ph="sheet.search" autocomplete="off">
   </div>
   <div class="lang-list" id="lang-list"></div>
 </div>
@@ -275,7 +279,7 @@
 <!-- Engine sheet -->
 <div class="sheet" id="engine-sheet" role="dialog" aria-modal="true" aria-label="Translation engine" hidden>
   <div class="sheet-handle"></div>
-  <div class="sheet-head"><h2 class="sheet-title">Translation engine</h2></div>
+  <div class="sheet-head"><h2 class="sheet-title" data-i18n="set.engine">Translation engine</h2></div>
   <div class="engine-list">
     <button class="engine-row" data-engine="auto"><span>Auto</span><span class="engine-sub">Google endpoint, falls back to MyMemory</span></button>
     <button class="engine-row" data-engine="mymemory"><span>MyMemory</span><span class="engine-sub">Free, open, rate-limited</span></button>
@@ -286,7 +290,7 @@
       <span class="field-label">API key (optional)</span>
       <input type="text" id="libre-key" placeholder="key" autocomplete="off">
     </label>
-    <button class="btn btn-volt" id="engine-save">Save</button>
+    <button class="btn btn-volt" id="engine-save" data-i18n="prof.save">Save</button>
   </div>
 </div>
 
@@ -294,13 +298,13 @@
 <div class="sheet" id="voice-sheet" role="dialog" aria-modal="true" aria-label="Talk-back voice" hidden>
   <div class="sheet-handle"></div>
   <div class="sheet-head">
-    <h2 class="sheet-title">Talk-back voice</h2>
+    <h2 class="sheet-title" data-i18n="sheet.voice">Talk-back voice</h2>
     <p class="confirm-sub" id="voice-engine-note"></p>
   </div>
   <div class="lang-list" id="voice-list"></div>
   <div class="edit-actions voice-actions">
-    <button class="btn btn-ghost" id="voice-preview"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg> Preview</button>
-    <button class="btn btn-volt" id="voice-done">Done</button>
+    <button class="btn btn-ghost" id="voice-preview"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg> <span data-i18n="sheet.preview">Preview</span></button>
+    <button class="btn btn-volt" id="voice-done" data-i18n="sheet.done">Done</button>
   </div>
 </div>
 
@@ -308,17 +312,17 @@
 <div class="sheet" id="pro-sheet" role="dialog" aria-modal="true" aria-label="Parley Pro" hidden>
   <div class="sheet-handle"></div>
   <div class="sheet-head">
-    <h2 class="sheet-title">Support Parley</h2>
-    <p class="confirm-sub">Parley is free. If it's useful, chip in whatever you want, one time, no subscription, and you get unlimited history, recordings kept until you delete them, and transcript export. Unlock any other device with the email you paid with.</p>
+    <h2 class="sheet-title" data-i18n="prosheet.title">Support Parley</h2>
+    <p class="confirm-sub" data-i18n="prosheet.sub">Parley is free. If it's useful, chip in whatever you want, one time, no subscription, and you get unlimited history, recordings kept until you delete them, and transcript export. Unlock any other device with the email you paid with.</p>
   </div>
   <div class="engine-list">
-    <button class="btn btn-volt" id="pro-buy">Chip in · pay what you want</button>
-    <p class="field-label" style="margin-top:6px">Already chipped in? Restore on this device</p>
-    <label class="field"><span class="field-label">Email you paid with</span><input type="email" id="pro-email" placeholder="you@example.com" autocomplete="email" inputmode="email"></label>
+    <button class="btn btn-volt" id="pro-buy" data-i18n="prosheet.buy">Chip in · pay what you want</button>
+    <p class="field-label" style="margin-top:6px" data-i18n="prosheet.restore">Already chipped in? Restore on this device</p>
+    <label class="field"><span class="field-label" data-i18n="prosheet.email">Email you paid with</span><input type="email" id="pro-email" placeholder="you@example.com" autocomplete="email" inputmode="email"></label>
     <p class="voice-status" id="pro-status"></p>
     <div class="edit-actions">
-      <button class="btn btn-ghost" id="pro-cancel">Not now</button>
-      <button class="btn btn-volt" id="pro-activate">Restore</button>
+      <button class="btn btn-ghost" id="pro-cancel" data-i18n="prosheet.notnow">Not now</button>
+      <button class="btn btn-volt" id="pro-activate" data-i18n="prosheet.restorebtn">Restore</button>
     </div>
   </div>
 </div>
@@ -328,13 +332,14 @@
   <div class="sheet-handle"></div>
   <div class="sheet-head"><h2 class="sheet-title" id="confirm-title">Are you sure?</h2><p class="confirm-sub" id="confirm-sub"></p></div>
   <div class="edit-actions">
-    <button class="btn btn-ghost" id="confirm-no">Cancel</button>
-    <button class="btn btn-volt" id="confirm-yes">Confirm</button>
+    <button class="btn btn-ghost" id="confirm-no" data-i18n="confirm.cancel">Cancel</button>
+    <button class="btn btn-volt" id="confirm-yes" data-i18n="confirm.ok">Confirm</button>
   </div>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
 
+<script src="i18n.js"></script>
 <script src="aurora.js"></script>
 <script src="app.js"></script>
 </body>
