@@ -21,6 +21,8 @@
 </head>
 <body class="app-body">
 <div class="app-bg"><canvas id="app-bg" aria-hidden="true"></canvas></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="siri" id="siri" aria-hidden="true"></div>
 
 <!-- Top bar -->
 <header class="topbar">
@@ -32,7 +34,6 @@
     <button class="nav-btn" data-view="history" id="nav-history">History</button>
     <button class="nav-btn" data-view="profile" id="nav-profile">Profile</button>
   </nav>
-  <button class="avatar-btn" id="topbar-avatar" data-view="profile" aria-label="Profile"></button>
 </header>
 
 <main class="views">
@@ -76,11 +77,6 @@
           <input type="checkbox" id="opt-record" checked>
           <span class="toggle-track"><span class="toggle-knob"></span></span>
           <span class="toggle-label">Record audio for playback</span>
-        </label>
-        <label class="toggle">
-          <input type="checkbox" id="opt-fast" checked>
-          <span class="toggle-track"><span class="toggle-knob"></span></span>
-          <span class="toggle-label">Snappy turns (end a line the moment you pause)</span>
         </label>
       </div>
 

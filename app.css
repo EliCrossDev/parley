@@ -4,6 +4,22 @@
 #app-bg { width: 100%; height: 100%; }
 .app-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,5,5,.55) 0%, rgba(5,5,5,.25) 45%, rgba(5,5,5,.7) 100%); }
 .topbar, .views { position: relative; z-index: 1; }
+/* film grain over everything — subtle grit */
+.grain { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: .07; mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+/* Siri-style edge glow while live */
+.siri { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity .5s; --c: var(--volt); --lv: 0; }
+.siri::before { content: ""; position: absolute; inset: 0; border-radius: 28px;
+  box-shadow: inset 0 0 calc(18px + var(--lv, 0) * 70px) calc(2px + var(--lv, 0) * 10px) var(--c);
+  filter: blur(calc(6px + var(--lv, 0) * 10px)); opacity: calc(.45 + var(--lv, 0) * .55); transition: box-shadow .12s, opacity .12s; }
+.siri::after { content: ""; position: absolute; inset: 0; background:
+  radial-gradient(60% 18% at 50% 100%, color-mix(in srgb, var(--c) 55%, transparent), transparent 70%); opacity: calc(.25 + var(--lv, 0) * .75); transition: opacity .12s; }
+.siri.on { opacity: 1; animation: breathe 3.2s ease-in-out infinite; }
+.siri.a { --c: var(--volt); } .siri.b { --c: var(--blue); }
+@keyframes breathe { 50% { filter: brightness(1.25); } }
+:root { --lv: 0; }
+.siri { --lv: var(--lv); }
+.topnav { margin-left: auto; }
 
 .topbar {
   display: flex; align-items: center; gap: 12px;
@@ -18,8 +34,6 @@
 .topnav { margin-left: auto; display: flex; gap: 2px; background: var(--bg-3); padding: 3px; border-radius: 999px; }
 .nav-btn { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--fg-2); transition: background .2s, color .2s; }
 .nav-btn.is-active { background: var(--fg); color: var(--bg); }
-.avatar-btn { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; border: 1px solid var(--line-2); flex: 0 0 auto; }
-.avatar-btn svg { width: 100%; height: 100%; }
 
 .views { flex: 1 1 auto; min-height: 0; position: relative; }
 .view { position: absolute; inset: 0; display: none; overflow: hidden; }
@@ -118,7 +132,7 @@
 .bubble.b { align-self: flex-end; background: var(--blue); color: var(--blue-ink); border-bottom-right-radius: 8px; }
 .bubble.interim { opacity: .55; }
 .bubble .orig { font-size: 13px; line-height: 1.35; opacity: .72; }
-.bubble .trans { font-family: var(--font-display); font-weight: 700; font-size: clamp(19px, 5.2vw, 26px); line-height: 1.18; letter-spacing: -0.01em; }
+.bubble .trans { font-family: var(--font-display); font-weight: 600; font-size: clamp(19px, 5.2vw, 26px); line-height: 1.18; letter-spacing: -0.01em; }
 .bubble .orig:empty { display: none; }
 .bubble .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; opacity: .55; margin-top: 4px; }
 .bubble.error { background: var(--bg-3); color: var(--fg-2); align-self: center; font-size: 13px; }

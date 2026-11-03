@@ -44,7 +44,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 0, engine: 'auto', libreUrl: '', libreKey: '', pro: false,
-    fast: true, voiceEngine: 'kokoro', voices: {}, browserVoices: {},
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {},
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -275,7 +275,7 @@
       mix += (targetMix - mix) * 0.08;
       let sum = 0;
       if (analyser) { analyser.getByteFrequencyData(data); for (let i = 0; i < 48; i++) sum += data[i]; level = sum / (48 * 255); }
-      else level = 0.05;
+      else level = 0;
       const tint = colorA.clone().lerp(colorB, mix);
       const c = new THREE.Color();
       for (let x = 0; x < cols; x++) {
@@ -309,7 +309,7 @@
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const live = {
     on: false, rec: null, stream: null, recorder: null, chunks: [], startedAt: 0, timerId: null,
-    expected: 'a', lines: [], interimEl: null, forced: null, netErrors: 0, levelId: null, silenceId: null, interimTid: null, detected: null, detectPending: null, carry: null, convoId: null,
+    expected: 'a', lines: [], interimEl: null, forced: null, netErrors: 0, levelId: null, epId: null, epQuiet: 0, turnId: null, interimTid: null, detected: null, detectPending: null, carry: null, convoId: null,
   };
   const langOf = (who) => who === 'a' ? prefs.langA : prefs.langB;
   const other = (who) => who === 'a' ? 'b' : 'a';
@@ -322,6 +322,7 @@
     live.expected = who; if (forced !== undefined) live.forced = forced;
     $('who-a').classList.toggle('is-live', who === 'a'); $('who-b').classList.toggle('is-live', who === 'b');
     Wave.setSpeaker(who); if (BG) BG.setTint(who === 'b' ? BLUE_RGB : VOLT_RGB, 0.85);
+    const sg = $('siri'); sg.className = 'siri on ' + who;
     setStatus('Listening · ' + byCode(langOf(who)).name, who);
   }
 
@@ -413,7 +414,7 @@
         if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus('Hearing…', live.expected); }
         scheduleInterimTranslate(shown);
         // Snappy turns: if the interim text stops changing, force the final now instead of waiting for the engine.
-        if (prefs.fast) { clearTimeout(live.silenceId); live.silenceId = setTimeout(() => { if (live.on && live.rec === r && live.interimEl) { try { r.stop(); } catch (e) {} } }, 650); }
+        armEndpoint(r, shown);
       }
       for (const f of finals) if (f) handleFinal(live.carry ? (live.carry + ' ' + f) : f);
     };
@@ -449,11 +450,35 @@
     }, 300);
   }
 
+  /* ---- Natural endpointing ----
+     The speech engine's own pause timeout is slow (1-2 s) and a fixed short timer cuts people off mid-thought.
+     Instead: once the words stop changing, watch the mic. End the line only after the room has been quiet
+     for a while, and wait longer when the sentence clearly isn't finished (trailing "and", "pero", "que"…). */
+  const TRAILING = /\b(and|but|or|so|because|that|which|if|then|y|pero|o|que|porque|si|entonces|e|mas|ou|porque|et|mais|ou|que|und|aber|oder|dass|e|ma|o|che|perché|um|uh|eh|este|pues|like)$/i;
+  function armEndpoint(r, text) {
+    clearInterval(live.epId); live.epQuiet = 0; live.epText = text;
+    const words = wordCount(text);
+    const open = TRAILING.test(text.trim()) || /[,;:]$/.test(text.trim()) || words < 3;
+    const needQuiet = open ? 1500 : (words > 14 ? 800 : 950);   // ms of real silence required
+    live.epId = setInterval(() => {
+      if (!live.on || live.rec !== r || !live.interimEl) { clearInterval(live.epId); return; }
+      const quiet = Wave.level() < 0.045;                        // mic level, not just "no new words"
+      live.epQuiet = quiet ? live.epQuiet + 100 : 0;
+      if (live.epQuiet >= needQuiet) { clearInterval(live.epId); try { r.stop(); } catch (e) {} }
+    }, 100);
+  }
+
   async function handleFinal(text) {
-    clearTimeout(live.silenceId); clearTimeout(live.interimTid);
+    clearInterval(live.epId); clearTimeout(live.interimTid); clearTimeout(live.turnId);
     // Speaker priority: manual tap > early detection (first two words) > offline guess on full text > turn-taking
-    const guess = live.forced || live.detected || guessOffline(text) || live.expected;
-    const node = live.interimEl || appendBubble(makeBubble(guess, '', text, true));
+    let guess = live.forced || live.detected || guessOffline(text) || live.expected;
+    // Same person kept talking after a short pause → extend their last bubble instead of starting a new one.
+    const last = live.lines[live.lines.length - 1];
+    const sinceLast = last ? (Date.now() - live.startedAt - last.t - (last.dur || 0)) : 1e9;
+    const cont = last && last.who === guess && sinceLast < 2500 && !/[.!?。！？]$/.test(last.orig.trim()) && !live.forced;
+    if (cont && live.interimEl) { live.interimEl.remove(); }
+    const node = cont ? last.node : (live.interimEl || appendBubble(makeBubble(guess, '', text, true)));
+    if (cont) { text = (last.orig + ' ' + text).trim(); live.lines.pop(); }
     live.interimEl = null; live.carry = null; live.detected = null; live.detectPending = null;
     node.className = 'bubble ' + guess + ' interim';
     node.querySelector('.trans').textContent = text;
@@ -478,12 +503,13 @@
     node.querySelector('.trans').textContent = result.text; node.querySelector('.trans').classList.remove('pending');
     node.querySelector('.meta').textContent = byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short;
     $('convo').scrollTop = $('convo').scrollHeight;
-    live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: t0 });
-    speak(result.text, langOf(other(who)));
+    live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : t0, dur: (Date.now() - live.startedAt) - (cont ? last.t : t0), node });
+    if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     live.forced = null;
-    // Expect the other person next (turn-taking). Restart recognizer in their language.
-    const next = other(who);
-    if (next !== live.expected || langOf(who) !== langOf(next)) { setExpected(next); startRecognizer(langOf(next)); } else setExpected(next);
+    // Don't assume the other person is next. Keep listening in the same language for a beat (they may
+    // continue); if nobody starts within ~2 s, expect the other person. Early detection corrects either way.
+    if (live.expected !== who) { setExpected(who); startRecognizer(langOf(who)); } else setExpected(who);
+    live.turnId = setTimeout(() => { if (live.on && !live.interimEl) { const next = other(who); setExpected(next); startRecognizer(langOf(next)); } }, 2200);
   }
 
   async function startLive() {
@@ -498,7 +524,7 @@
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
     catch (e) { live.stream = null; toast('Mic stream unavailable — transcription still runs, no waveform or recording.'); }
-    live.levelId = setInterval(() => { if (BG) BG.setEnergy(Math.min(1, Wave.level() * 2.2)); }, 80);
+    live.levelId = setInterval(() => { const lv = Math.min(1, Wave.level() * 2.2); if (BG) BG.setEnergy(lv); document.documentElement.style.setProperty('--lv', lv.toFixed(3)); }, 80);
     // Recording
     if (live.stream && prefs.record && 'MediaRecorder' in window) {
       try { const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'].find((m) => MediaRecorder.isTypeSupported(m)) || ''; live.recorder = new MediaRecorder(live.stream, mime ? { mimeType: mime } : undefined); live.recorder.ondataavailable = (e) => { if (e.data && e.data.size) live.chunks.push(e.data); }; live.recorder.start(1000); $('rec-dot').classList.remove('off'); }
@@ -510,7 +536,7 @@
 
   async function stopLive() {
     if (!live.on) return;
-    live.on = false; clearInterval(live.timerId); clearInterval(live.levelId); clearTimeout(live.silenceId); clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
+    live.on = false; clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId); clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
     try { if (live.rec) { live.rec.onend = null; live.rec.stop(); } } catch (e) {}
     let audioBlob = null;
     if (live.recorder && live.recorder.state !== 'inactive') {
@@ -523,7 +549,7 @@
     if (live.lines.length) {
       const first = live.lines[0];
       const title = (first.orig.length > 42 ? first.orig.slice(0, 42).trim() + '…' : first.orig);
-      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, lines: live.lines, audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
+      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
       if (ok) { await enforceLimit(); toast('Conversation saved'); } else toast('Could not save on this device');
     }
     $('live-stage').hidden = true; $('live-setup').hidden = false;
@@ -576,7 +602,7 @@
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
     $('label-b').textContent = b.native; $('native-b').textContent = b.name;
-    $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; $('opt-fast').checked = prefs.fast !== false;
+    $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record;
     const note = $('support-note');
     if (!SR) { note.textContent = 'Live speech needs Chrome, Edge, or Safari. Firefox does not support speech recognition yet.'; note.classList.add('warn'); }
     else note.textContent = 'Works best within arm\'s reach. Parley picks the language from the first two words. If it ever guesses wrong, tap the language chip.';
@@ -587,7 +613,6 @@
   function renderSpeakBtn() { const b = $('speak-btn'); b.classList.toggle('on', !!prefs.speak); b.setAttribute('aria-pressed', String(!!prefs.speak)); }
   $('speak-btn').addEventListener('click', () => { prefs.speak = !prefs.speak; savePrefs(); renderSpeakBtn(); $('opt-speak').checked = prefs.speak; if (!prefs.speak) Voice.stop(); else Voice.warm(); toast(prefs.speak ? 'Talk-back on' : 'Talk-back off'); });
   $('opt-speak').addEventListener('change', (e) => { prefs.speak = e.target.checked; savePrefs(); if (prefs.speak) Voice.warm(); });
-  $('opt-fast').addEventListener('change', (e) => { prefs.fast = e.target.checked; savePrefs(); });
   $('opt-record').addEventListener('change', (e) => { prefs.record = e.target.checked; savePrefs(); });
   $('start-live').addEventListener('click', startLive);
   $('stop-live').addEventListener('click', stopLive);
@@ -672,7 +697,7 @@
 
   /* ---------------- Profile ---------------- */
   function renderProfile() {
-    $('profile-avatar').innerHTML = avatarSVG(prefs.avatar); $('topbar-avatar').innerHTML = avatarSVG(prefs.avatar);
+    $('profile-avatar').innerHTML = avatarSVG(prefs.avatar);
     $('profile-name-display').textContent = prefs.name || 'Traveler';
     $('profile-plan').textContent = prefs.pro ? 'Pro plan · unlimited history' : 'Free plan · 5 saved conversations';
     $('profile-lang-btn').textContent = byCode(prefs.langA).name;

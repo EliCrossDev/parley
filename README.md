@@ -32,7 +32,7 @@ Or drag the folder onto vercel.com/new. Any static host works (Netlify, Cloudfla
 
 ## Latency
 - Interim transcript is translated every ~300 ms, so the translated line is already on screen (dimmed) while the person is still talking; the final pass reuses it.
-- **Snappy turns** (on by default): if the transcript stops changing for 650 ms, Parley ends the line itself instead of waiting for the speech engine's own 1-2 s pause timeout. Turn it off for people who pause mid-sentence a lot.
+- **Natural endpointing**: once the words stop changing, Parley watches the mic level. It ends the line after ~0.95 s of real silence, or ~1.5 s when the sentence is clearly unfinished (trailing "and", "pero", "que", a comma, fewer than 3 words). If the same person resumes within 2.5 s, the new words extend their last bubble instead of starting a new one. The mic stays in their language for ~2 s before expecting the other person.
 - Speaker is decided from the first two words (offline word list → translator detection), and the mic switches language mid-sentence if needed.
 
 ## Production notes
