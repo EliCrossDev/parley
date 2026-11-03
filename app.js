@@ -67,7 +67,7 @@
     ['#2a2a2e', '#d9ff3b', 'ring'],
   ];
   function avatarSVG(i) {
-    const [bg, fg, shape] = AVATARS[i % AVATARS.length];
+    const [bg, fg, shape] = AVATARS[((i % AVATARS.length) + AVATARS.length) % AVATARS.length] || AVATARS[3];
     let g = '';
     switch (shape) {
       case 'circle': g = `<circle cx="50" cy="50" r="22" fill="${fg}"/>`; break;
@@ -303,7 +303,7 @@
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const live = {
     on: false, rec: null, stream: null, recorder: null, chunks: [], startedAt: 0, timerId: null,
-    avatars: { a: 3, b: 5 },
+    avatars: { a: 3, b: -1 },
     expected: 'a', lines: [], interimEl: null, forced: null, netErrors: 0, levelId: null, epId: null, epQuiet: 0, turnId: null, interimTid: null, detected: null, detectPending: null, carry: null, convoId: null,
   };
   const langOf = (who) => who === 'a' ? prefs.langA : prefs.langB;
@@ -334,11 +334,18 @@
     return b;
   }
   function setBubbleWho(node, who) { node.querySelector('.ml').textContent = byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short; node.querySelector('.bav').innerHTML = avatarSVG(live.avatars[who]); }
-  function pickAvatars() {
-    const a = prefs.avatar % AVATARS.length; let b = Math.floor(Math.random() * (AVATARS.length - 1)); if (b >= a) b++;
-    live.avatars = { a, b };
-    const da = $('who-a').querySelector('.who-dot'), db = $('who-b').querySelector('.who-dot'); if (da) da.innerHTML = avatarSVG(a); if (db) db.innerHTML = avatarSVG(b);
+  // Guest avatar: a new colorful character each conversation, never the same as yours, never the two plain ones.
+  function pickGuest() {
+    const a = prefs.avatar % AVATARS.length;
+    const pool = [0, 1, 2, 3, 4, 5, 6, 7].filter((i) => i !== a);
+    live.avatars = { a, b: pool[Math.floor(Math.random() * pool.length)] };
   }
+  function renderAvatarsUI() {
+    live.avatars.a = prefs.avatar % AVATARS.length; if (!(live.avatars.b >= 0) || live.avatars.b === live.avatars.a) pickGuest();
+    const da = $('who-a').querySelector('.who-dot'), db = $('who-b').querySelector('.who-dot'); if (da) da.innerHTML = avatarSVG(live.avatars.a); if (db) db.innerHTML = avatarSVG(live.avatars.b);
+    const sa = document.querySelector('.sw.a'), sb = document.querySelector('.sw.b'); if (sa) sa.innerHTML = avatarSVG(live.avatars.a); if (sb) sb.innerHTML = avatarSVG(live.avatars.b);
+  }
+  function pickAvatars() { renderAvatarsUI(); }
   function appendBubble(node) { const c = $('convo'); const hint = $('convo-hint'); if (hint) hint.remove(); c.appendChild(node); c.scrollTop = c.scrollHeight; return node; }
 
   /* ---- Early language detection: decide the speaker from the first two words ---- */
@@ -569,7 +576,7 @@
       const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
       if (ok) { await enforceLimit(); toast('Conversation saved'); } else toast('Could not save on this device');
     }
-    $('live-stage').hidden = true; $('live-setup').hidden = false; document.body.classList.remove('live');
+    $('live-stage').hidden = true; $('live-setup').hidden = false; document.body.classList.remove('live'); pickGuest(); renderAvatarsUI();
     renderHistory();
   }
 
@@ -615,6 +622,7 @@
   $('pick-b').addEventListener('click', () => openLangPicker('b', T('sheet.lang2')));
 
   function renderSetup() {
+    renderAvatarsUI();
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
     $('label-b').textContent = b.native; $('native-b').textContent = b.name;
