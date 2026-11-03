@@ -14,43 +14,62 @@ float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   float a = hash3(i).x, b = hash3(i+vec2(1,0)).x, c = hash3(i+vec2(0,1)).x, d = hash3(i+vec2(1,1)).x;
   return mix(mix(a,b,f.x), mix(c,d,f.x), f.y); }
 float fbm(vec2 p){ float v = 0.0, a = 0.5; mat2 m = mat2(1.6, 1.2, -1.2, 1.6); for (int i = 0; i < 5; i++) { v += a*noise(p); p = m*p; a *= 0.5; } return v; }
-float blob(vec2 uv, vec2 c, float r){ float d = length(uv - c); return exp(-(d*d) / (r*r)); }
 void main(){
   vec2 uv = (gl_FragCoord.xy - 0.5*uRes) / uRes.y;
-  float t = uTime * 0.22;
+  float t = uTime * 0.05;
   float e = uEnergy;
-  vec2 m = uMouse * 0.08; uv.y += uScroll * 0.3;
-  // --- layer 1: aurora curtains. Vertical bands warped by flowing noise, like light through water.
-  vec2 p = uv * vec2(1.4, 2.2) + m;
-  float w1 = fbm(p * 1.3 + vec2(t * 0.6, -t * 0.35));
-  float w2 = fbm(p * 2.1 - vec2(t * 0.4, t * 0.5) + 7.0);
-  vec2 q = p + (vec2(w1, w2) - 0.5) * (1.4 + e * 0.8);
-  float bands = sin(q.x * 3.0 + t * 1.5) * 0.5 + 0.5;
-  bands = pow(bands, 2.2);
-  float curtain = bands * smoothstep(-1.2, 0.9, -uv.y + fbm(q * 0.8 + t) * 1.2) ;
-  // color drift across the curtain
-  float hue = fbm(q * 0.6 + t * 0.3);
-  vec3 cc = mix(uC1, uC2, smoothstep(0.2, 0.7, hue));
-  cc = mix(cc, uC3, smoothstep(0.55, 0.95, w2));
-  vec3 col = cc * curtain * 1.5;
-  // --- layer 2: slow deep masses for body
-  vec2 p1 = vec2(sin(t*0.9)*0.5, cos(t*0.6)*0.3 - 0.15);
-  vec2 p2 = vec2(cos(t*0.7 + 2.0)*0.55, sin(t*0.5 + 1.0)*0.32 + 0.1);
-  float r = 0.55 + e*0.25;
-  col += uC2 * blob(uv + m, p1, r) * 0.5 + uC3 * blob(uv + m, p2, r) * 0.45;
-  // --- layer 3: sparse drifting sparks
-  vec2 g = (uv + vec2(0.0, t * 0.08)) * 9.0; vec2 gi = floor(g), gf = fract(g);
-  vec3 h = hash3(gi); vec2 sp = 0.2 + 0.6 * h.xy; float sd = length(gf - sp);
-  float spark = smoothstep(0.05, 0.0, sd) * step(0.93, h.z) * (0.5 + 0.5 * sin(uTime * 2.0 + h.z * 40.0));
-  col += vec3(0.9) * spark * 0.6;
-  // speaker tint + voice
-  float lum = max(curtain, 0.0001);
-  col = mix(col, uTintCol * (lum * 0.9 + 0.08), uTint * 0.8);
-  float breathe = 0.9 + 0.1 * sin(uTime * 0.8);
-  col *= (0.85 + e * 0.9) * breathe;
-  col += (fbm(uv * 7.0 + t * 2.0) - 0.5) * 0.025;
-  col *= 1.0 - smoothstep(0.6, 1.3, length(uv * vec2(0.8, 1.2)));
-  col = col / (1.0 + col * 0.8);
+  vec2 m = uMouse * vec2(0.05, 0.03);
+  float horizon = -0.08 - uScroll * 0.25 + m.y;
+  float y = uv.y - horizon;                 // 0 at horizon, + up, - down
+  // ---- sky: stacked warm gradient
+  vec3 cTop = uC1;                           // sky top (palette)
+  vec3 cMid = uC2;                           // mid band (palette)
+  vec3 cHor = uC3;                           // horizon (palette)
+  vec3 cHi  = mix(cTop, cMid, 0.45);
+  vec3 cLow = mix(cMid, cHor, 0.55);
+  float sy = clamp(y / 0.9, 0.0, 1.0);
+  vec3 sky = mix(cHor, cLow, smoothstep(0.0, 0.14, sy));
+  sky = mix(sky, cMid, smoothstep(0.10, 0.36, sy));
+  sky = mix(sky, cHi, smoothstep(0.32, 0.62, sy));
+  sky = mix(sky, cTop, smoothstep(0.58, 1.0, sy));
+  // ---- sun
+  vec2 sunP = vec2(0.12 + m.x * 0.5, horizon + 0.05);
+  float sd = length((uv - sunP) * vec2(1.0, 1.08));
+  float sunR = 0.11 + e * 0.02;
+  float disc = 1.0 - smoothstep(sunR - 0.004, sunR + 0.004, sd);
+  float glow = exp(-sd * (6.0 - e * 2.5)) * (1.2 + e * 0.8);
+  float halo = exp(-sd * 2.2) * 0.35;
+  vec3 sunCol = vec3(1.0, 0.93, 0.78);
+  // ---- clouds: long streaks, warm lit undersides near the sun
+  vec2 cp = vec2(uv.x * 1.2 + t * 1.6, y * 5.5);
+  float cl = fbm(cp * 1.4 + vec2(0.0, 3.0)) * fbm(cp * 0.6 - t);
+  float cmask = smoothstep(0.22, 0.42, cl) * smoothstep(0.0, 0.08, y) * smoothstep(0.95, 0.25, y);
+  vec3 cloudCol = mix(vec3(0.55, 0.18, 0.45), vec3(1.0, 0.72, 0.45), exp(-sd * 3.0) * 0.9 + 0.15);
+  vec3 col = sky;
+  col = mix(col, cloudCol, cmask * 0.75);
+  col += sunCol * glow * (1.0 - cmask * 0.5);
+  col += sunCol * halo;
+  col += sunCol * disc * (1.6 - cmask * 0.8);
+  // ---- water below the horizon: mirrored sky, darker, with a shimmering sun path
+  if (y < 0.0) {
+    float depth = -y;
+    float ripple = fbm(vec2(uv.x * 14.0 + t * 8.0, depth * 60.0 - uTime * 0.6)) - 0.5;
+    vec3 wsky = mix(cHor, cLow, smoothstep(0.0, 0.2, depth));
+    wsky = mix(wsky, vec3(0.16, 0.06, 0.26), smoothstep(0.05, 0.7, depth));
+    float path = exp(-abs(uv.x - sunP.x + ripple * 0.09) * (9.0 + depth * 30.0)) * exp(-depth * 3.5);
+    float glint = smoothstep(0.35, 0.6, fbm(vec2(uv.x * 40.0 + uTime * 1.5, depth * 90.0)) + ripple) * path;
+    col = wsky * 0.75 + sunCol * (path * (0.9 + e * 0.6) + glint * 0.8) + ripple * 0.03;
+    col = mix(col, col * 0.5, smoothstep(0.0, 0.8, depth));
+  }
+  // horizon haze
+  col += cHor * exp(-abs(y) * 40.0) * 0.25;
+  // speaker tint (subtle) and voice warmth
+  col = mix(col, uTintCol * dot(col, vec3(0.33)) * 1.1, uTint * 0.22);
+  col *= 1.0 + e * 0.25;
+  // grain + vignette
+  col += (fbm(uv * 9.0 + uTime) - 0.5) * 0.025;
+  col *= 1.0 - smoothstep(0.75, 1.5, length(uv * vec2(0.75, 1.1)));
+  col = pow(col / (1.0 + col * 0.45), vec3(0.95)); col = mix(vec3(dot(col, vec3(0.33))), col, 1.25);
   gl_FragColor = vec4(col * uDim, 1.0);
 }`;
   function hexToRgb(h) { h = String(h).trim().replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); const n = parseInt(h, 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
@@ -70,7 +89,7 @@ void main(){
     const U = {}; ['uRes', 'uTime', 'uMouse', 'uScroll', 'uC1', 'uC2', 'uC3', 'uTint', 'uTintCol', 'uEnergy', 'uDim'].forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
     let mx = 0, my = 0, tx = 0, ty = 0, scroll = 0, visible = true, alive = true, drew = false;
     let tint = 0, tintT = 0, tintCol = [1, 1, 1], tintColT = [1, 1, 1], energy = 0, energyT = 0, dim = opts.dim == null ? 1 : opts.dim;
-    let C = (opts.colors || ['#ff6fb5', '#7b61ff', '#4ed8e8']).map((c) => Array.isArray(c) ? c : hexToRgb(c));
+    let C = (opts.colors || ['#1b1040', '#d8457a', '#ffb060']).map((c) => Array.isArray(c) ? c : hexToRgb(c));
     const onMove = (e) => { tx = (e.clientX / window.innerWidth - 0.5) * 2; ty = (e.clientY / window.innerHeight - 0.5) * 2; };
     const onScroll = () => { scroll = window.scrollY; };
     const onVis = () => { visible = !document.hidden; };

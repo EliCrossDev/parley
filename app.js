@@ -295,7 +295,7 @@
     prefs.palette = p || 'aurora'; if (prefs.palette === 'aurora') document.documentElement.removeAttribute('data-palette'); else document.documentElement.setAttribute('data-palette', prefs.palette);
     if (BG) BG.setColors(cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3'));
     document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.pal === prefs.palette));
-    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Tide', volt: 'Volt', neon: 'Neon', ember: 'Ember' }[prefs.palette] || 'Tide';
+    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Sunset', dusk: 'Dusk', tide: 'Tide', volt: 'Volt' }[prefs.palette] || 'Sunset';
     const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = '#050505';
   }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
