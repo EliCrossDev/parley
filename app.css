@@ -131,7 +131,9 @@
 .bubble .orig { font-size: 13px; line-height: 1.35; opacity: .72; }
 .bubble .trans { font-family: var(--font-display); font-weight: 600; font-size: clamp(19px, 5.2vw, 26px); line-height: 1.18; letter-spacing: -0.01em; }
 .bubble .orig:empty { display: none; }
-.bubble .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; opacity: .55; margin-top: 4px; }
+.bubble .meta { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; opacity: .75; margin-top: 6px; }
+.bubble .bav { width: 18px; height: 18px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
+.bubble .bav svg { width: 100%; height: 100%; display: block; }
 .bubble.error { background: var(--bg-3); color: var(--fg-2); align-self: center; font-size: 13px; }
 @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
 
@@ -146,7 +148,9 @@
   transition: background .2s, border-color .2s, color .2s; justify-self: start;
 }
 .who-b { justify-self: end; }
-.who-dot { width: 10px; height: 10px; border-radius: 50%; }
+.who-dot { width: 18px; height: 18px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; }
+.who-dot svg { width: 100%; height: 100%; display: block; }
+.who-dot:empty { width: 10px; height: 10px; }
 .who-a .who-dot { background: var(--volt); }
 .who-b .who-dot { background: var(--blue); }
 .who-a.is-live { background: var(--volt-dim); border-color: var(--volt); color: var(--volt); }

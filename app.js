@@ -303,6 +303,7 @@
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const live = {
     on: false, rec: null, stream: null, recorder: null, chunks: [], startedAt: 0, timerId: null,
+    avatars: { a: 3, b: 5 }, soft: null,
     expected: 'a', lines: [], interimEl: null, forced: null, netErrors: 0, levelId: null, epId: null, epQuiet: 0, turnId: null, interimTid: null, detected: null, detectPending: null, carry: null, convoId: null,
   };
   const langOf = (who) => who === 'a' ? prefs.langA : prefs.langB;
@@ -329,8 +330,14 @@
   function makeBubble(who, orig, trans, interim) {
     const b = el('div', 'bubble ' + who + (interim ? ' interim' : ''));
     const o = el('div', 'orig', orig || ''); const t = el('div', 'trans', trans || ''); b.appendChild(o); b.appendChild(t);
-    const m = el('div', 'meta', byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short); b.appendChild(m);
+    const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(live.avatars[who]); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short)); b.appendChild(m);
     return b;
+  }
+  function setBubbleWho(node, who) { node.querySelector('.ml').textContent = byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short; node.querySelector('.bav').innerHTML = avatarSVG(live.avatars[who]); }
+  function pickAvatars() {
+    const a = prefs.avatar % AVATARS.length; let b = Math.floor(Math.random() * (AVATARS.length - 1)); if (b >= a) b++;
+    live.avatars = { a, b };
+    const da = $('who-a').querySelector('.who-dot'), db = $('who-b').querySelector('.who-dot'); if (da) da.innerHTML = avatarSVG(a); if (db) db.innerHTML = avatarSVG(b);
   }
   function appendBubble(node) { const c = $('convo'); const hint = $('convo-hint'); if (hint) hint.remove(); c.appendChild(node); c.scrollTop = c.scrollHeight; return node; }
 
@@ -390,7 +397,7 @@
     }
     if (!who) return;
     live.detected = who;
-    if (live.interimEl) { live.interimEl.className = 'bubble ' + who + ' interim'; live.interimEl.querySelector('.meta').textContent = byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short; }
+    if (live.interimEl) { live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who); }
     if (who !== live.expected) {
       // Wrong speaker guessed: switch recognizer to the right language now, keeping what we already heard.
       live.carry = interim.trim();
@@ -401,12 +408,19 @@
   function startRecognizer(lang) {
     if (!SR || !live.on) return;
     try { if (live.rec) { live.rec.onend = null; live.rec.abort(); } } catch (e) {}
+    live.soft = null; // the old engine will never finalize what it was hearing
     const r = new SR(); live.rec = r;
     r.lang = byCode(lang).sr; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
     r.onresult = (ev) => {
       let interim = '', finals = [];
       for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) finals.push(res[0].transcript.trim()); else interim += res[0].transcript; }
       interim = interim.trim();
+      // A line we already committed (soft final) is still open inside the engine: only the words beyond it are new.
+      if (live.soft && interim) {
+        const extra = softExtra(live.carry ? (live.carry + ' ' + interim) : interim);
+        if (extra === null) interim = '';                  // engine is revising the committed line; wait for its final
+        else interim = extra;                              // continuation after the commit (may be empty)
+      }
       if (interim) {
         const shown = live.carry ? (live.carry + ' ' + interim) : interim;
         if (!live.interimEl) live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true));
@@ -417,7 +431,7 @@
         armEndpoint(r, shown);
       }
       if (finals.length) Wave.setTalking(false);
-      for (const f of finals) if (f) handleFinal(live.carry ? (live.carry + ' ' + f) : f);
+      for (const f of finals) if (f) { if (live.soft) reconcileSoft(f); else handleFinal(live.carry ? (live.carry + ' ' + f) : f); }
     };
     r.onerror = (ev) => {
       const e = ev.error;
@@ -427,7 +441,7 @@
       if (e === 'language-not-supported') { showError(byCode(lang).name + ' speech is not supported in this browser.'); return; }
       /* no-speech / aborted: restart in onend */
     };
-    r.onend = () => { if (live.on && live.rec === r) setTimeout(() => { if (live.on && live.rec === r) startRecognizer(langOf(live.expected)); }, 120); };
+    r.onend = () => { if (live.on && live.rec === r) setTimeout(() => { if (live.on && live.rec === r) startRecognizer(langOf(live.expected)); }, 0); };
     try { r.start(); } catch (e) {}
   }
 
@@ -465,14 +479,15 @@
       if (!live.on || live.rec !== r || !live.interimEl) { clearInterval(live.epId); return; }
       const quiet = Wave.level() < 0.045;                        // mic level, not just "no new words"
       live.epQuiet = quiet ? live.epQuiet + 100 : 0;
-      if (live.epQuiet >= needQuiet) { clearInterval(live.epId); try { r.stop(); } catch (e) {} }
+      if (live.epQuiet >= needQuiet) { clearInterval(live.epId); softCommit(text); }
     }, 100);
   }
 
-  async function handleFinal(text) {
-    clearInterval(live.epId); clearTimeout(live.interimTid); clearTimeout(live.turnId);
+  async function handleFinal(text, opts) {
+    opts = opts || {};
+    clearInterval(live.epId); clearTimeout(live.interimTid); clearTimeout(live.turnId); live.turnPoll && clearInterval(live.turnPoll);
     // Speaker priority: manual tap > early detection (first two words) > offline guess on full text > turn-taking
-    let guess = live.forced || live.detected || guessOffline(text) || live.expected;
+    let guess = live.forced || opts.who || live.detected || guessOffline(text) || live.expected;
     // Same person kept talking after a short pause → extend their last bubble instead of starting a new one.
     const last = live.lines[live.lines.length - 1];
     const sinceLast = last ? (Date.now() - live.startedAt - last.t - (last.dur || 0)) : 1e9;
@@ -502,15 +517,61 @@
     node.className = 'bubble ' + who;
     node.querySelector('.orig').textContent = text;
     node.querySelector('.trans').textContent = result.text; node.querySelector('.trans').classList.remove('pending');
-    node.querySelector('.meta').textContent = byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short;
+    setBubbleWho(node, who);
     $('convo').scrollTop = $('convo').scrollHeight;
     live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : t0, dur: (Date.now() - live.startedAt) - (cont ? last.t : t0), node });
+    if (opts.soft) live.soft = { text: opts.soft, who, line: live.lines[live.lines.length - 1] };
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     live.forced = null;
     // Don't assume the other person is next. Keep listening in the same language for a beat (they may
     // continue); if nobody starts within ~2 s, expect the other person. Early detection corrects either way.
-    if (live.expected !== who) { setExpected(who); startRecognizer(langOf(who)); } else setExpected(who);
-    live.turnId = setTimeout(() => { if (live.on && !live.interimEl) { const next = other(who); setExpected(next); startRecognizer(langOf(next)); } }, 2200);
+    if (live.expected !== who) { setExpected(who); if (!opts.soft) startRecognizer(langOf(who)); } else setExpected(who);
+    scheduleTurnSwap(who);
+  }
+  // After a line, expect the other person next. The engine can only listen in one language, so we must restart it
+  // to switch, and a restart is ~half a second of deafness. So: wait ~2 s, then swap only in a quiet moment, never
+  // while someone is mid-word, and not at all if the same person is already talking again.
+  function scheduleTurnSwap(who) {
+    clearTimeout(live.turnId); live.turnPoll && clearInterval(live.turnPoll);
+    live.turnId = setTimeout(() => {
+      let quietFor = 0;
+      live.turnPoll = setInterval(() => {
+        if (!live.on) { clearInterval(live.turnPoll); return; }
+        if (live.interimEl) { clearInterval(live.turnPoll); return; }          // same person continued; early detection handles a switch
+        quietFor = Wave.level() < 0.045 ? quietFor + 100 : 0;
+        if (quietFor >= 300) { clearInterval(live.turnPoll); const next = other(who); setExpected(next); startRecognizer(langOf(next)); }
+      }, 100);
+    }, 2000);
+  }
+  /* ---- Soft finals ----
+     Stopping the engine to force a final costs a restart (~0.5 s of lost audio) on every single line. Instead, when the
+     words have stopped changing and the room is quiet, commit the line ourselves and keep the engine running. When
+     the engine later finalizes the same stretch, reconcile: take its (usually better) text, or treat any extra words
+     as the person continuing. */
+  const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+  function softExtra(interim) {
+    const a = norm(live.soft.text), b = norm(interim);
+    if (b.startsWith(a)) { const words = interim.trim().split(/\s+/), n = live.soft.text.trim().split(/\s+/).length; return words.slice(n).join(' '); }
+    if (a.startsWith(b)) return '';                               // engine briefly shows less than we committed
+    return null;
+  }
+  function softCommit(text) {
+    if (!live.interimEl) return;
+    handleFinal(text, { soft: text });
+  }
+  async function reconcileSoft(finalText) {
+    const soft = live.soft; live.soft = null;
+    const f = live.carry ? (live.carry + ' ' + finalText) : finalText;
+    const a = norm(soft.text), b = norm(f);
+    if (b.startsWith(a)) {
+      const extra = f.trim().split(/\s+/).slice(soft.text.trim().split(/\s+/).length).join(' ');
+      if (extra) handleFinal(extra, { who: soft.who });
+      return;
+    }
+    // The engine rewrote the sentence: update the committed line in place.
+    const line = soft.line; if (!line || !live.lines.includes(line)) return;
+    line.orig = f; line.node.querySelector('.orig').textContent = f;
+    try { const r = await translate(f, langOf(line.who), langOf(other(line.who))); line.trans = r.text; line.node.querySelector('.trans').textContent = r.text; } catch (e) {}
   }
 
   async function startLive() {
@@ -520,7 +581,7 @@
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint"></p>'; $('convo-hint').textContent = T('live.hint');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
-    Wave.start($('ribbon')); renderSpeakBtn(); Voice.warm();
+    pickAvatars(); Wave.start($('ribbon')); renderSpeakBtn(); Voice.warm();
     setExpected('a'); startRecognizer(prefs.langA);
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
@@ -537,7 +598,7 @@
 
   async function stopLive() {
     if (!live.on) return;
-    live.on = false; clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId); clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
+    live.on = false; live.soft = null; clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId); live.turnPoll && clearInterval(live.turnPoll); clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
     try { if (live.rec) { live.rec.onend = null; live.rec.stop(); } } catch (e) {}
     let audioBlob = null;
     if (live.recorder && live.recorder.state !== 'inactive') {
@@ -550,7 +611,7 @@
     if (live.lines.length) {
       const first = live.lines[0];
       const title = (first.orig.length > 42 ? first.orig.slice(0, 42).trim() + '…' : first.orig);
-      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
+      const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
       if (ok) { await enforceLimit(); toast('Conversation saved'); } else toast('Could not save on this device');
     }
     $('live-stage').hidden = true; $('live-setup').hidden = false; document.body.classList.remove('live');
@@ -707,7 +768,7 @@
     const box = $('pb-convo'); const liveMode = $('pb-livemode').checked;
     if (!box.childElementCount) {
       pb.c.lines.forEach((l) => {
-        const b = el('div', 'bubble ' + l.who); b.appendChild(el('div', 'orig', l.orig)); b.appendChild(el('div', 'trans', l.trans)); b.appendChild(el('div', 'meta', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.dataset.t = l.t; box.appendChild(b);
+        const b = el('div', 'bubble ' + l.who); b.appendChild(el('div', 'orig', l.orig)); b.appendChild(el('div', 'trans', l.trans)); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = l.t; box.appendChild(b);
       });
     }
     box.querySelectorAll('.bubble').forEach((b) => { b.classList.toggle('hidden-replay', liveMode && Number(b.dataset.t) > timeMs); });
@@ -850,7 +911,7 @@
   if (/[?&]demo=1/.test(location.search)) {
     $('live-setup').hidden = true; $('live-stage').hidden = false; $('rec-dot').classList.add('off'); document.body.classList.add('live');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
-    Wave.start($('ribbon')); setExpected('b');
+    pickAvatars(); Wave.start($('ribbon')); setExpected('b');
     [['a', 'Hey, is this table free?', 'Oye, ¿está libre esta mesa?'], ['b', 'Sí, siéntense. ¿Qué les traigo?', 'Yes, sit down. What can I get you?'], ['a', 'Two cold beers and the fish tacos.', 'Dos cervezas frías y los tacos de pescado.']]
       .forEach((l) => appendBubble(makeBubble(l[0], l[1], l[2])));
   }
