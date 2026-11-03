@@ -17,9 +17,9 @@
   --blue: #16162a;        /* language two: dark glass */
   --blue-ink: #f7f7fb;
   --blue-dim: rgba(22, 22, 42, 0.5);
-  --mid: #7fb7c7;
+  --mid: #5fd0b8;
   /* sky: top, mid, horizon haze */
-  --bg-c1: #5b93d6; --bg-c2: #8fc6d8; --bg-c3: #f3cdb0;
+  --bg-c1: #0f2f3f; --bg-c2: #3fb8a8; --bg-c3: #d8f3e6;
   --glass: rgba(10, 12, 26, 0.5);
   --glass-2: rgba(10, 12, 26, 0.62);
   --glass-line: rgba(255, 255, 255, 0.22);
@@ -37,6 +37,7 @@
 }
 
 /* Palettes — set data-palette on <html>. */
+:root[data-palette="aurora"] { --bg-c1: #5b93d6; --bg-c2: #8fc6d8; --bg-c3: #f3cdb0; --mid: #7fb7c7; }
 :root[data-palette="dawn"] { --bg-c1: #2a1f4a; --bg-c2: #c97aa0; --bg-c3: #ffd9a8; --mid: #e39ab0; }
 :root[data-palette="sea"] { --bg-c1: #0f2f3f; --bg-c2: #3fb8a8; --bg-c3: #d8f3e6; --mid: #5fd0b8; }
 :root[data-palette="night"] { --bg-c1: #070a14; --bg-c2: #1b2a44; --bg-c3: #3a3550; --mid: #2a3a5a; --glass: rgba(6, 8, 16, 0.6); --glass-2: rgba(6, 8, 16, 0.72); --glass-line: rgba(255, 255, 255, 0.16); --volt: #e9e9f2; --blue: #0b0d18; }

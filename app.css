@@ -374,3 +374,9 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 
 #pro-buy { text-decoration: none; }
 #pro-sheet .engine-list { gap: 12px; }
+
+/* voice sheet: selection shown by row tint only */
+.voice-row { grid-template-columns: 44px 1fr auto; }
+.voice-row .lang-check { display: none; }
+.lang-row.voice-row.is-selected { background: rgba(255,255,255,.14); outline: 1px solid rgba(255,255,255,.22); }
+#voice-preview { gap: 8px; } #voice-preview.playing { color: #0e0e16; background: #f7f7fb; animation: blink 1s infinite; }

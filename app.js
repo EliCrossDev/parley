@@ -43,8 +43,8 @@
   const PREF_KEY = 'parley.prefs.v1';
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
-    name: 'Traveler', avatar: 0, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'aurora',
+    name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'sea',
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -305,10 +305,10 @@
 
   const BG = window.Aurora ? Aurora.mount($('app-bg'), { dim: 0.9, maxDpr: 1, colors: [cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3')] }) : null;
   function applyPalette(p) {
-    prefs.palette = p || 'aurora'; if (prefs.palette === 'aurora') document.documentElement.removeAttribute('data-palette'); else document.documentElement.setAttribute('data-palette', prefs.palette);
+    prefs.palette = p || 'sea'; if (prefs.palette === 'sea') document.documentElement.removeAttribute('data-palette'); else document.documentElement.setAttribute('data-palette', prefs.palette);
     if (BG) BG.setColors(cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3'));
     document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.pal === prefs.palette));
-    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Sky', dawn: 'Dawn', sea: 'Sea', dusk: 'Dusk', night: 'Night', tide: 'Tide', volt: 'Volt' }[prefs.palette] || 'Sky';
+    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Sky', dawn: 'Dawn', sea: 'Sea', dusk: 'Dusk', night: 'Night', tide: 'Tide', volt: 'Volt' }[prefs.palette] || 'Sea';
     const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = '#050505';
   }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
@@ -756,52 +756,31 @@
 
   // Voice sheet
   function voiceLabel() {
-    if (prefs.voiceEngine === 'browser') { const v = (prefs.browserVoices || {})[base(prefs.langA)]; return 'Device · ' + (v || 'auto'); }
-    const id = Voice.voiceFor(prefs.langA) || 'auto'; const v = KVOICES.find((x) => x[0] === id); return 'Studio · ' + (v ? v[1] + ' (' + v[2].toUpperCase() + ')' : 'auto');
+    const parts = [prefs.langA, prefs.langB].map((c) => { const id = Voice.voiceFor(c); const v = KVOICES.find((x) => x[0] === id); return byCode(c).short + ' ' + (v ? v[1] : 'device voice'); });
+    return parts.join(' · ');
   }
+  let lastPick = null; // { lang, voice } — what Preview plays
   function renderVoiceSheet() {
-    document.querySelectorAll('.seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.ve === prefs.voiceEngine));
+    prefs.voiceEngine = 'kokoro';
     const note = $('voice-engine-note'), list = $('voice-list'); list.innerHTML = '';
-    if (prefs.voiceEngine === 'kokoro') {
-      note.innerHTML = 'Kokoro, open source, runs on your device. One ~90 MB download, then it works offline. Covers EN · ES · PT · FR · IT · HI · JA · ZH; other languages use device voices. Tap ▶ on any voice to hear it.<div class="dl-bar"><i id="voice-dl" style="width:' + (Voice.ready() ? 100 : 0) + '%"></i></div><span class="voice-status" id="voice-status"></span>';
-      Voice.status();
-      const langs = [...new Set(KVOICES.map((v) => v[2]))];
-      langs.forEach((lg) => {
-        list.appendChild(el('div', 'history-group', byCode(LANGS.find((l) => base(l.code) === lg).code).name));
-        KVOICES.filter((v) => v[2] === lg).forEach((v) => {
-          const sel = Voice.voiceFor(lg) === v[0];
-          const row = el('button', 'lang-row voice-row' + (sel ? ' is-selected' : ''));
-          row.appendChild(el('span', 'lang-code', lg.toUpperCase())); row.appendChild(el('span', 'lang-name', v[1])); row.appendChild(el('span', 'voice-tag', v[3] === 'F' ? 'Female' : 'Male'));
-          const play = el('button', 'row-play'); play.innerHTML = PLAY_SVG; play.setAttribute('aria-label', 'Preview ' + v[1]);
-          play.addEventListener('click', (e) => { e.stopPropagation(); playPreview(play, lg, 'kokoro', v[0]); }); row.appendChild(play);
-          row.appendChild(el('span', 'lang-check'));
-          row.addEventListener('click', () => { prefs.voices = prefs.voices || {}; prefs.voices[lg] = v[0]; savePrefs(); renderVoiceSheet(); playPreview(null, lg, 'kokoro', v[0]); });
-          list.appendChild(row);
-        });
+    note.innerHTML = 'Kokoro, open source, runs on your device. One ~90 MB download, then it works offline. Covers EN · ES · PT · FR · IT · HI · JA · ZH; other languages use your phone\'s voice. Tap a voice, then Preview.<div class="dl-bar"><i id="voice-dl" style="width:' + (Voice.ready() ? 100 : 0) + '%"></i></div><span class="voice-status" id="voice-status"></span>';
+    Voice.status();
+    const langs = [...new Set(KVOICES.map((v) => v[2]))];
+    const mine = [base(prefs.langA), base(prefs.langB)];
+    langs.sort((a, b) => (mine.includes(b) ? 1 : 0) - (mine.includes(a) ? 1 : 0));
+    langs.forEach((lg) => {
+      list.appendChild(el('div', 'history-group', byCode(LANGS.find((l) => base(l.code) === lg).code).name + (mine.includes(lg) ? ' · in use' : '')));
+      KVOICES.filter((v) => v[2] === lg).forEach((v) => {
+        const sel = Voice.voiceFor(lg) === v[0];
+        const row = el('button', 'lang-row voice-row' + (sel ? ' is-selected' : ''));
+        row.appendChild(el('span', 'lang-code', lg.toUpperCase())); row.appendChild(el('span', 'lang-name', v[1])); row.appendChild(el('span', 'voice-tag', v[3] === 'F' ? 'Female' : 'Male'));
+        row.addEventListener('click', () => { prefs.voices = prefs.voices || {}; prefs.voices[lg] = v[0]; lastPick = { lang: lg, voice: v[0] }; savePrefs(); renderVoiceSheet(); });
+        list.appendChild(row);
       });
-    } else {
-      note.textContent = 'Voices built into this phone or browser. Instant, no download. Quality varies by device. Tap ▶ on any voice to hear it.';
-      const vs = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
-      const codes = [prefs.langA, prefs.langB].map(base);
-      codes.forEach((lg) => {
-        const mine = vs.filter((v) => v.lang && base(v.lang) === lg);
-        list.appendChild(el('div', 'history-group', byCode(LANGS.find((l) => base(l.code) === lg).code).name + (mine.length ? '' : ' · none installed')));
-        mine.forEach((v) => {
-          const sel = (prefs.browserVoices || {})[lg] === v.name;
-          const row = el('button', 'lang-row voice-row' + (sel ? ' is-selected' : ''));
-          row.appendChild(el('span', 'lang-code', lg.toUpperCase())); row.appendChild(el('span', 'lang-name', v.name.replace(/\(.*?\)/g, '').trim())); row.appendChild(el('span', 'voice-tag', v.localService ? 'local' : 'cloud'));
-          const play = el('button', 'row-play'); play.innerHTML = PLAY_SVG; play.setAttribute('aria-label', 'Preview ' + v.name);
-          play.addEventListener('click', (e) => { e.stopPropagation(); playPreview(play, lg, 'browser', v.name); }); row.appendChild(play);
-          row.appendChild(el('span', 'lang-check'));
-          row.addEventListener('click', () => { prefs.browserVoices = prefs.browserVoices || {}; prefs.browserVoices[lg] = v.name; savePrefs(); renderVoiceSheet(); playPreview(null, lg, 'browser', v.name); });
-          list.appendChild(row);
-        });
-      });
-    }
+    });
     $('voice-sub').textContent = voiceLabel();
   }
   $('voice-btn').addEventListener('click', () => { renderVoiceSheet(); sheetOpen('voice-sheet'); });
-  document.querySelectorAll('.seg-btn').forEach((b) => b.addEventListener('click', () => { prefs.voiceEngine = b.dataset.ve; savePrefs(); renderVoiceSheet(); }));
   $('voice-done').addEventListener('click', () => { sheetClose(); renderProfile(); });
   const PLAY_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>';
   const SAMPLES = { en: 'Hi, this is how I sound.', es: 'Hola, así es como sueno.', pt: 'Oi, é assim que eu soo.', fr: 'Salut, voilà comment je sonne.', it: 'Ciao, ecco come suono.', hi: 'नमस्ते, मेरी आवाज़ ऐसी है।', ja: 'こんにちは、こんな声です。', zh: '你好，我的声音是这样的。', de: 'Hallo, so klinge ich.', ko: '안녕하세요, 제 목소리예요.', th: 'สวัสดี นี่คือเสียงของฉัน', ar: 'مرحبا، هكذا يبدو صوتي.', ru: 'Привет, вот как я звучу.', nl: 'Hoi, zo klink ik.', tr: 'Merhaba, sesim böyle.', id: 'Halo, begini suaraku.', vi: 'Xin chào, giọng tôi như thế này.' };
@@ -811,12 +790,10 @@
     try { await Voice.preview(SAMPLES[lg] || SAMPLES.en, lg, engine, key); } finally { if (btn) btn.classList.remove('playing'); }
   }
   $('voice-preview').addEventListener('click', () => {
-    // Preview the voice currently chosen for Language one (or two if one isn't covered)
-    const lg = base(prefs.langA); const eng = prefs.voiceEngine;
-    const key = eng === 'browser' ? (prefs.browserVoices || {})[lg] : Voice.voiceFor(lg);
-    playPreview(null, lg, eng, key);
+    const pick = lastPick || { lang: base(prefs.langA), voice: Voice.voiceFor(base(prefs.langA)) };
+    const btn = $('voice-preview'); btn.classList.add('playing');
+    playPreview(null, pick.lang, 'kokoro', pick.voice).finally(() => btn.classList.remove('playing'));
   });
-  if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { if (openSheet === 'voice-sheet') renderVoiceSheet(); };
 
   // Engine sheet
   function renderEngineSheet() { document.querySelectorAll('.engine-row').forEach((r) => r.classList.toggle('is-selected', r.dataset.engine === prefs.engine)); $('libre-field').classList.toggle('show', prefs.engine === 'libre'); $('libre-url').value = prefs.libreUrl || ''; $('libre-key').value = prefs.libreKey || ''; }
