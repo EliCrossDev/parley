@@ -290,12 +290,12 @@
   const langOf = (who) => who === 'a' ? prefs.langA : prefs.langB;
   const other = (who) => who === 'a' ? 'b' : 'a';
 
-  const BG = window.Aurora ? Aurora.mount($('app-bg'), { dim: 0.9, maxDpr: 1, colors: [cssVar('--volt'), cssVar('--mid'), cssVar('--blue')] }) : null;
+  const BG = window.Aurora ? Aurora.mount($('app-bg'), { dim: 0.9, maxDpr: 1, colors: [cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3')] }) : null;
   function applyPalette(p) {
     prefs.palette = p || 'aurora'; if (prefs.palette === 'aurora') document.documentElement.removeAttribute('data-palette'); else document.documentElement.setAttribute('data-palette', prefs.palette);
-    if (BG) BG.setColors(cssVar('--volt'), cssVar('--mid'), cssVar('--blue'));
+    if (BG) BG.setColors(cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3'));
     document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.pal === prefs.palette));
-    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Aurora', volt: 'Volt', ember: 'Ember', mono: 'Mono' }[prefs.palette] || 'Aurora';
+    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Tide', volt: 'Volt', neon: 'Neon', ember: 'Ember' }[prefs.palette] || 'Tide';
     const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = '#050505';
   }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
@@ -305,7 +305,7 @@
     $('who-a').classList.toggle('is-live', who === 'a'); $('who-b').classList.toggle('is-live', who === 'b');
     Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--blue' : '--volt'), 0.7);
     const sg = $('siri'); sg.className = 'siri on ' + who;
-    setStatus('Listening · ' + byCode(langOf(who)).name, who);
+    setStatus('Listening', who);
   }
 
   function makeBubble(who, orig, trans, interim) {
@@ -377,7 +377,7 @@
       // Wrong speaker guessed: switch recognizer to the right language now, keeping what we already heard.
       live.carry = interim.trim();
       setExpected(who); startRecognizer(langOf(who));
-    } else setStatus('Hearing ' + byCode(langOf(who)).name + '…', who);
+    } else setStatus('Listening', who);
   }
 
   function startRecognizer(lang) {
@@ -393,7 +393,7 @@
         const shown = live.carry ? (live.carry + ' ' + interim) : interim;
         if (!live.interimEl) live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true));
         else { live.interimEl.querySelector('.trans').textContent = shown; $('convo').scrollTop = $('convo').scrollHeight; }
-        if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus('Hearing…', live.expected); }
+        if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus('Listening', live.expected); }
         Wave.setTalking(true); scheduleInterimTranslate(shown);
         // Snappy turns: if the interim text stops changing, force the final now instead of waiting for the engine.
         armEndpoint(r, shown);

@@ -17,31 +17,40 @@ float fbm(vec2 p){ float v = 0.0, a = 0.5; mat2 m = mat2(1.6, 1.2, -1.2, 1.6); f
 float blob(vec2 uv, vec2 c, float r){ float d = length(uv - c); return exp(-(d*d) / (r*r)); }
 void main(){
   vec2 uv = (gl_FragCoord.xy - 0.5*uRes) / uRes.y;
-  float t = uTime * 0.12;
+  float t = uTime * 0.22;
   float e = uEnergy;
-  // domain warp for fluid motion
-  vec2 w = vec2(fbm(uv*1.6 + t), fbm(uv*1.6 - t*0.8 + 3.1));
-  vec2 q = uv + (w - 0.5) * (0.55 + e*0.35);
-  q += uMouse * 0.06;
-  q.y += uScroll * 0.35;
-  // three light masses on slow orbits
-  vec2 p1 = vec2(sin(t*1.3)*0.45, cos(t*0.9)*0.25 - 0.1);
-  vec2 p2 = vec2(cos(t*1.1 + 2.0)*0.5, sin(t*0.7 + 1.0)*0.3 + 0.05);
-  vec2 p3 = vec2(sin(t*0.8 + 4.0)*0.35, cos(t*1.2 + 2.5)*0.28 - 0.2);
-  float r = 0.5 + e*0.22;
-  float b1 = blob(q, p1, r), b2 = blob(q, p2, r*1.1), b3 = blob(q, p3, r*0.9);
-  vec3 col = uC1*b1 + uC2*b2 + uC3*b3;
-  // tint toward the active speaker
-  float lum = b1 + b2 + b3;
-  col = mix(col, uTintCol * lum, uTint);
-  // breathing + voice brightness
-  float breathe = 0.85 + 0.15*sin(uTime*0.9);
-  col *= (0.6 + e*0.8) * breathe;
-  // fine veil of noise so it never looks flat
-  col += (fbm(uv*6.0 + t*2.0) - 0.5) * 0.03;
-  // vignette to black
-  col *= 1.0 - smoothstep(0.55, 1.25, length(uv*vec2(0.85, 1.25)));
-  col = col / (1.0 + col); // soft tone map
+  vec2 m = uMouse * 0.08; uv.y += uScroll * 0.3;
+  // --- layer 1: aurora curtains. Vertical bands warped by flowing noise, like light through water.
+  vec2 p = uv * vec2(1.4, 2.2) + m;
+  float w1 = fbm(p * 1.3 + vec2(t * 0.6, -t * 0.35));
+  float w2 = fbm(p * 2.1 - vec2(t * 0.4, t * 0.5) + 7.0);
+  vec2 q = p + (vec2(w1, w2) - 0.5) * (1.4 + e * 0.8);
+  float bands = sin(q.x * 3.0 + t * 1.5) * 0.5 + 0.5;
+  bands = pow(bands, 2.2);
+  float curtain = bands * smoothstep(-1.2, 0.9, -uv.y + fbm(q * 0.8 + t) * 1.2) ;
+  // color drift across the curtain
+  float hue = fbm(q * 0.6 + t * 0.3);
+  vec3 cc = mix(uC1, uC2, smoothstep(0.2, 0.7, hue));
+  cc = mix(cc, uC3, smoothstep(0.55, 0.95, w2));
+  vec3 col = cc * curtain * 1.5;
+  // --- layer 2: slow deep masses for body
+  vec2 p1 = vec2(sin(t*0.9)*0.5, cos(t*0.6)*0.3 - 0.15);
+  vec2 p2 = vec2(cos(t*0.7 + 2.0)*0.55, sin(t*0.5 + 1.0)*0.32 + 0.1);
+  float r = 0.55 + e*0.25;
+  col += uC2 * blob(uv + m, p1, r) * 0.5 + uC3 * blob(uv + m, p2, r) * 0.45;
+  // --- layer 3: sparse drifting sparks
+  vec2 g = (uv + vec2(0.0, t * 0.08)) * 9.0; vec2 gi = floor(g), gf = fract(g);
+  vec3 h = hash3(gi); vec2 sp = 0.2 + 0.6 * h.xy; float sd = length(gf - sp);
+  float spark = smoothstep(0.05, 0.0, sd) * step(0.93, h.z) * (0.5 + 0.5 * sin(uTime * 2.0 + h.z * 40.0));
+  col += vec3(0.9) * spark * 0.6;
+  // speaker tint + voice
+  float lum = max(curtain, 0.0001);
+  col = mix(col, uTintCol * (lum * 0.9 + 0.08), uTint * 0.8);
+  float breathe = 0.9 + 0.1 * sin(uTime * 0.8);
+  col *= (0.85 + e * 0.9) * breathe;
+  col += (fbm(uv * 7.0 + t * 2.0) - 0.5) * 0.025;
+  col *= 1.0 - smoothstep(0.6, 1.3, length(uv * vec2(0.8, 1.2)));
+  col = col / (1.0 + col * 0.8);
   gl_FragColor = vec4(col * uDim, 1.0);
 }`;
   function hexToRgb(h) { h = String(h).trim().replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); const n = parseInt(h, 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }

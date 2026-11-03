@@ -12,7 +12,7 @@
 
   /* ---------- Shader hero ---------- */
   const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  (function () { const c = document.getElementById('hero-canvas'); if (c && window.Aurora) Aurora.mount(c, { scrollTilt: true, dim: 1, maxDpr: 1, colors: [cssVar('--volt'), cssVar('--mid'), cssVar('--blue')] }); })();
+  (function () { const c = document.getElementById('hero-canvas'); if (c && window.Aurora) Aurora.mount(c, { scrollTilt: true, dim: 1, maxDpr: 1, colors: [cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3')] }); })();
 
   /* ---------- Demo phone ---------- */
   let demoSpeaker = 'a', demoTalk = false;

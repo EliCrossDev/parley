@@ -8,7 +8,7 @@ LOG="deploy.log"; : > "$LOG"
   echo "node: $(node -v 2>&1)  gh: $(gh --version 2>&1 | head -1)  vercel: $(vercel --version 2>&1 | head -1)"
   [ -d .git ] || git init -b main
   git rm -q --cached glyphbg.js 2>/dev/null; git add -A
-  git commit -m "Parley v6 — aurora background, Siri ribbon, palettes, faster translation" -q || echo "(nothing new to commit)"
+  git commit -m "Parley v7 — Tide palette, curtain background, plain Listening status" -q || echo "(nothing new to commit)"
   if ! git remote get-url origin >/dev/null 2>&1; then
     gh repo create parley --public --source=. --remote=origin --push || { echo "gh repo create failed"; }
   else

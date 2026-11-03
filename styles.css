@@ -11,13 +11,14 @@
   --fg-2: rgba(245, 245, 242, 0.62);
   --fg-3: rgba(245, 245, 242, 0.38);
   /* Speaker colors. --volt = language one, --blue = language two (names kept for the stylesheet; palettes below swap the values). */
-  --volt: #ff6fb5;        /* Aurora pink */
-  --volt-ink: #2a0017;
-  --volt-dim: rgba(255, 111, 181, 0.16);
-  --blue: #4ed8e8;        /* Aurora aqua */
-  --blue-ink: #002a2e;
-  --blue-dim: rgba(78, 216, 232, 0.16);
-  --mid: #7b61ff;         /* the color between them, for the background field */
+  --volt: #4ed8e8;        /* Tide aqua — language one */
+  --volt-ink: #00262b;
+  --volt-dim: rgba(78, 216, 232, 0.16);
+  --blue: #f2efe6;        /* Tide ivory — language two */
+  --blue-ink: #0b0b0d;
+  --blue-dim: rgba(242, 239, 230, 0.12);
+  --mid: #2b4bff;         /* deep electric blue for the background field */
+  --bg-c1: #4ed8e8; --bg-c2: #2b4bff; --bg-c3: #7a5cff;
   --danger: #ff4d5a;
   --font-display: "Outfit", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
@@ -32,9 +33,9 @@
 }
 
 /* Palettes — set data-palette on <html>. */
-:root[data-palette="volt"] { --volt: #d9ff3b; --volt-ink: #0a0b00; --volt-dim: rgba(217,255,59,.14); --blue: #2f6bff; --blue-ink: #ffffff; --blue-dim: rgba(47,107,255,.18); --mid: #3a7bff; }
-:root[data-palette="ember"] { --volt: #ff8a3d; --volt-ink: #2a0e00; --volt-dim: rgba(255,138,61,.16); --blue: #cfe8ff; --blue-ink: #0b1a26; --blue-dim: rgba(207,232,255,.14); --mid: #ff4d6d; }
-:root[data-palette="mono"] { --volt: #f5f5f2; --volt-ink: #050505; --volt-dim: rgba(245,245,242,.12); --blue: #8a8a92; --blue-ink: #ffffff; --blue-dim: rgba(138,138,146,.18); --mid: #5a5a62; }
+:root[data-palette="volt"] { --volt: #d9ff3b; --volt-ink: #0a0b00; --volt-dim: rgba(217,255,59,.14); --blue: #2f6bff; --blue-ink: #ffffff; --blue-dim: rgba(47,107,255,.18); --mid: #3a7bff; --bg-c1: #d9ff3b; --bg-c2: #2f6bff; --bg-c3: #1b2a80; }
+:root[data-palette="neon"] { --volt: #4ed8e8; --volt-ink: #00262b; --volt-dim: rgba(78,216,232,.16); --blue: #d9ff3b; --blue-ink: #0a0b00; --blue-dim: rgba(217,255,59,.14); --mid: #2bff9e; --bg-c1: #4ed8e8; --bg-c2: #2bff9e; --bg-c3: #d9ff3b; }
+:root[data-palette="ember"] { --volt: #4ed8e8; --volt-ink: #00262b; --volt-dim: rgba(78,216,232,.16); --blue: #ff8a3d; --blue-ink: #2a0e00; --blue-dim: rgba(255,138,61,.16); --mid: #ff4d6d; --bg-c1: #4ed8e8; --bg-c2: #ff4d6d; --bg-c3: #ff8a3d; }
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }
