@@ -105,7 +105,12 @@
   /* ---------- Install CTA ---------- */
   let installEvt = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
-  const cta = document.getElementById('install-cta');
-  if (cta) cta.addEventListener('click', (e) => { if (installEvt) { e.preventDefault(); installEvt.prompt(); installEvt = null; } });
+  const cta = document.getElementById('install-cta'), tip = document.getElementById('install-tip');
+  if (cta) cta.addEventListener('click', (e) => {
+    if (installEvt) { e.preventDefault(); installEvt.prompt(); installEvt = null; return; }
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (standalone || ios || tip) { e.preventDefault(); tip.textContent = standalone ? T('hero.installed') : ios ? T('hero.iostip') : T('hero.desktoptip'); tip.hidden = false; }
+  });
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

@@ -135,6 +135,18 @@
         </div>
         <span class="chip" id="history-count">0 / 5 saved</span>
       </div>
+      <div class="hist-tools">
+        <div class="keep">
+          <span class="keep-label" data-i18n="hist.keep">Keep</span>
+          <div class="seg keep-seg" id="keep-seg" role="group" aria-label="How many conversations to keep">
+            <button class="seg-btn" data-keep="5">5</button>
+            <button class="seg-btn" data-keep="10">10</button>
+            <button class="seg-btn" data-keep="25">25</button>
+            <button class="seg-btn" data-keep="0" data-i18n="hist.all">All</button>
+          </div>
+        </div>
+        <button class="text-btn danger" id="hist-clear" data-i18n="hist.clear">Clear all</button>
+      </div>
       <div class="history-list" id="history-list"></div>
       <div class="pro-card" id="pro-card">
         <div>

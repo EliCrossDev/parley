@@ -190,3 +190,4 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .hero-langs button:hover { background: rgba(255,255,255,.22); }
 .hero-langs button.is-active { background: rgba(255,255,255,.92); color: #0e0e16; border-color: #fff; }
 .hero-langs button:active { transform: scale(.97); }
+.hero-tip { font-size: 14px; line-height: 1.45; color: #f7f7fb; background: rgba(14,14,24,.45); border: 1px solid rgba(255,255,255,.25); border-radius: 14px; padding: 12px 14px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); max-width: 520px; }

@@ -44,7 +44,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'sea',
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'sea', keep: 0,
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -109,10 +109,15 @@
   function setPro(on, token, email) { prefs.pro = !!on; prefs.license = on ? token : ''; prefs.proEmail = on ? (email || '') : ''; savePrefs(); renderProfile(); renderHistory(); }
 
   const FREE_LIMIT = 5;
+  function keepLimit() { return prefs.pro ? (Number(prefs.keep) || 0) : FREE_LIMIT; } // 0 = keep everything
   async function enforceLimit() {
-    if (prefs.pro) return;
+    const lim = keepLimit(); if (!lim) return;
     const all = (await dbAll()).sort((a, b) => b.startedAt - a.startedAt);
-    for (const c of all.slice(FREE_LIMIT)) await dbDel(c.id);
+    for (const c of all.slice(lim)) await dbDel(c.id);
+  }
+  function renderKeep() {
+    const lim = keepLimit();
+    document.querySelectorAll('.keep-seg .seg-btn').forEach((b) => b.classList.toggle('is-active', Number(b.dataset.keep) === lim));
   }
 
   /* ---------------- Translation providers ---------------- */
@@ -625,7 +630,7 @@
   async function renderHistory() {
     const list = $('history-list'); list.innerHTML = '';
     const all = (await dbAll()).sort((a, b) => b.startedAt - a.startedAt);
-    $('history-count').textContent = (prefs.pro ? all.length : all.length + ' / ' + FREE_LIMIT) + ' ' + T('hist.saved');
+    const lim = keepLimit(); $('history-count').textContent = (lim ? all.length + ' / ' + lim : all.length) + ' ' + T('hist.saved'); renderKeep(); $('hist-clear').hidden = !all.length;
     $('pro-card').hidden = !!prefs.pro;
     if (!all.length) { list.appendChild(el('div', 'history-empty', T('hist.empty'))); return; }
     let lastGroup = null;
@@ -725,7 +730,7 @@
   $('pb-scrub').addEventListener('input', (e) => { if (!pb.c) return; const frac = Number(e.target.value) / 1000; const t = frac * (pb.c.duration || 0); if (pb.audio) pb.audio.currentTime = t; else { pb.elapsed = t; pb.start = Date.now() - t * 1000; } $('pb-cur').textContent = fmtTime(t); renderPlaybackLines(t * 1000); });
   $('pb-livemode').addEventListener('change', () => { const cur = pb.audio ? pb.audio.currentTime : pb.elapsed; renderPlaybackLines(cur * 1000); });
   $('pb-back').addEventListener('click', () => { closeAudio(); $('pb-convo').innerHTML = ''; showView('history'); });
-  $('pb-delete').addEventListener('click', () => confirmSheet('Delete this conversation?', 'Transcript and audio are removed from this device.', async () => { await dbDel(pb.c.id); closeAudio(); $('pb-convo').innerHTML = ''; toast('Deleted'); showView('history'); }));
+  $('pb-delete').addEventListener('click', () => confirmSheet(T('pb.deleteq'), T('pb.deletesub'), async () => { await dbDel(pb.c.id); closeAudio(); $('pb-convo').innerHTML = ''; toast(T('pb.deleted')); showView('history'); }));
 
   /* ---------------- Confirm ---------------- */
   let confirmCb = null;
@@ -752,7 +757,17 @@
   $('cancel-profile').addEventListener('click', () => { $('edit-panel').hidden = true; try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {} renderProfile(); });
   $('save-profile').addEventListener('click', () => { prefs.name = $('profile-name-input').value.trim() || 'Traveler'; savePrefs(); $('edit-panel').hidden = true; renderProfile(); toast('Profile saved'); });
   $('profile-lang-btn').addEventListener('click', () => openLangPicker('p', T('prof.default')));
-  $('clear-all').addEventListener('click', () => confirmSheet('Clear all conversations?', 'Every transcript and recording on this device is removed.', async () => { await dbClear(); toast('Cleared'); renderHistory(); }));
+  const clearAll = () => confirmSheet(T('hist.clearq'), T('hist.clearsub'), async () => { await dbClear(); toast(T('hist.cleared')); renderHistory(); });
+  $('clear-all').addEventListener('click', clearAll);
+  $('hist-clear').addEventListener('click', clearAll);
+  document.querySelectorAll('.keep-seg .seg-btn').forEach((b) => b.addEventListener('click', async () => {
+    const n = Number(b.dataset.keep);
+    if (!prefs.pro && (n === 0 || n > FREE_LIMIT)) { openPro(); return; }
+    const all = (await dbAll()).sort((x, y) => y.startedAt - x.startedAt);
+    const drop = n ? Math.max(0, all.length - n) : 0;
+    const apply = async () => { prefs.keep = n; savePrefs(); await enforceLimit(); renderHistory(); };
+    if (drop) confirmSheet(T('hist.keepq').replace('{n}', n), T('hist.keepsub').replace('{d}', drop), apply); else apply();
+  }));
 
   // Voice sheet
   function voiceLabel() {

@@ -389,3 +389,12 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .ui-lang-select select { appearance: none; -webkit-appearance: none; background: transparent; border: 0; color: inherit; font: inherit; cursor: pointer; outline: none; padding: 0; }
 .ui-lang-select select option { color: #111; }
 .ui-lang-select::after { content: ""; position: absolute; right: 13px; top: 50%; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-70%) rotate(45deg); pointer-events: none; opacity: .8; }
+
+/* History retention tools */
+.hist-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -6px 0 16px; }
+.keep { display: inline-flex; align-items: center; gap: 10px; }
+.keep-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); }
+.keep-seg .seg-btn { flex: 0 0 auto; height: 32px; min-width: 40px; padding: 0 12px; font-size: 12px; }
+.text-btn { font-size: 13px; font-weight: 600; color: var(--fg-2); padding: 8px 2px; }
+.text-btn.danger { color: var(--danger); }
+.text-btn:hover { opacity: .8; }
