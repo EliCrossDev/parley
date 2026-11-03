@@ -7,13 +7,15 @@
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const T = (k) => (window.I18N ? I18N.t(k) : k);
 
-  /* ---------- UI language ---------- */
+  /* ---------- UI language (chips in the hero) ---------- */
   (function uiLang() {
     if (!window.I18N) return;
-    document.querySelectorAll('select[data-ui-lang]').forEach((sel) => {
-      if (!sel.options.length) I18N.LANGS.forEach(([c, n]) => { const o = document.createElement('option'); o.value = c; o.textContent = n; sel.appendChild(o); });
-      sel.addEventListener('change', () => I18N.set(sel.value));
-    });
+    const box = document.getElementById('hero-langs');
+    if (box) {
+      I18N.LANGS.forEach(([c, n]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.lang = c; b.textContent = n; b.addEventListener('click', () => I18N.set(c)); box.appendChild(b); });
+      const mark = () => box.querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === I18N.lang));
+      document.addEventListener('i18n:change', mark); mark();
+    }
     I18N.apply();
   })();
 
