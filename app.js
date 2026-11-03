@@ -667,13 +667,14 @@
     renderRecent(all);
   }
   function historyRow(c, withDate) {
+    const from = withDate ? 'live' : 'history';
     const item = el('button', 'history-item');
     const pair = el('span', 'hi-pair'); pair.appendChild(el('span', 'pa')); pair.appendChild(el('span', 'pb')); item.appendChild(pair);
     const mid = el('span'); mid.appendChild(el('div', 'hi-title', c.title || 'Conversation'));
     mid.appendChild(el('div', 'hi-sub', byCode(c.langA).short + ' ↔ ' + byCode(c.langB).short + ' · ' + c.lines.length + ' ' + T('hist.lines') + (c.audio ? ' · ' + T('hist.audio') : ''))); item.appendChild(mid);
     const d = new Date(c.startedAt);
     item.appendChild(el('span', 'hi-time', withDate ? groupLabel(c.startedAt) + ' · ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })));
-    item.addEventListener('click', () => openPlayback(c));
+    item.addEventListener('click', () => openPlayback(c, from));
     return item;
   }
   // The same conversations, folded under the Start button so replaying never means leaving the main screen.
@@ -732,8 +733,9 @@
 
   /* ---------------- Playback ---------------- */
   const pb = { c: null, audio: null, url: null, raf: null, playing: false, start: 0, elapsed: 0 };
-  function openPlayback(c) {
-    pb.c = c; closeAudio();
+  function openPlayback(c, from) {
+    pb.c = c; pb.from = from || 'history'; closeAudio();
+    $('pb-back').textContent = pb.from === 'live' ? T('pb.home') : T('pb.back');
     $('pb-date').textContent = new Date(c.startedAt).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     $('pb-title').textContent = c.title || 'Conversation';
     $('pb-noaudio').hidden = !!c.audio;
@@ -791,7 +793,7 @@
   });
   $('pb-scrub').addEventListener('input', (e) => { if (!pb.c) return; const frac = Number(e.target.value) / 1000; const t = frac * (pb.c.duration || 0); if (pb.audio) pb.audio.currentTime = t; else { pb.elapsed = t; pb.start = Date.now() - t * 1000; } $('pb-cur').textContent = fmtTime(t); renderPlaybackLines(t * 1000); });
   $('pb-livemode').addEventListener('change', () => { const cur = pb.audio ? pb.audio.currentTime : pb.elapsed; renderPlaybackLines(cur * 1000); });
-  $('pb-back').addEventListener('click', () => { closeAudio(); $('pb-convo').innerHTML = ''; showView('history'); });
+  $('pb-back').addEventListener('click', () => { closeAudio(); $('pb-convo').innerHTML = ''; showView(pb.from === 'live' ? 'live' : 'history'); });
   $('pb-delete').addEventListener('click', () => confirmSheet(T('pb.deleteq'), T('pb.deletesub'), async () => { await dbDel(pb.c.id); closeAudio(); $('pb-convo').innerHTML = ''; toast(T('pb.deleted')); showView('history'); }));
 
   /* ---------------- Confirm ---------------- */
