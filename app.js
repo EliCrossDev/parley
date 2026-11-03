@@ -191,29 +191,37 @@
       })().catch((e) => { failed = true; loading = null; throw e; });
       return loading;
     }
-    function browserSpeak(text, lang) {
+    let lastErr = null;
+    function browserSpeak(text, lang, voiceName) {
       return new Promise((res) => {
         if (!('speechSynthesis' in window)) return res();
         try {
+          speechSynthesis.cancel();
           const u = new SpeechSynthesisUtterance(text); u.lang = byCode(lang).sr; u.rate = 1.03;
-          const want = (prefs.browserVoices || {})[base(lang)];
+          const want = voiceName || (prefs.browserVoices || {})[base(lang)];
           const vs = speechSynthesis.getVoices();
           const v = vs.find((x) => x.name === want) || vs.find((x) => x.lang && base(x.lang) === base(lang) && /premium|enhanced|neural|natural/i.test(x.name)) || vs.find((x) => x.lang && base(x.lang) === base(lang));
           if (v) u.voice = v; u.onend = res; u.onerror = res; speechSynthesis.speak(u);
         } catch (e) { res(); }
       });
     }
-    async function kokoroSpeak(text, lang) {
-      const voice = voiceFor(lang); if (!voice) return browserSpeak(text, lang);
+    async function kokoroSpeak(text, lang, voiceId) {
+      const voice = voiceId || voiceFor(lang); if (!voice) return browserSpeak(text, lang);
       let model;
-      try { model = await load((p) => setBusy(true, 'Downloading voice ' + Math.round(p) + '%')); }
-      catch (e) { toast('Studio voice unavailable, using device voice'); return browserSpeak(text, lang); }
+      try { model = await load((p) => { setBusy(true, 'Downloading voice ' + Math.round(p) + '%'); const b = $('voice-dl'); if (b) b.style.width = p + '%'; }); }
+      catch (e) { lastErr = e; console.warn('Kokoro load failed', e); toast('Studio voice unavailable — using device voice'); setVoiceStatus(); return browserSpeak(text, lang); }
       try {
+        setVoiceStatus('Generating…');
         const audio = await model.generate(text, { voice });
+        setVoiceStatus();
         const blob = audio.toBlob ? audio.toBlob() : new Blob([audio.toWav()], { type: 'audio/wav' });
         const url = URL.createObjectURL(blob);
         await new Promise((res) => { const a = new Audio(url); current = a; a.onended = () => { URL.revokeObjectURL(url); res(); }; a.onerror = () => { URL.revokeObjectURL(url); res(); }; a.play().catch(() => res()); });
-      } catch (e) { return browserSpeak(text, lang); }
+      } catch (e) { lastErr = e; console.warn('Kokoro generate failed', e); setVoiceStatus(); return browserSpeak(text, lang); }
+    }
+    function setVoiceStatus(msg) {
+      const n = $('voice-status'); if (!n) return;
+      n.textContent = msg || (failed ? 'Studio engine failed to load on this device (' + String((lastErr && lastErr.message) || lastErr || 'unknown').slice(0, 80) + '). Previews use device voices.' : tts ? 'Studio engine ready.' : loading ? 'Downloading studio engine…' : 'Studio engine loads on first play (~90 MB, once).');
     }
     function setBusy(on, label) { const b = $('speak-btn'); if (b) { b.classList.toggle('busy', !!on); if (label) setStatus(label); } }
     async function drain() {
@@ -227,9 +235,14 @@
       playing = false;
     }
     function speak(text, lang) { if (!prefs.speak || !text) return; queue.push({ text, lang }); drain(); }
+    // Preview one specific voice regardless of prefs. engine: 'kokoro' | 'browser'
+    async function preview(text, lang, engine, voiceKey) {
+      stop(); queue = []; setBusy(true);
+      try { if (engine === 'browser') await browserSpeak(text, lang, voiceKey); else await kokoroSpeak(text, lang, voiceKey); } finally { setBusy(false); }
+    }
     function stop() { queue = []; try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {} try { if (current) { current.pause(); current = null; } } catch (e) {} }
     function warm() { if (prefs.speak && prefs.voiceEngine !== 'browser') load((p) => { const b = $('voice-dl'); if (b) b.style.width = p + '%'; }).catch(() => {}); }
-    return { speak, stop, warm, load, voiceFor, ready: () => !!tts };
+    return { speak, stop, warm, load, voiceFor, preview, status: setVoiceStatus, ready: () => !!tts };
   })();
   function speak(text, lang) { Voice.speak(text, lang); }
 
@@ -516,7 +529,7 @@
     if (!SR) { toast('This browser has no speech recognition. Use Chrome or Safari.'); return; }
     if (prefs.langA === prefs.langB) { toast('Pick two different languages.'); return; }
     live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null;
-    $('live-setup').hidden = true; $('live-stage').hidden = false;
+    $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint">Start talking. Either of you.</p>';
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
     Wave.start($('wave')); renderSpeakBtn(); Voice.warm();
@@ -552,7 +565,7 @@
       const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
       if (ok) { await enforceLimit(); toast('Conversation saved'); } else toast('Could not save on this device');
     }
-    $('live-stage').hidden = true; $('live-setup').hidden = false;
+    $('live-stage').hidden = true; $('live-setup').hidden = false; document.body.classList.remove('live');
     renderHistory();
   }
 
@@ -724,20 +737,24 @@
     document.querySelectorAll('.seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.ve === prefs.voiceEngine));
     const note = $('voice-engine-note'), list = $('voice-list'); list.innerHTML = '';
     if (prefs.voiceEngine === 'kokoro') {
-      note.innerHTML = 'Kokoro, open source, runs on your device. One ~90 MB download, then it works offline. Covers EN · ES · PT · FR · IT · HI · JA · ZH; other languages use device voices.<div class="dl-bar"><i id="voice-dl" style="width:' + (Voice.ready() ? 100 : 0) + '%"></i></div>';
+      note.innerHTML = 'Kokoro, open source, runs on your device. One ~90 MB download, then it works offline. Covers EN · ES · PT · FR · IT · HI · JA · ZH; other languages use device voices. Tap ▶ on any voice to hear it.<div class="dl-bar"><i id="voice-dl" style="width:' + (Voice.ready() ? 100 : 0) + '%"></i></div><span class="voice-status" id="voice-status"></span>';
+      Voice.status();
       const langs = [...new Set(KVOICES.map((v) => v[2]))];
       langs.forEach((lg) => {
         list.appendChild(el('div', 'history-group', byCode(LANGS.find((l) => base(l.code) === lg).code).name));
         KVOICES.filter((v) => v[2] === lg).forEach((v) => {
           const sel = Voice.voiceFor(lg) === v[0];
           const row = el('button', 'lang-row voice-row' + (sel ? ' is-selected' : ''));
-          row.appendChild(el('span', 'lang-code', lg.toUpperCase())); row.appendChild(el('span', 'lang-name', v[1])); row.appendChild(el('span', 'voice-tag', v[3] === 'F' ? 'Female' : 'Male')); row.appendChild(el('span', 'lang-check'));
-          row.addEventListener('click', () => { prefs.voices = prefs.voices || {}; prefs.voices[lg] = v[0]; savePrefs(); renderVoiceSheet(); });
+          row.appendChild(el('span', 'lang-code', lg.toUpperCase())); row.appendChild(el('span', 'lang-name', v[1])); row.appendChild(el('span', 'voice-tag', v[3] === 'F' ? 'Female' : 'Male'));
+          const play = el('button', 'row-play'); play.innerHTML = PLAY_SVG; play.setAttribute('aria-label', 'Preview ' + v[1]);
+          play.addEventListener('click', (e) => { e.stopPropagation(); playPreview(play, lg, 'kokoro', v[0]); }); row.appendChild(play);
+          row.appendChild(el('span', 'lang-check'));
+          row.addEventListener('click', () => { prefs.voices = prefs.voices || {}; prefs.voices[lg] = v[0]; savePrefs(); renderVoiceSheet(); playPreview(null, lg, 'kokoro', v[0]); });
           list.appendChild(row);
         });
       });
     } else {
-      note.textContent = 'Voices built into this phone or browser. Instant, no download. Quality varies by device.';
+      note.textContent = 'Voices built into this phone or browser. Instant, no download. Quality varies by device. Tap ▶ on any voice to hear it.';
       const vs = ('speechSynthesis' in window) ? speechSynthesis.getVoices() : [];
       const codes = [prefs.langA, prefs.langB].map(base);
       codes.forEach((lg) => {
@@ -746,8 +763,11 @@
         mine.forEach((v) => {
           const sel = (prefs.browserVoices || {})[lg] === v.name;
           const row = el('button', 'lang-row voice-row' + (sel ? ' is-selected' : ''));
-          row.appendChild(el('span', 'lang-code', lg.toUpperCase())); row.appendChild(el('span', 'lang-name', v.name.replace(/\(.*?\)/g, '').trim())); row.appendChild(el('span', 'voice-tag', v.localService ? 'local' : 'cloud')); row.appendChild(el('span', 'lang-check'));
-          row.addEventListener('click', () => { prefs.browserVoices = prefs.browserVoices || {}; prefs.browserVoices[lg] = v.name; savePrefs(); renderVoiceSheet(); });
+          row.appendChild(el('span', 'lang-code', lg.toUpperCase())); row.appendChild(el('span', 'lang-name', v.name.replace(/\(.*?\)/g, '').trim())); row.appendChild(el('span', 'voice-tag', v.localService ? 'local' : 'cloud'));
+          const play = el('button', 'row-play'); play.innerHTML = PLAY_SVG; play.setAttribute('aria-label', 'Preview ' + v.name);
+          play.addEventListener('click', (e) => { e.stopPropagation(); playPreview(play, lg, 'browser', v.name); }); row.appendChild(play);
+          row.appendChild(el('span', 'lang-check'));
+          row.addEventListener('click', () => { prefs.browserVoices = prefs.browserVoices || {}; prefs.browserVoices[lg] = v.name; savePrefs(); renderVoiceSheet(); playPreview(null, lg, 'browser', v.name); });
           list.appendChild(row);
         });
       });
@@ -757,9 +777,18 @@
   $('voice-btn').addEventListener('click', () => { renderVoiceSheet(); sheetOpen('voice-sheet'); });
   document.querySelectorAll('.seg-btn').forEach((b) => b.addEventListener('click', () => { prefs.voiceEngine = b.dataset.ve; savePrefs(); renderVoiceSheet(); }));
   $('voice-done').addEventListener('click', () => { sheetClose(); renderProfile(); });
+  const PLAY_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>';
+  const SAMPLES = { en: 'Hi, this is how I sound.', es: 'Hola, así es como sueno.', pt: 'Oi, é assim que eu soo.', fr: 'Salut, voilà comment je sonne.', it: 'Ciao, ecco come suono.', hi: 'नमस्ते, मेरी आवाज़ ऐसी है।', ja: 'こんにちは、こんな声です。', zh: '你好，我的声音是这样的。', de: 'Hallo, so klinge ich.', ko: '안녕하세요, 제 목소리예요.', th: 'สวัสดี นี่คือเสียงของฉัน', ar: 'مرحبا، هكذا يبدو صوتي.', ru: 'Привет, вот как я звучу.', nl: 'Hoi, zo klink ik.', tr: 'Merhaba, sesim böyle.', id: 'Halo, begini suaraku.', vi: 'Xin chào, giọng tôi như thế này.' };
+  let previewBtn = null;
+  async function playPreview(btn, lg, engine, key) {
+    if (previewBtn) previewBtn.classList.remove('playing'); previewBtn = btn; if (btn) btn.classList.add('playing');
+    try { await Voice.preview(SAMPLES[lg] || SAMPLES.en, lg, engine, key); } finally { if (btn) btn.classList.remove('playing'); }
+  }
   $('voice-preview').addEventListener('click', () => {
-    const samples = { en: 'Hi, this is how I sound.', es: 'Hola, así es como sueno.', pt: 'Oi, é assim que eu soo.', fr: 'Salut, voilà comment je sonne.', it: 'Ciao, ecco come suono.', hi: 'नमस्ते, मेरी आवाज़ ऐसी है।', ja: 'こんにちは、こんな声です。', zh: '你好，我的声音是这样的。', de: 'Hallo, so klinge ich.', ko: '안녕하세요, 제 목소리예요.', th: 'สวัสดี นี่คือเสียงของฉัน' };
-    const lg = base(prefs.langB) === 'en' ? prefs.langA : prefs.langB; const was = prefs.speak; prefs.speak = true; Voice.speak(samples[base(lg)] || samples.en, lg); prefs.speak = was;
+    // Preview the voice currently chosen for Language one (or two if one isn't covered)
+    const lg = base(prefs.langA); const eng = prefs.voiceEngine;
+    const key = eng === 'browser' ? (prefs.browserVoices || {})[lg] : Voice.voiceFor(lg);
+    playPreview(null, lg, eng, key);
   });
   if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { if (openSheet === 'voice-sheet') renderVoiceSheet(); };
 
@@ -778,7 +807,11 @@
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
     toast(ios ? 'Safari: tap Share, then "Add to Home Screen"' : 'Use your browser menu: "Install app" or "Add to Home Screen"');
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') { navigator.serviceWorker.register('sw.js').catch(() => {}); }
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').then((reg) => { try { reg.update(); } catch (e) {} }).catch(() => {});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || live.on) return; reloaded = true; location.reload(); });
+  }
 
   /* ---------------- Boot ---------------- */
   if ('speechSynthesis' in window) { try { speechSynthesis.getVoices(); } catch (e) {} }
@@ -787,7 +820,7 @@
   if (['history', 'profile'].includes(hash)) showView(hash);
   // ?demo=1 — preview the live screen with sample lines, no microphone
   if (/[?&]demo=1/.test(location.search)) {
-    $('live-setup').hidden = true; $('live-stage').hidden = false; $('rec-dot').classList.add('off');
+    $('live-setup').hidden = true; $('live-stage').hidden = false; $('rec-dot').classList.add('off'); document.body.classList.add('live');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
     Wave.start($('wave')); setExpected('b');
     [['a', 'Hey, is this table free?', 'Oye, ¿está libre esta mesa?'], ['b', 'Sí, siéntense. ¿Qué les traigo?', 'Yes, sit down. What can I get you?'], ['a', 'Two cold beers and the fish tacos.', 'Dos cervezas frías y los tacos de pescado.']]

@@ -8,7 +8,7 @@ LOG="deploy.log"; : > "$LOG"
   echo "node: $(node -v 2>&1)  gh: $(gh --version 2>&1 | head -1)  vercel: $(vercel --version 2>&1 | head -1)"
   [ -d .git ] || git init -b main
   git add -A
-  git commit -m "Parley v4 — natural endpointing, Siri glow, grain" -q || echo "(nothing new to commit)"
+  git commit -m "Parley v5 — voice previews, live mode, network-first SW" -q || echo "(nothing new to commit)"
   if ! git remote get-url origin >/dev/null 2>&1; then
     gh repo create parley --public --source=. --remote=origin --push || { echo "gh repo create failed"; }
   else
