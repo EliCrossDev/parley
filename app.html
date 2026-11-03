@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Parley</title>
+<meta name="description" content="Live two-way conversation translation. Two people, two languages, one screen.">
+<meta name="theme-color" content="#050505">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Parley">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="app-body">
+<div class="app-bg"><canvas id="app-bg" aria-hidden="true"></canvas></div>
+
+<!-- Top bar -->
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="Parley home">
+    <span class="brand-mark"></span><span>Parley</span>
+  </a>
+  <nav class="topnav" aria-label="App sections">
+    <button class="nav-btn is-active" data-view="live" id="nav-live">Live</button>
+    <button class="nav-btn" data-view="history" id="nav-history">History</button>
+    <button class="nav-btn" data-view="profile" id="nav-profile">Profile</button>
+  </nav>
+  <button class="avatar-btn" id="topbar-avatar" data-view="profile" aria-label="Profile"></button>
+</header>
+
+<main class="views">
+
+  <!-- ============ LIVE ============ -->
+  <section class="view is-active" id="view-live">
+
+    <!-- Setup state -->
+    <div class="live-setup" id="live-setup">
+      <p class="eyebrow">Live translation</p>
+      <h1 class="setup-title">Two languages.<br>One conversation.</h1>
+      <p class="setup-sub">Pick the two languages in the room. Doesn't matter who's who. Parley hears which one is being spoken and translates it into the other, live.</p>
+
+      <div class="speaker-cards">
+        <button class="speaker-card speaker-a" id="pick-a" aria-label="Choose language one">
+          <span class="speaker-tag"><i class="sw a"></i>Language one</span>
+          <span class="speaker-lang" id="label-a">English</span>
+          <span class="speaker-native" id="native-a">English</span>
+          <span class="speaker-change">Change</span>
+        </button>
+        <div class="swap-wrap">
+          <button class="swap-btn" id="swap-langs" aria-label="Swap colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg>
+          </button>
+        </div>
+        <button class="speaker-card speaker-b" id="pick-b" aria-label="Choose language two">
+          <span class="speaker-tag"><i class="sw b"></i>Language two</span>
+          <span class="speaker-lang" id="label-b">Español</span>
+          <span class="speaker-native" id="native-b">Spanish</span>
+          <span class="speaker-change">Change</span>
+        </button>
+      </div>
+
+      <div class="setup-options">
+        <label class="toggle">
+          <input type="checkbox" id="opt-speak">
+          <span class="toggle-track"><span class="toggle-knob"></span></span>
+          <span class="toggle-label">Read translations out loud</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="opt-record" checked>
+          <span class="toggle-track"><span class="toggle-knob"></span></span>
+          <span class="toggle-label">Record audio for playback</span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="opt-fast" checked>
+          <span class="toggle-track"><span class="toggle-knob"></span></span>
+          <span class="toggle-label">Snappy turns (end a line the moment you pause)</span>
+        </label>
+      </div>
+
+      <button class="btn btn-volt start-btn" id="start-live">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Start conversation
+      </button>
+      <p class="setup-note" id="support-note"></p>
+      <p class="setup-note warn" id="origin-note" hidden></p>
+    </div>
+
+    <!-- Live state -->
+    <div class="live-stage" id="live-stage" hidden>
+      <div class="stage-top">
+        <span class="rec-dot" id="rec-dot"></span>
+        <span class="stage-timer" id="stage-timer">00:00</span>
+        <span class="stage-status" id="stage-status">Listening</span>
+        <button class="kb-btn speak-toggle" id="speak-btn" aria-label="Talk back out loud" aria-pressed="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="sp-w1" d="M16 9a4 4 0 0 1 0 6"/><path class="sp-w2" d="M19 6a8 8 0 0 1 0 12"/><path class="sp-x" d="M16 9l5 6M21 9l-5 6"/></svg>
+        </button>
+        <button class="kb-btn" id="type-btn" aria-label="Type instead of speaking"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg></button>
+      </div>
+
+      <div class="wave-wrap">
+        <canvas id="wave" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="convo" id="convo" aria-live="polite">
+        <p class="convo-hint" id="convo-hint">Start talking. Either of you.</p>
+      </div>
+
+      <form class="type-row" id="type-row" hidden>
+        <input type="text" id="type-input" placeholder="Type instead…" autocomplete="off">
+        <button type="submit" class="type-send" aria-label="Translate typed text">→</button>
+      </form>
+      <div class="stage-bottom">
+        <button class="who-btn who-a is-live" id="who-a" aria-label="Language one is speaking">
+          <span class="who-dot"></span><span class="who-lang" id="who-a-label">EN</span>
+        </button>
+        <button class="stop-btn" id="stop-live" aria-label="End conversation">
+          <span class="stop-square"></span>
+        </button>
+        <button class="who-btn who-b" id="who-b" aria-label="Language two is speaking">
+          <span class="who-dot"></span><span class="who-lang" id="who-b-label">ES</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="view" id="view-history">
+    <div class="page">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow">History</p>
+          <h1 class="page-title">Conversations</h1>
+        </div>
+        <span class="chip" id="history-count">0 / 5 saved</span>
+      </div>
+      <div class="history-list" id="history-list"></div>
+      <div class="pro-card" id="pro-card">
+        <div>
+          <p class="pro-tag">Parley Pro</p>
+          <h3>Keep every conversation.</h3>
+          <p class="pro-sub">Free keeps your 5 most recent. Pro keeps all of them, with audio, forever.</p>
+        </div>
+        <button class="btn btn-blue" id="go-pro">Upgrade</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PLAYBACK ============ -->
+  <section class="view" id="view-playback">
+    <div class="page">
+      <button class="back-btn" id="pb-back">← Conversations</button>
+      <div class="page-head">
+        <div>
+          <p class="eyebrow" id="pb-date"></p>
+          <h1 class="page-title" id="pb-title"></h1>
+        </div>
+        <button class="icon-btn danger" id="pb-delete" aria-label="Delete conversation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+        </button>
+      </div>
+      <div class="player" id="player">
+        <button class="play-btn" id="pb-play" aria-label="Play">
+          <svg class="ico-play" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>
+          <svg class="ico-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+        </button>
+        <div class="scrub">
+          <input type="range" id="pb-scrub" min="0" max="1000" value="0" aria-label="Scrub">
+          <div class="scrub-times"><span id="pb-cur">0:00</span><span id="pb-dur">0:00</span></div>
+        </div>
+        <label class="toggle small">
+          <input type="checkbox" id="pb-livemode" checked>
+          <span class="toggle-track"><span class="toggle-knob"></span></span>
+          <span class="toggle-label">Live replay</span>
+        </label>
+      </div>
+      <p class="pb-noaudio" id="pb-noaudio" hidden>No audio was recorded for this conversation. Transcript only.</p>
+      <div class="convo pb-convo" id="pb-convo"></div>
+    </div>
+  </section>
+
+  <!-- ============ PROFILE ============ -->
+  <section class="view" id="view-profile">
+    <div class="page">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow">Profile</p>
+          <h1 class="page-title">You</h1>
+        </div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-avatar" id="profile-avatar"></div>
+        <div class="profile-meta">
+          <p class="profile-name" id="profile-name-display">Traveler</p>
+          <p class="profile-plan" id="profile-plan">Free plan · 5 saved conversations</p>
+        </div>
+        <button class="btn btn-ghost" id="edit-profile">Edit profile</button>
+      </div>
+
+      <div class="edit-panel" id="edit-panel" hidden>
+        <label class="field">
+          <span class="field-label">Name</span>
+          <input type="text" id="profile-name-input" maxlength="24" placeholder="Your name" autocomplete="off">
+        </label>
+        <p class="field-label">Pick a character</p>
+        <div class="avatar-grid" id="avatar-grid"></div>
+        <label class="field">
+          <span class="field-label">Default language</span>
+          <button class="field-select" id="profile-lang-btn">English</button>
+        </label>
+        <div class="edit-actions">
+          <button class="btn btn-ghost" id="cancel-profile">Cancel</button>
+          <button class="btn btn-volt" id="save-profile">Save</button>
+        </div>
+      </div>
+
+      <div class="settings-list">
+        <div class="setting-row">
+          <div><p class="setting-title">Translation engine</p><p class="setting-sub" id="engine-sub">Auto (Google · MyMemory fallback)</p></div>
+          <button class="field-select small" id="engine-btn">Change</button>
+        </div>
+        <div class="setting-row">
+          <div><p class="setting-title">Talk-back voice</p><p class="setting-sub" id="voice-sub">Studio · Heart (EN)</p></div>
+          <button class="field-select small" id="voice-btn">Change</button>
+        </div>
+        <div class="setting-row">
+          <div><p class="setting-title">Install Parley</p><p class="setting-sub">Add it to your home screen for full-screen use.</p></div>
+          <button class="field-select small" id="install-btn">Install</button>
+        </div>
+        <div class="setting-row">
+          <div><p class="setting-title">Clear all conversations</p><p class="setting-sub">Removes transcripts and audio from this device.</p></div>
+          <button class="field-select small danger" id="clear-all">Clear</button>
+        </div>
+      </div>
+      <p class="credits">
+        Speech runs on your browser's speech engine. Translation via public endpoints by default; point it at your own LibreTranslate server in settings.
+        Built on the shoulders of open source: <a href="https://github.com/cjpais/Handy" target="_blank" rel="noopener">Handy</a>,
+        <a href="https://github.com/ggerganov/whisper.cpp" target="_blank" rel="noopener">whisper.cpp</a>,
+        <a href="https://github.com/LibreTranslate/LibreTranslate" target="_blank" rel="noopener">LibreTranslate</a>,
+        <a href="https://github.com/argosopentech/argos-translate" target="_blank" rel="noopener">Argos Translate</a>.
+      </p>
+    </div>
+  </section>
+</main>
+
+<!-- Language sheet -->
+<div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+<div class="sheet" id="lang-sheet" role="dialog" aria-modal="true" aria-label="Choose a language" hidden>
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2 class="sheet-title" id="sheet-title">Language</h2>
+    <input type="search" class="sheet-search" id="lang-search" placeholder="Search" autocomplete="off">
+  </div>
+  <div class="lang-list" id="lang-list"></div>
+</div>
+
+<!-- Engine sheet -->
+<div class="sheet" id="engine-sheet" role="dialog" aria-modal="true" aria-label="Translation engine" hidden>
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title">Translation engine</h2></div>
+  <div class="engine-list">
+    <button class="engine-row" data-engine="auto"><span>Auto</span><span class="engine-sub">Google endpoint, falls back to MyMemory</span></button>
+    <button class="engine-row" data-engine="mymemory"><span>MyMemory</span><span class="engine-sub">Free, open, rate-limited</span></button>
+    <button class="engine-row" data-engine="libre"><span>LibreTranslate</span><span class="engine-sub">Your own server. Private, unlimited.</span></button>
+    <label class="field libre-field" id="libre-field">
+      <span class="field-label">LibreTranslate URL</span>
+      <input type="url" id="libre-url" placeholder="https://translate.yourdomain.com" autocomplete="off">
+      <span class="field-label">API key (optional)</span>
+      <input type="text" id="libre-key" placeholder="key" autocomplete="off">
+    </label>
+    <button class="btn btn-volt" id="engine-save">Save</button>
+  </div>
+</div>
+
+<!-- Voice sheet -->
+<div class="sheet" id="voice-sheet" role="dialog" aria-modal="true" aria-label="Talk-back voice" hidden>
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2 class="sheet-title">Talk-back voice</h2>
+    <div class="seg" id="voice-engine-seg">
+      <button class="seg-btn" data-ve="kokoro">Studio voices</button>
+      <button class="seg-btn" data-ve="browser">Device voices</button>
+    </div>
+    <p class="confirm-sub" id="voice-engine-note"></p>
+  </div>
+  <div class="lang-list" id="voice-list"></div>
+  <div class="edit-actions voice-actions">
+    <button class="btn btn-ghost" id="voice-preview">Preview</button>
+    <button class="btn btn-volt" id="voice-done">Done</button>
+  </div>
+</div>
+
+<!-- Confirm sheet -->
+<div class="sheet" id="confirm-sheet" role="dialog" aria-modal="true" hidden>
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" id="confirm-title">Are you sure?</h2><p class="confirm-sub" id="confirm-sub"></p></div>
+  <div class="edit-actions">
+    <button class="btn btn-ghost" id="confirm-no">Cancel</button>
+    <button class="btn btn-volt" id="confirm-yes">Confirm</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="glyphbg.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
