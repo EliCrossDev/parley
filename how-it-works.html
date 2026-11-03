@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Parley works: live conversation translation in the browser</title>
+<meta name="description" content="How Parley translates an in-person conversation live: speech recognition in the browser, detection of which language is being spoken from the first two words, translation as the words land, and spoken playback with open-source voices.">
+<link rel="canonical" href="https://parley-murex.vercel.app/how-it-works">
+<meta name="theme-color" content="#050505">
+<meta property="og:title" content="How Parley works: live conversation translation in the browser">
+<meta property="og:description" content="How Parley translates an in-person conversation live: speech recognition in the browser, detection of which language is being spoken from the first two words, translation as the words land, and spoken playback with open-source voices.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://parley-murex.vercel.app/how-it-works">
+<meta property="og:site_name" content="Parley">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>try{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{}").palette;if(p&&p!=="sea")document.documentElement.setAttribute("data-palette",p)}catch(e){}</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/landing.css">
+<link rel="stylesheet" href="/pages.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebPage", "name": "How Parley works: live conversation translation in the browser", "description": "How Parley translates an in-person conversation live: speech recognition in the browser, detection of which language is being spoken from the first two words, translation as the words land, and spoken playback with open-source voices.", "url": "https://parley-murex.vercel.app/how-it-works", "isPartOf": {"@type": "WebSite", "name": "Parley", "url": "https://parley-murex.vercel.app"}, "publisher": {"@type": "Organization", "name": "0xROSSI Digital", "url": "https://parley-murex.vercel.app"}}</script>
+</head>
+<body class="landing doc">
+<header class="site-head scrolled">
+  <a class="brand" href="/"><span class="brand-mark"></span><span>Parley</span></a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="/how-it-works">How it works</a>
+    <a href="/compare">Compare</a>
+    <a href="/faq">FAQ</a>
+    <a href="/blog/">Blog</a>
+  </nav>
+  <a class="btn btn-volt head-cta" href="/app">Open Parley</a>
+</header>
+<main>
+<article>
+<p class="eyebrow">How it works</p>
+<h1>Live conversation translation, explained simply.</h1>
+<p class="lede">Parley is a web app for two people who do not share a language and are standing in the same place. There is no call, no account and nothing to download from an app store. Here is what happens underneath.</p>
+<h2>1. Two languages, one screen</h2>
+<p>You pick the two languages in the room, for example English and Spanish. It does not matter who is who. Put the phone between you and tap Start. Light bubbles are one language, dark bubbles are the other, large enough to read across a table.</p>
+<h2>2. Speech is recognized by your browser</h2>
+<p>Parley uses the speech recognition built into Chrome, Edge and Safari. Nothing is uploaded to a Parley server, because there is no Parley server in the loop: the browser hears you and hands Parley the words as you say them, with interim results arriving several times a second.</p>
+<h2>3. Parley decides who is talking from the first two words</h2>
+<p>The browser's engine can only listen in one language at a time, so Parley has to know which language is being spoken as early as possible. It checks the first two words against a tiny on-device list of the most common words in each language (articles, pronouns, greetings). For languages that use different alphabets it looks at the script instead. When that is not enough, it asks the translation engine to identify the language. If the guess was wrong, Parley switches the recognizer and keeps the words it already heard. Either person can also tap their language chip to force it.</p>
+<h2>4. Translation appears as the sentence is still being said</h2>
+<p>Every fraction of a second, the in-progress sentence is translated and shown in the big text of the bubble while the raw words stay in the small line above it. When the room goes quiet, Parley commits the line, translates the final version, and switches the engine to the other language during that silence, so the reply is heard in the right language.</p>
+<h2>5. Optional voice</h2>
+<p>Turn on "Read translations out loud" and Parley speaks the translation with Kokoro, an open-source neural voice model that downloads to your device once and then runs offline. There is no per-use cost, which is part of why Parley is free.</p>
+<h2>6. Everything stays on your device</h2>
+<p>Transcripts and audio recordings are stored in your browser's own database, grouped by day, and can be replayed bubble by bubble. The free tier keeps your last five conversations; <a href="/faq#supporter">supporters</a> keep all of them and can export transcripts.</p>
+<p><a class="cta" href="/app">Try it now, it's free</a></p>
+<div class="related"><p><b>Keep reading:</b> <a href="/how-it-works">How Parley works</a> · <a href="/compare">Parley vs Google Translate vs Apple Translate</a> · <a href="/faq">Frequently asked questions</a> · <a href="/blog/">All posts</a> · <a href="/app">Open Parley, it's free</a></p></div></article>
+</main>
+<footer class="site-foot">
+  <div>
+    <span class="brand"><span class="brand-mark"></span><span>Parley</span></span>
+    <nav aria-label="Pages">
+      <a href="/">Home</a><a href="/app">Open the app</a><a href="/how-it-works">How it works</a><a href="/compare">Parley vs Google Translate vs Apple Translate</a><a href="/faq">FAQ</a><a href="/blog/">Blog</a><a href="/llms.txt">llms.txt</a><a href="https://github.com/EliCrossDev/parley">Source on GitHub</a>
+    </nav>
+    <p class="mono" style="margin-top:14px">Speech by your browser · Translation by open engines · Your data stays on your device · Made by 0xROSSI Digital in Tulum, Mexico</p>
+  </div>
+</footer>
+</body>
+</html>

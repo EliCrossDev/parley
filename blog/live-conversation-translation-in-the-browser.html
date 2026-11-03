@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Why we built a live conversation translator that runs in the browser · Parley blog</title>
+<meta name="description" content="The case for a translation tool with no app store, no account and no server in the loop, and what that makes possible for two people standing in the same room.">
+<link rel="canonical" href="https://parley-murex.vercel.app/blog/live-conversation-translation-in-the-browser">
+<meta name="theme-color" content="#050505">
+<meta property="og:title" content="Why we built a live conversation translator that runs in the browser · Parley blog">
+<meta property="og:description" content="The case for a translation tool with no app store, no account and no server in the loop, and what that makes possible for two people standing in the same room.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://parley-murex.vercel.app/blog/live-conversation-translation-in-the-browser">
+<meta property="og:site_name" content="Parley">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>try{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{}").palette;if(p&&p!=="sea")document.documentElement.setAttribute("data-palette",p)}catch(e){}</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/landing.css">
+<link rel="stylesheet" href="/pages.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Why we built a live conversation translator that runs in the browser", "description": "The case for a translation tool with no app store, no account and no server in the loop, and what that makes possible for two people standing in the same room.", "datePublished": "2026-10-20", "dateModified": "2026-10-20", "url": "https://parley-murex.vercel.app/blog/live-conversation-translation-in-the-browser", "author": {"@type": "Person", "name": "Frankie Rossi", "url": "https://parley-murex.vercel.app"}, "publisher": {"@type": "Organization", "name": "0xROSSI Digital", "url": "https://parley-murex.vercel.app"}, "mainEntityOfPage": "https://parley-murex.vercel.app/blog/live-conversation-translation-in-the-browser", "about": {"@type": "SoftwareApplication", "name": "Parley", "url": "https://parley-murex.vercel.app"}}</script>
+</head>
+<body class="landing doc">
+<header class="site-head scrolled">
+  <a class="brand" href="/"><span class="brand-mark"></span><span>Parley</span></a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="/how-it-works">How it works</a>
+    <a href="/compare">Compare</a>
+    <a href="/faq">FAQ</a>
+    <a href="/blog/">Blog</a>
+  </nav>
+  <a class="btn btn-volt head-cta" href="/app">Open Parley</a>
+</header>
+<main>
+<article><p class="eyebrow">Parley blog</p><h1>Why we built a live conversation translator that runs in the browser</h1><p class="meta">2026-10-20 · by Frankie Rossi, 0xROSSI Digital</p><p class="lede">Most translation apps were designed around a text box. Parley was designed around two people, a table, and a phone lying between them.</p>
+<h2>The moment we wanted to fix</h2>
+<p>You are at a market, a clinic, a landlord's office, a dinner. The other person does not speak your language. Both of you reach for a phone, open an app, tap through screens, hold it up, wait. The conversation that was supposed to happen has become a demo of an app.</p>
+<p>We wanted the opposite: one link, one screen, both of you looking at the same bubbles, no account, nothing to set up beyond picking two languages. The whole app is the conversation.</p>
+<h2>Why the browser</h2>
+<p>Chrome and Safari already ship excellent speech recognition, and open translation engines are a request away. By building Parley as a web app we skip the store, work on every phone and laptop with one link, and keep your words off our servers because there are no servers of ours in the loop. It also means Parley can be installed to the home screen and run full screen, like an app, in two taps.</p>
+<h2>What it cost us</h2>
+<p>Browser speech engines only listen in one language at a time. A native app with its own speech model can identify the language from the sound; we cannot. So we built a different approach: decide from the first two words, switch during silences, never mid-word. We wrote about it in <a href="/blog/how-parley-knows-which-language-is-being-spoken">How Parley knows which language is being spoken</a>.</p>
+<h2>What it made possible</h2>
+<p>Free for everyone, because nothing meters. Private by construction. Replayable conversations, with audio, on your device. And a translation engine you can swap for your own server when you need unlimited, private use. Try it at <a href="/app">parley-murex.vercel.app/app</a>.</p><div class="related"><p><b>Keep reading:</b> <a href="/how-it-works">How Parley works</a> · <a href="/compare">Parley vs Google Translate vs Apple Translate</a> · <a href="/faq">Frequently asked questions</a> · <a href="/blog/">All posts</a> · <a href="/app">Open Parley, it's free</a></p></div></article>
+</main>
+<footer class="site-foot">
+  <div>
+    <span class="brand"><span class="brand-mark"></span><span>Parley</span></span>
+    <nav aria-label="Pages">
+      <a href="/">Home</a><a href="/app">Open the app</a><a href="/how-it-works">How it works</a><a href="/compare">Parley vs Google Translate vs Apple Translate</a><a href="/faq">FAQ</a><a href="/blog/">Blog</a><a href="/llms.txt">llms.txt</a><a href="https://github.com/EliCrossDev/parley">Source on GitHub</a>
+    </nav>
+    <p class="mono" style="margin-top:14px">Speech by your browser · Translation by open engines · Your data stays on your device · Made by 0xROSSI Digital in Tulum, Mexico</p>
+  </div>
+</footer>
+</body>
+</html>

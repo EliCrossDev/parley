@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parley vs Google Translate conversation mode: which one for a face-to-face chat? · Parley blog</title>
+<meta name="description" content="A practical, first-party comparison of Parley and Google Translate's conversation mode for translating an in-person conversation: setup, detection, privacy, history and when to pick each.">
+<link rel="canonical" href="https://parley-murex.vercel.app/blog/parley-vs-google-translate-conversation-mode">
+<meta name="theme-color" content="#050505">
+<meta property="og:title" content="Parley vs Google Translate conversation mode: which one for a face-to-face chat? · Parley blog">
+<meta property="og:description" content="A practical, first-party comparison of Parley and Google Translate's conversation mode for translating an in-person conversation: setup, detection, privacy, history and when to pick each.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://parley-murex.vercel.app/blog/parley-vs-google-translate-conversation-mode">
+<meta property="og:site_name" content="Parley">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>try{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{}").palette;if(p&&p!=="sea")document.documentElement.setAttribute("data-palette",p)}catch(e){}</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/landing.css">
+<link rel="stylesheet" href="/pages.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Parley vs Google Translate conversation mode: which one for a face-to-face chat?", "description": "A practical, first-party comparison of Parley and Google Translate's conversation mode for translating an in-person conversation: setup, detection, privacy, history and when to pick each.", "datePublished": "2026-11-03", "dateModified": "2026-11-03", "url": "https://parley-murex.vercel.app/blog/parley-vs-google-translate-conversation-mode", "author": {"@type": "Person", "name": "Frankie Rossi", "url": "https://parley-murex.vercel.app"}, "publisher": {"@type": "Organization", "name": "0xROSSI Digital", "url": "https://parley-murex.vercel.app"}, "mainEntityOfPage": "https://parley-murex.vercel.app/blog/parley-vs-google-translate-conversation-mode", "about": {"@type": "SoftwareApplication", "name": "Parley", "url": "https://parley-murex.vercel.app"}}</script>
+</head>
+<body class="landing doc">
+<header class="site-head scrolled">
+  <a class="brand" href="/"><span class="brand-mark"></span><span>Parley</span></a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="/how-it-works">How it works</a>
+    <a href="/compare">Compare</a>
+    <a href="/faq">FAQ</a>
+    <a href="/blog/">Blog</a>
+  </nav>
+  <a class="btn btn-volt head-cta" href="/app">Open Parley</a>
+</header>
+<main>
+<article><p class="eyebrow">Parley blog</p><h1>Parley vs Google Translate conversation mode: which one for a face-to-face chat?</h1><p class="meta">2026-11-03 · by Frankie Rossi, 0xROSSI Digital</p><p class="lede">Google Translate's conversation mode is good. Here is where Parley does better, where it does not, and how to decide in ten seconds.</p>
+<h2>Getting started</h2>
+<p>Parley: open a link, pick two languages, tap Start. Google Translate: install the app, sign in or skip, choose Conversation, pick languages. Both are quick; Parley wins when the other person's phone is the one you are using, because there is nothing to install.</p>
+<h2>Detecting who is talking</h2>
+<p>Google's app listens for both languages at once with its own speech models. Parley decides from the first two words and switches the browser's engine during silences, which we describe in <a href="/blog/how-parley-knows-which-language-is-being-spoken">this post</a>. In everyday conversation both feel immediate; Google has the edge when both languages sound alike and the opening words are ambiguous.</p>
+<h2>What happens to your words</h2>
+<p>Google Translate sends audio to Google. Parley's speech recognition runs through your browser's engine and translation through public engines, with no Parley server in between, and you can point Parley at your own LibreTranslate server for fully private use. Conversations stay on your device in both cases, but Parley saves the audio too and replays it bubble by bubble.</p>
+<h2>Languages</h2>
+<p>Google covers over a hundred languages. Parley covers 28, chosen for in-person conversations. If your language is not on <a href="/faq">the list</a>, use Google.</p>
+<h2>The decision</h2>
+<p>Need a rare language or fully offline use: Google Translate. Want to open a link on any device, keep the conversation and its audio, and keep it private: <a href="/app">Parley</a>. The full table is on the <a href="/compare">comparison page</a>, which also covers Apple Translate.</p><div class="related"><p><b>Keep reading:</b> <a href="/how-it-works">How Parley works</a> · <a href="/compare">Parley vs Google Translate vs Apple Translate</a> · <a href="/faq">Frequently asked questions</a> · <a href="/blog/">All posts</a> · <a href="/app">Open Parley, it's free</a></p></div></article>
+</main>
+<footer class="site-foot">
+  <div>
+    <span class="brand"><span class="brand-mark"></span><span>Parley</span></span>
+    <nav aria-label="Pages">
+      <a href="/">Home</a><a href="/app">Open the app</a><a href="/how-it-works">How it works</a><a href="/compare">Parley vs Google Translate vs Apple Translate</a><a href="/faq">FAQ</a><a href="/blog/">Blog</a><a href="/llms.txt">llms.txt</a><a href="https://github.com/EliCrossDev/parley">Source on GitHub</a>
+    </nav>
+    <p class="mono" style="margin-top:14px">Speech by your browser · Translation by open engines · Your data stays on your device · Made by 0xROSSI Digital in Tulum, Mexico</p>
+  </div>
+</footer>
+</body>
+</html>

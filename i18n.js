@@ -49,6 +49,7 @@ window.I18N = (function () {
       'prosheet.title': 'Support Parley', 'prosheet.sub': "Parley is free. If it's useful, chip in whatever you want, one time, no subscription, and you get unlimited history, recordings kept until you delete them, and transcript export. Unlock any other device with the email you paid with.",
       'prosheet.buy': 'Chip in · pay what you want', 'prosheet.restore': 'Already chipped in? Restore on this device', 'prosheet.email': 'Email you paid with', 'prosheet.notnow': 'Not now', 'prosheet.restorebtn': 'Restore',
       "hist.keep": "Keep", "hist.all": "All", "hist.clear": "Clear all", "hist.clearq": "Clear all conversations?", "hist.clearsub": "Every transcript and recording on this device is removed.", "hist.cleared": "Cleared", "hist.keepq": "Keep the latest {n}?", "hist.keepsub": "{d} older conversations will be deleted now, and Parley will keep trimming to this number.", "pb.deleteq": "Delete this conversation?", "pb.deletesub": "Transcript and audio are removed from this device.", "pb.deleted": "Deleted", "hero.iostip": "On iPhone: tap Share, then \"Add to Home Screen\". Parley becomes a full-screen app with its own icon.", "hero.desktoptip": "Use your browser menu: \"Install app\" or \"Add to Home Screen\".", "hero.installed": "Parley is already installed",
+      'nav.compare': "Compare", 'nav.faq': "FAQ", 'nav.blog': "Blog",
       'confirm.cancel': 'Cancel', 'confirm.ok': 'Confirm',
     },
     es: {
@@ -96,6 +97,7 @@ window.I18N = (function () {
       'prosheet.title': 'Apoya a Parley', 'prosheet.sub': 'Parley es gratis. Si te sirve, aporta lo que quieras, una sola vez, sin suscripción, y obtienes historial ilimitado, grabaciones guardadas hasta que las borres y exportación de transcripciones. Desbloquea otros dispositivos con el correo con el que pagaste.',
       'prosheet.buy': 'Aportar · paga lo que quieras', 'prosheet.restore': '¿Ya aportaste? Restaura en este dispositivo', 'prosheet.email': 'Correo con el que pagaste', 'prosheet.notnow': 'Ahora no', 'prosheet.restorebtn': 'Restaurar',
       "hist.keep": "Guardar", "hist.all": "Todas", "hist.clear": "Borrar todo", "hist.clearq": "¿Borrar todas las conversaciones?", "hist.clearsub": "Se eliminan todas las transcripciones y grabaciones de este dispositivo.", "hist.cleared": "Borrado", "hist.keepq": "¿Guardar solo las últimas {n}?", "hist.keepsub": "Se borrarán {d} conversaciones antiguas ahora y Parley seguirá recortando a ese número.", "pb.deleteq": "¿Borrar esta conversación?", "pb.deletesub": "La transcripción y el audio se eliminan de este dispositivo.", "pb.deleted": "Borrada", "hero.iostip": "En iPhone: toca Compartir y luego \"Añadir a pantalla de inicio\". Parley se convierte en una app a pantalla completa con su propio icono.", "hero.desktoptip": "Usa el menú del navegador: \"Instalar app\" o \"Añadir a pantalla de inicio\".", "hero.installed": "Parley ya está instalado",
+      'nav.compare': "Comparar", 'nav.faq': "Preguntas", 'nav.blog': "Blog",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     pt: {
@@ -143,6 +145,7 @@ window.I18N = (function () {
       'prosheet.title': 'Apoie o Parley', 'prosheet.sub': 'O Parley é grátis. Se for útil, contribua com o que quiser, uma vez só, sem assinatura, e você ganha histórico ilimitado, gravações mantidas até apagar e exportação de transcrições. Desbloqueie outros aparelhos com o e-mail que usou para pagar.',
       'prosheet.buy': 'Contribuir · pague o que quiser', 'prosheet.restore': 'Já contribuiu? Restaure neste aparelho', 'prosheet.email': 'E-mail usado no pagamento', 'prosheet.notnow': 'Agora não', 'prosheet.restorebtn': 'Restaurar',
       "hist.keep": "Manter", "hist.all": "Todas", "hist.clear": "Apagar tudo", "hist.clearq": "Apagar todas as conversas?", "hist.clearsub": "Todas as transcrições e gravações deste aparelho serão removidas.", "hist.cleared": "Apagado", "hist.keepq": "Manter só as últimas {n}?", "hist.keepsub": "{d} conversas antigas serão apagadas agora e o Parley vai continuar limitando a esse número.", "pb.deleteq": "Apagar esta conversa?", "pb.deletesub": "A transcrição e o áudio são removidos deste aparelho.", "pb.deleted": "Apagada", "hero.iostip": "No iPhone: toque em Compartilhar e depois em \"Adicionar à Tela de Início\". O Parley vira um app em tela cheia com ícone próprio.", "hero.desktoptip": "Use o menu do navegador: \"Instalar app\" ou \"Adicionar à tela inicial\".", "hero.installed": "O Parley já está instalado",
+      'nav.compare': "Comparar", 'nav.faq': "Perguntas", 'nav.blog': "Blog",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     fr: {
@@ -190,6 +193,7 @@ window.I18N = (function () {
       'prosheet.title': 'Soutenir Parley', 'prosheet.sub': "Parley est gratuit. S'il vous est utile, contribuez ce que vous voulez, une seule fois, sans abonnement, et vous obtenez l'historique illimité, les enregistrements gardés jusqu'à suppression et l'export des transcriptions. Débloquez un autre appareil avec l'e-mail utilisé pour payer.",
       'prosheet.buy': 'Contribuer · payez ce que vous voulez', 'prosheet.restore': 'Déjà contribué ? Restaurer sur cet appareil', 'prosheet.email': 'E-mail utilisé pour payer', 'prosheet.notnow': 'Pas maintenant', 'prosheet.restorebtn': 'Restaurer',
       "hist.keep": "Garder", "hist.all": "Toutes", "hist.clear": "Tout effacer", "hist.clearq": "Effacer toutes les conversations ?", "hist.clearsub": "Toutes les transcriptions et tous les enregistrements de cet appareil sont supprimés.", "hist.cleared": "Effacé", "hist.keepq": "Garder seulement les {n} dernières ?", "hist.keepsub": "{d} anciennes conversations seront supprimées maintenant, et Parley gardera ce nombre.", "pb.deleteq": "Supprimer cette conversation ?", "pb.deletesub": "La transcription et l'audio sont supprimés de cet appareil.", "pb.deleted": "Supprimée", "hero.iostip": "Sur iPhone : touchez Partager, puis « Sur l'écran d'accueil ». Parley devient une app plein écran avec sa propre icône.", "hero.desktoptip": "Dans le menu du navigateur : « Installer l'application » ou « Ajouter à l'écran d'accueil ».", "hero.installed": "Parley est déjà installé",
+      'nav.compare': "Comparer", 'nav.faq': "FAQ", 'nav.blog': "Blog",
       'confirm.cancel': 'Annuler', 'confirm.ok': 'Confirmer',
     },
     de: {
@@ -237,6 +241,7 @@ window.I18N = (function () {
       'prosheet.title': 'Parley unterstützen', 'prosheet.sub': 'Parley ist kostenlos. Wenn es dir hilft, gib dazu, was du willst, einmalig, kein Abo, und du bekommst unbegrenzten Verlauf, Aufnahmen bis du sie löschst und Transkript-Export. Andere Geräte schaltest du mit der E-Mail frei, mit der du bezahlt hast.',
       'prosheet.buy': 'Dazugeben · zahl, was du willst', 'prosheet.restore': 'Schon dazugegeben? Auf diesem Gerät wiederherstellen', 'prosheet.email': 'E-Mail der Zahlung', 'prosheet.notnow': 'Jetzt nicht', 'prosheet.restorebtn': 'Wiederherstellen',
       "hist.keep": "Behalten", "hist.all": "Alle", "hist.clear": "Alle löschen", "hist.clearq": "Alle Gespräche löschen?", "hist.clearsub": "Alle Transkripte und Aufnahmen auf diesem Gerät werden entfernt.", "hist.cleared": "Gelöscht", "hist.keepq": "Nur die letzten {n} behalten?", "hist.keepsub": "{d} ältere Gespräche werden jetzt gelöscht, und Parley hält diese Zahl weiter ein.", "pb.deleteq": "Dieses Gespräch löschen?", "pb.deletesub": "Transkript und Audio werden von diesem Gerät entfernt.", "pb.deleted": "Gelöscht", "hero.iostip": "Auf dem iPhone: Teilen antippen, dann „Zum Home-Bildschirm“. Parley wird zur Vollbild-App mit eigenem Icon.", "hero.desktoptip": "Im Browser-Menü: „App installieren“ oder „Zum Startbildschirm hinzufügen“.", "hero.installed": "Parley ist schon installiert",
+      'nav.compare': "Vergleich", 'nav.faq': "FAQ", 'nav.blog': "Blog",
       'confirm.cancel': 'Abbrechen', 'confirm.ok': 'Bestätigen',
     },
     it: {
@@ -284,6 +289,7 @@ window.I18N = (function () {
       'prosheet.title': 'Sostieni Parley', 'prosheet.sub': "Parley è gratis. Se ti è utile, contribuisci quanto vuoi, una volta sola, senza abbonamento, e ottieni cronologia illimitata, registrazioni conservate finché non le elimini ed esportazione delle trascrizioni. Sblocca altri dispositivi con l'email usata per pagare.",
       'prosheet.buy': 'Contribuisci · paga quanto vuoi', 'prosheet.restore': 'Hai già contribuito? Ripristina su questo dispositivo', 'prosheet.email': 'Email usata per pagare', 'prosheet.notnow': 'Non ora', 'prosheet.restorebtn': 'Ripristina',
       "hist.keep": "Tieni", "hist.all": "Tutte", "hist.clear": "Cancella tutto", "hist.clearq": "Cancellare tutte le conversazioni?", "hist.clearsub": "Tutte le trascrizioni e le registrazioni su questo dispositivo vengono rimosse.", "hist.cleared": "Cancellato", "hist.keepq": "Tenere solo le ultime {n}?", "hist.keepsub": "{d} conversazioni più vecchie verranno eliminate ora e Parley manterrà questo numero.", "pb.deleteq": "Eliminare questa conversazione?", "pb.deletesub": "Trascrizione e audio vengono rimossi da questo dispositivo.", "pb.deleted": "Eliminata", "hero.iostip": "Su iPhone: tocca Condividi, poi \"Aggiungi alla schermata Home\". Parley diventa un'app a schermo intero con la sua icona.", "hero.desktoptip": "Dal menu del browser: \"Installa app\" o \"Aggiungi a schermata Home\".", "hero.installed": "Parley è già installato",
+      'nav.compare': "Confronto", 'nav.faq': "FAQ", 'nav.blog': "Blog",
       'confirm.cancel': 'Annulla', 'confirm.ok': 'Conferma',
     },
     ko: {
@@ -331,6 +337,7 @@ window.I18N = (function () {
       'prosheet.title': 'Parley 후원', 'prosheet.sub': 'Parley는 무료입니다. 유용했다면 원하는 만큼 한 번만 후원하세요. 구독 없음. 무제한 기록, 삭제할 때까지 녹음 보관, 대본 내보내기가 열립니다. 결제한 이메일로 다른 기기도 열 수 있습니다.',
       'prosheet.buy': '후원하기 · 원하는 만큼', 'prosheet.restore': '이미 후원하셨나요? 이 기기에서 복원', 'prosheet.email': '결제한 이메일', 'prosheet.notnow': '나중에', 'prosheet.restorebtn': '복원',
       "hist.keep": "보관", "hist.all": "전부", "hist.clear": "모두 삭제", "hist.clearq": "모든 대화를 삭제할까요?", "hist.clearsub": "이 기기의 모든 대본과 녹음이 삭제됩니다.", "hist.cleared": "삭제됨", "hist.keepq": "최근 {n}개만 보관할까요?", "hist.keepsub": "오래된 대화 {d}개가 지금 삭제되고, 이후에도 이 개수로 유지됩니다.", "pb.deleteq": "이 대화를 삭제할까요?", "pb.deletesub": "대본과 오디오가 이 기기에서 삭제됩니다.", "pb.deleted": "삭제됨", "hero.iostip": "iPhone에서는 공유를 누른 뒤 \"홈 화면에 추가\"를 선택하세요. Parley가 아이콘이 있는 전체 화면 앱이 됩니다.", "hero.desktoptip": "브라우저 메뉴에서 \"앱 설치\" 또는 \"홈 화면에 추가\"를 선택하세요.", "hero.installed": "Parley가 이미 설치되어 있습니다",
+      'nav.compare': "비교", 'nav.faq': "자주 묻는 질문", 'nav.blog': "블로그",
       'confirm.cancel': '취소', 'confirm.ok': '확인',
     },
     ja: {
@@ -378,6 +385,7 @@ window.I18N = (function () {
       'prosheet.title': 'Parleyを応援', 'prosheet.sub': 'Parleyは無料です。役に立ったら、好きな金額で一回だけ応援してください。サブスクなし。無制限の履歴、削除するまでの録音保持、文字起こしの書き出しが使えます。支払いに使ったメールで他の端末も解放できます。',
       'prosheet.buy': '応援する · 好きな金額で', 'prosheet.restore': 'もう応援済み？この端末で復元', 'prosheet.email': '支払いに使ったメール', 'prosheet.notnow': '今はしない', 'prosheet.restorebtn': '復元',
       "hist.keep": "保存数", "hist.all": "すべて", "hist.clear": "すべて削除", "hist.clearq": "すべての会話を削除しますか？", "hist.clearsub": "この端末のすべての文字起こしと録音が削除されます。", "hist.cleared": "削除しました", "hist.keepq": "最新の{n}件だけ残しますか？", "hist.keepsub": "古い会話{d}件が今すぐ削除され、以後もこの件数に保たれます。", "pb.deleteq": "この会話を削除しますか？", "pb.deletesub": "文字起こしと音声がこの端末から削除されます。", "pb.deleted": "削除しました", "hero.iostip": "iPhoneでは共有をタップし、「ホーム画面に追加」を選んでください。Parleyがアイコン付きの全画面アプリになります。", "hero.desktoptip": "ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選んでください。", "hero.installed": "Parleyはすでにインストールされています",
+      'nav.compare': "比較", 'nav.faq': "よくある質問", 'nav.blog': "ブログ",
       'confirm.cancel': 'キャンセル', 'confirm.ok': '確認',
     },
     zh: {
@@ -425,6 +433,7 @@ window.I18N = (function () {
       'prosheet.title': '支持 Parley', 'prosheet.sub': 'Parley 是免费的。如果它帮到你，随心支持一次，无订阅，即可获得无限记录、录音保留到你删除为止，以及文字记录导出。用付款邮箱可在其他设备解锁。',
       'prosheet.buy': '支持 · 随心付费', 'prosheet.restore': '已经支持过？在此设备恢复', 'prosheet.email': '付款邮箱', 'prosheet.notnow': '暂不', 'prosheet.restorebtn': '恢复',
       "hist.keep": "保留", "hist.all": "全部", "hist.clear": "全部清除", "hist.clearq": "清除所有对话？", "hist.clearsub": "此设备上的所有文字记录和录音都会被删除。", "hist.cleared": "已清除", "hist.keepq": "只保留最近 {n} 条？", "hist.keepsub": "{d} 条较早的对话会立即删除，之后也会一直保持这个数量。", "pb.deleteq": "删除这次对话？", "pb.deletesub": "文字记录和音频会从此设备删除。", "pb.deleted": "已删除", "hero.iostip": "在 iPhone 上：点按分享，再选\"添加到主屏幕\"。Parley 就会成为带图标的全屏应用。", "hero.desktoptip": "使用浏览器菜单：\"安装应用\"或\"添加到主屏幕\"。", "hero.installed": "Parley 已经安装",
+      'nav.compare': "对比", 'nav.faq': "常见问题", 'nav.blog': "博客",
       'confirm.cancel': '取消', 'confirm.ok': '确认',
     },
   };

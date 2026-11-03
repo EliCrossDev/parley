@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parley vs Google Translate vs Apple Translate for live in-person conversation</title>
+<meta name="description" content="An honest comparison of Parley with Google Translate conversation mode and Apple Translate conversation mode for translating a face-to-face conversation: install, cost, language detection, privacy, playback and history.">
+<link rel="canonical" href="https://parley-murex.vercel.app/compare">
+<meta name="theme-color" content="#050505">
+<meta property="og:title" content="Parley vs Google Translate vs Apple Translate for live in-person conversation">
+<meta property="og:description" content="An honest comparison of Parley with Google Translate conversation mode and Apple Translate conversation mode for translating a face-to-face conversation: install, cost, language detection, privacy, playback and history.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://parley-murex.vercel.app/compare">
+<meta property="og:site_name" content="Parley">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>try{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{}").palette;if(p&&p!=="sea")document.documentElement.setAttribute("data-palette",p)}catch(e){}</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/landing.css">
+<link rel="stylesheet" href="/pages.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebPage", "name": "Parley vs Google Translate vs Apple Translate for live in-person conversation", "description": "An honest comparison of Parley with Google Translate conversation mode and Apple Translate conversation mode for translating a face-to-face conversation: install, cost, language detection, privacy, playback and history.", "url": "https://parley-murex.vercel.app/compare", "isPartOf": {"@type": "WebSite", "name": "Parley", "url": "https://parley-murex.vercel.app"}, "publisher": {"@type": "Organization", "name": "0xROSSI Digital", "url": "https://parley-murex.vercel.app"}}</script>
+</head>
+<body class="landing doc">
+<header class="site-head scrolled">
+  <a class="brand" href="/"><span class="brand-mark"></span><span>Parley</span></a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="/how-it-works">How it works</a>
+    <a href="/compare">Compare</a>
+    <a href="/faq">FAQ</a>
+    <a href="/blog/">Blog</a>
+  </nav>
+  <a class="btn btn-volt head-cta" href="/app">Open Parley</a>
+</header>
+<main>
+<article>
+<p class="eyebrow">Comparison</p>
+<h1>Parley vs Google Translate vs Apple Translate</h1>
+<p class="lede">All three can translate a conversation between two people in the same room. They differ in where they run, what they keep, and how they decide who is speaking. This page is written by the Parley team, so read it with that in mind; where we are unsure how a competitor behaves today, we say so.</p>
+<div class="table-wrap"><table>
+<tr><th>Capability</th><th>Parley</th><th>Google Translate (Conversation)</th><th>Apple Translate (Conversation)</th></tr>
+<tr><td>Where it runs</td><td>Any modern browser; installs to the home screen as a web app</td><td>Google Translate app (iOS, Android)</td><td>Translate app built into iOS and iPadOS</td></tr>
+<tr><td>Account or store</td><td>None. Open the link and talk</td><td>App Store or Play Store download</td><td>Pre-installed on iPhone</td></tr>
+<tr><td>Cost</td><td>Free. Optional pay-what-you-want supporter upgrade</td><td>Free</td><td>Free</td></tr>
+<tr><td>Who is speaking</td><td>Detected from the first two words; tap a chip to override</td><td>Automatic detection between the two chosen languages</td><td>Automatic detection between the two chosen languages</td></tr>
+<tr><td>Translation shown while the sentence is still being said</td><td>Yes, interim translation updates in the bubble</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Spoken playback</td><td>Optional, open-source neural voices that run on the device</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Saves the conversation</td><td>Transcript and audio, replayable bubble by bubble, on the device</td><td>History of translations, tied to your Google account when signed in</td><td>Favorites and recent translations</td></tr>
+<tr><td>Where your words go</td><td>Browser speech engine and public translation engines; no Parley server sees your conversation</td><td>Google servers</td><td>Apple; on-device mode available when languages are downloaded</td></tr>
+<tr><td>Languages</td><td>28, chosen for real conversations</td><td>Over 100</td><td>About 20</td></tr>
+<tr><td>Works on a laptop or desktop</td><td>Yes, same link</td><td>Web version lacks conversation mode</td><td>Mac Translate app</td></tr>
+<tr><td>Pick your own translation engine</td><td>Yes: public engines or your own LibreTranslate server</td><td>No</td><td>No</td></tr>
+</table></div>
+<h2>When Parley is the better pick</h2>
+<p>You want something that opens instantly on any phone or laptop with nothing to install, you care that no account is involved, you want to replay the conversation later with the audio, or you want to point the translator at your own server for private, unlimited use. Parley's whole screen is the conversation, with nothing else competing for attention.</p>
+<h2>When the big apps are the better pick</h2>
+<p>You need one of the many languages Parley does not cover yet, you want fully offline translation with downloaded language packs, or you already live inside the Google or Apple ecosystem and want history synced to your account. Google Translate also handles text in photos and documents, which Parley does not try to do.</p>
+<h2>How the detection actually differs</h2>
+<p>The browser speech engines Parley relies on can only listen in one language per session. Parley works around that by guessing from the first two words and switching during silences, which we explain in <a href="/how-it-works">How it works</a>. The native apps run their own speech models and identify the language from the audio itself. In practice both approaches feel immediate; the native apps have the edge when both languages sound alike and the first words are ambiguous, and Parley has the edge in getting started and in keeping your words off a company server.</p>
+<p><a class="cta" href="/app">Open Parley</a></p>
+<div class="related"><p><b>Keep reading:</b> <a href="/how-it-works">How Parley works</a> · <a href="/compare">Parley vs Google Translate vs Apple Translate</a> · <a href="/faq">Frequently asked questions</a> · <a href="/blog/">All posts</a> · <a href="/app">Open Parley, it's free</a></p></div></article>
+</main>
+<footer class="site-foot">
+  <div>
+    <span class="brand"><span class="brand-mark"></span><span>Parley</span></span>
+    <nav aria-label="Pages">
+      <a href="/">Home</a><a href="/app">Open the app</a><a href="/how-it-works">How it works</a><a href="/compare">Parley vs Google Translate vs Apple Translate</a><a href="/faq">FAQ</a><a href="/blog/">Blog</a><a href="/llms.txt">llms.txt</a><a href="https://github.com/EliCrossDev/parley">Source on GitHub</a>
+    </nav>
+    <p class="mono" style="margin-top:14px">Speech by your browser · Translation by open engines · Your data stays on your device · Made by 0xROSSI Digital in Tulum, Mexico</p>
+  </div>
+</footer>
+</body>
+</html>

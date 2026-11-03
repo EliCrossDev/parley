@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Parley knows which language is being spoken · Parley blog</title>
+<meta name="description" content="A look inside Parley's two-word language detection: on-device word lists, script detection, a translator fallback, and switching the speech engine only during silence.">
+<link rel="canonical" href="https://parley-murex.vercel.app/blog/how-parley-knows-which-language-is-being-spoken">
+<meta name="theme-color" content="#050505">
+<meta property="og:title" content="How Parley knows which language is being spoken · Parley blog">
+<meta property="og:description" content="A look inside Parley's two-word language detection: on-device word lists, script detection, a translator fallback, and switching the speech engine only during silence.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://parley-murex.vercel.app/blog/how-parley-knows-which-language-is-being-spoken">
+<meta property="og:site_name" content="Parley">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>try{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{}").palette;if(p&&p!=="sea")document.documentElement.setAttribute("data-palette",p)}catch(e){}</script>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/landing.css">
+<link rel="stylesheet" href="/pages.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "How Parley knows which language is being spoken", "description": "A look inside Parley's two-word language detection: on-device word lists, script detection, a translator fallback, and switching the speech engine only during silence.", "datePublished": "2026-10-27", "dateModified": "2026-10-27", "url": "https://parley-murex.vercel.app/blog/how-parley-knows-which-language-is-being-spoken", "author": {"@type": "Person", "name": "Frankie Rossi", "url": "https://parley-murex.vercel.app"}, "publisher": {"@type": "Organization", "name": "0xROSSI Digital", "url": "https://parley-murex.vercel.app"}, "mainEntityOfPage": "https://parley-murex.vercel.app/blog/how-parley-knows-which-language-is-being-spoken", "about": {"@type": "SoftwareApplication", "name": "Parley", "url": "https://parley-murex.vercel.app"}}</script>
+</head>
+<body class="landing doc">
+<header class="site-head scrolled">
+  <a class="brand" href="/"><span class="brand-mark"></span><span>Parley</span></a>
+  <nav class="site-nav" aria-label="Site">
+    <a href="/how-it-works">How it works</a>
+    <a href="/compare">Compare</a>
+    <a href="/faq">FAQ</a>
+    <a href="/blog/">Blog</a>
+  </nav>
+  <a class="btn btn-volt head-cta" href="/app">Open Parley</a>
+</header>
+<main>
+<article><p class="eyebrow">Parley blog</p><h1>How Parley knows which language is being spoken</h1><p class="meta">2026-10-27 · by Frankie Rossi, 0xROSSI Digital</p><p class="lede">The browser can only hear one language at a time. Here is how Parley turns that into a conversation that flips direction on its own.</p>
+<h2>The constraint</h2>
+<p>Web speech recognition takes a language code when it starts. Start it in English and Spanish comes out as nonsense. So the question Parley has to answer, every time someone starts talking, is: which of the two languages is this, and how fast can we know?</p>
+<h2>Two words</h2>
+<p>The first thing Parley does with an in-progress sentence is look at its first two words. For the common pairs that share an alphabet, like English and Spanish or Portuguese and Italian, a small list of each language's most frequent function words (the, a, is, yes; el, la, es, sí) usually decides it in zero milliseconds, on the device. For pairs with different scripts, Japanese and English for instance, the characters themselves answer the question.</p>
+<p>If neither trick is confident, Parley sends just those two words to the translation engine and asks it which language they are. That costs one short network round trip and happens while the person is still talking.</p>
+<h2>Switching without losing words</h2>
+<p>When the guess says the other person is talking, Parley restarts the speech engine in their language and carries the words it already heard into the new bubble. When a line ends in silence, Parley commits it, translates it, and uses that same silence to switch the engine to the other language, because the reply usually comes next. If the same person keeps talking instead, the two-word check flips it back.</p>
+<h2>A manual override, always</h2>
+<p>Automatic detection is a guess, and guesses are wrong sometimes. Both language chips at the bottom of the live screen are buttons; tapping one tells Parley who is speaking right now. It is the fastest fix there is and it never gets in the way when the guess is right.</p>
+<p>Read how the rest of the pipeline fits together in <a href="/how-it-works">How Parley works</a>.</p><div class="related"><p><b>Keep reading:</b> <a href="/how-it-works">How Parley works</a> · <a href="/compare">Parley vs Google Translate vs Apple Translate</a> · <a href="/faq">Frequently asked questions</a> · <a href="/blog/">All posts</a> · <a href="/app">Open Parley, it's free</a></p></div></article>
+</main>
+<footer class="site-foot">
+  <div>
+    <span class="brand"><span class="brand-mark"></span><span>Parley</span></span>
+    <nav aria-label="Pages">
+      <a href="/">Home</a><a href="/app">Open the app</a><a href="/how-it-works">How it works</a><a href="/compare">Parley vs Google Translate vs Apple Translate</a><a href="/faq">FAQ</a><a href="/blog/">Blog</a><a href="/llms.txt">llms.txt</a><a href="https://github.com/EliCrossDev/parley">Source on GitHub</a>
+    </nav>
+    <p class="mono" style="margin-top:14px">Speech by your browser · Translation by open engines · Your data stays on your device · Made by 0xROSSI Digital in Tulum, Mexico</p>
+  </div>
+</footer>
+</body>
+</html>

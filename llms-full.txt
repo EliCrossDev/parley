@@ -1,0 +1,306 @@
+# Parley
+
+> Parley is a free live conversation translator for two people in the same room. Pick two languages, put the phone between you, and each person sees what the other said in their own language as they say it. It runs in the browser (Chrome, Edge, Safari), installs to the home screen as a web app, needs no account, and keeps conversations on the device.
+
+Made by 0xROSSI Digital (Frankie Rossi, Tulum, Mexico). Live at https://parley-murex.vercel.app. Source: https://github.com/EliCrossDev/parley
+
+## What it does
+- Live, two-way translation of an in-person conversation (no call): light bubbles are one language, dark bubbles the other, big enough to read across a table.
+- Detects which of the two languages is being spoken from the first two words (on-device word lists, script detection, translator fallback); either person can tap a chip to override.
+- Translation appears while the sentence is still being said; the engine switches languages during the silence after each line.
+- Optional spoken playback with Kokoro, an open-source neural voice model that runs on the device.
+- Conversations saved on the device with audio, replayable bubble by bubble. Free keeps the last 5; supporters keep all, can export transcripts, and can auto-trim to any number.
+- 28 languages: English, Spanish, Portuguese, Chinese, Hindi, Thai, Korean, Japanese, French, German, Italian, Arabic, Russian, Indonesian, Vietnamese, Turkish, Dutch, Polish, Filipino, Swahili, Bengali, Urdu, Hebrew, Greek, Swedish, Ukrainian, Malay, Persian.
+- Interface available in English, Spanish, Portuguese, French, German, Italian, Korean, Japanese and Chinese.
+- Translation engine is selectable: public engines, or your own LibreTranslate server for private unlimited use.
+
+## Pricing
+Free for everyone, no account. Optional pay-what-you-want supporter upgrade (one time, no subscription): unlimited history, recordings kept until deleted, transcript export.
+
+## Pages
+- [Home](https://parley-murex.vercel.app/): overview and install
+- [Open the app](https://parley-murex.vercel.app/app)
+- [How it works](https://parley-murex.vercel.app/how-it-works): the pipeline, step by step
+- [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare): honest comparison table
+- [FAQ](https://parley-murex.vercel.app/faq)
+- [Blog](https://parley-murex.vercel.app/blog/)
+- [Full text for language models](https://parley-murex.vercel.app/llms-full.txt)
+
+## Blog posts
+- [Why we built a live conversation translator that runs in the browser](https://parley-murex.vercel.app/blog/live-conversation-translation-in-the-browser): The case for a translation tool with no app store, no account and no server in the loop, and what that makes possible for two people standing in the same room.
+- [How Parley knows which language is being spoken](https://parley-murex.vercel.app/blog/how-parley-knows-which-language-is-being-spoken): A look inside Parley's two-word language detection: on-device word lists, script detection, a translator fallback, and switching the speech engine only during silence.
+- [Install Parley on iPhone, Android or your desktop in two taps](https://parley-murex.vercel.app/blog/install-parley-iphone-android-desktop): Parley is an installable web app. Here is how to put it on your home screen on iPhone and Android, and on your desktop in Chrome or Edge, with no app store involved.
+- [Why Parley is free, and what supporters get](https://parley-murex.vercel.app/blog/why-parley-is-free-and-what-supporters-get): Parley costs nothing to run per conversation, so it is free for everyone. Supporters chip in whatever they want, once, and get unlimited history, kept recordings and transcript export.
+- [Parley vs Google Translate conversation mode: which one for a face-to-face chat?](https://parley-murex.vercel.app/blog/parley-vs-google-translate-conversation-mode): A practical, first-party comparison of Parley and Google Translate's conversation mode for translating an in-person conversation: setup, detection, privacy, history and when to pick each.
+
+## FAQ
+- **Is Parley really free?** Yes. Live translation, all 28 languages, spoken playback and your last five saved conversations are free with no account. If Parley is useful you can chip in whatever you want, one time, and get unlimited history, recordings kept until you delete them, and transcript export.
+- **Do I need to download an app?** No. Parley runs in Chrome, Edge or Safari. You can add it to your home screen from the browser and it then opens full screen with its own icon, like any app. On Android and desktop Chrome the Install button does this for you; on iPhone tap Share, then Add to Home Screen.
+- **How does Parley know which language is being spoken?** It reads the first two words. A small on-device list of the most common words in each language usually settles it instantly; for languages with different alphabets the script alone is enough; otherwise the translation engine identifies the language. If Parley guesses wrong, it switches and keeps what it heard, and either person can tap their language chip to force it.
+- **Is there a delay?** The translation starts appearing while the sentence is still being said and is finalized about a second after you stop talking. The engine switches languages during that silence so the other person's reply is heard correctly.
+- **Where do my conversations go?** They stay on your device. Transcripts and audio are stored in your browser's local database. There is no Parley account and no Parley server that sees your conversation. Speech recognition is done by your browser's engine and translation by public translation engines, or by your own LibreTranslate server if you set one up.
+- **Which languages does Parley support?** 28 at the moment: English, Spanish, Portuguese, Chinese, Hindi, Thai, Korean, Japanese, French, German, Italian, Arabic, Russian, Indonesian, Vietnamese, Turkish, Dutch, Polish, Filipino, Swahili, Bengali, Urdu, Hebrew, Greek, Swedish, Ukrainian, Malay and Persian.
+- **Does Parley work on a laptop?** Yes, the same link works on macOS, Windows and Linux in Chrome or Edge, and in Safari on a Mac. It is handy for a desk conversation or a video call where the other person is in the room with you.
+- **Can it speak the translation out loud?** Yes. Turn on Read translations out loud. Voices come from Kokoro, an open-source neural text-to-speech model that downloads once and runs on your device.
+- **How is Parley different from Google Translate or Apple Translate?** Nothing to install, no account, the whole screen is the conversation, conversations replay with audio, and you can use your own translation server. The native apps cover more languages and can work fully offline. See the full comparison page.
+- **What do supporters get?** Unlimited conversation history instead of the last five, recordings kept until you delete them, transcript export, and a Keep setting to auto-trim history to any number you choose. It is pay what you want, one time, and the same email unlocks any other device.
+- **Is Parley open source?** The source is on GitHub. Underneath, Parley relies on open projects and credits them: Kokoro for voices, LibreTranslate and Argos Translate for self-hosted translation, and the ideas in Handy and whisper.cpp.
+- **Who makes Parley?** Parley is made by 0xROSSI Digital, an independent studio run by Frankie Rossi in Tulum, Mexico.
+
+
+---
+
+How it works
+
+# Live conversation translation, explained simply.
+
+Parley is a web app for two people who do not share a language and are standing in the same place. There is no call, no account and nothing to download from an app store. Here is what happens underneath.
+
+## 1. Two languages, one screen
+
+You pick the two languages in the room, for example English and Spanish. It does not matter who is who. Put the phone between you and tap Start. Light bubbles are one language, dark bubbles are the other, large enough to read across a table.
+
+## 2. Speech is recognized by your browser
+
+Parley uses the speech recognition built into Chrome, Edge and Safari. Nothing is uploaded to a Parley server, because there is no Parley server in the loop: the browser hears you and hands Parley the words as you say them, with interim results arriving several times a second.
+
+## 3. Parley decides who is talking from the first two words
+
+The browser's engine can only listen in one language at a time, so Parley has to know which language is being spoken as early as possible. It checks the first two words against a tiny on-device list of the most common words in each language (articles, pronouns, greetings). For languages that use different alphabets it looks at the script instead. When that is not enough, it asks the translation engine to identify the language. If the guess was wrong, Parley switches the recognizer and keeps the words it already heard. Either person can also tap their language chip to force it.
+
+## 4. Translation appears as the sentence is still being said
+
+Every fraction of a second, the in-progress sentence is translated and shown in the big text of the bubble while the raw words stay in the small line above it. When the room goes quiet, Parley commits the line, translates the final version, and switches the engine to the other language during that silence, so the reply is heard in the right language.
+
+## 5. Optional voice
+
+Turn on "Read translations out loud" and Parley speaks the translation with Kokoro, an open-source neural voice model that downloads to your device once and then runs offline. There is no per-use cost, which is part of why Parley is free.
+
+## 6. Everything stays on your device
+
+Transcripts and audio recordings are stored in your browser's own database, grouped by day, and can be replayed bubble by bubble. The free tier keeps your last five conversations; [supporters](https://parley-murex.vercel.app/faq#supporter) keep all of them and can export transcripts.
+
+Try it now, it's free
+
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
+
+Comparison
+
+# Parley vs Google Translate vs Apple Translate
+
+All three can translate a conversation between two people in the same room. They differ in where they run, what they keep, and how they decide who is speaking. This page is written by the Parley team, so read it with that in mind; where we are unsure how a competitor behaves today, we say so.
+
+| Capability | Parley | Google Translate (Conversation) | Apple Translate (Conversation) | 
+
+| Where it runs | Any modern browser; installs to the home screen as a web app | Google Translate app (iOS, Android) | Translate app built into iOS and iPadOS | 
+
+| Account or store | None. Open the link and talk | App Store or Play Store download | Pre-installed on iPhone | 
+
+| Cost | Free. Optional pay-what-you-want supporter upgrade | Free | Free | 
+
+| Who is speaking | Detected from the first two words; tap a chip to override | Automatic detection between the two chosen languages | Automatic detection between the two chosen languages | 
+
+| Translation shown while the sentence is still being said | Yes, interim translation updates in the bubble | Yes | Yes | 
+
+| Spoken playback | Optional, open-source neural voices that run on the device | Yes | Yes | 
+
+| Saves the conversation | Transcript and audio, replayable bubble by bubble, on the device | History of translations, tied to your Google account when signed in | Favorites and recent translations | 
+
+| Where your words go | Browser speech engine and public translation engines; no Parley server sees your conversation | Google servers | Apple; on-device mode available when languages are downloaded | 
+
+| Languages | 28, chosen for real conversations | Over 100 | About 20 | 
+
+| Works on a laptop or desktop | Yes, same link | Web version lacks conversation mode | Mac Translate app | 
+
+| Pick your own translation engine | Yes: public engines or your own LibreTranslate server | No | No | 
+
+## When Parley is the better pick
+
+You want something that opens instantly on any phone or laptop with nothing to install, you care that no account is involved, you want to replay the conversation later with the audio, or you want to point the translator at your own server for private, unlimited use. Parley's whole screen is the conversation, with nothing else competing for attention.
+
+## When the big apps are the better pick
+
+You need one of the many languages Parley does not cover yet, you want fully offline translation with downloaded language packs, or you already live inside the Google or Apple ecosystem and want history synced to your account. Google Translate also handles text in photos and documents, which Parley does not try to do.
+
+## How the detection actually differs
+
+The browser speech engines Parley relies on can only listen in one language per session. Parley works around that by guessing from the first two words and switching during silences, which we explain in [How it works](https://parley-murex.vercel.app/how-it-works). The native apps run their own speech models and identify the language from the audio itself. In practice both approaches feel immediate; the native apps have the edge when both languages sound alike and the first words are ambiguous, and Parley has the edge in getting started and in keeping your words off a company server.
+
+Open Parley
+
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
+
+FAQ
+# Questions people ask about Parley
+
+## Is Parley really free?
+Yes. Live translation, all 28 languages, spoken playback and your last five saved conversations are free with no account. If Parley is useful you can chip in whatever you want, one time, and get unlimited history, recordings kept until you delete them, and transcript export.
+
+## Do I need to download an app?
+No. Parley runs in Chrome, Edge or Safari. You can add it to your home screen from the browser and it then opens full screen with its own icon, like any app. On Android and desktop Chrome the Install button does this for you; on iPhone tap Share, then Add to Home Screen.
+
+## How does Parley know which language is being spoken?
+It reads the first two words. A small on-device list of the most common words in each language usually settles it instantly; for languages with different alphabets the script alone is enough; otherwise the translation engine identifies the language. If Parley guesses wrong, it switches and keeps what it heard, and either person can tap their language chip to force it.
+
+## Is there a delay?
+The translation starts appearing while the sentence is still being said and is finalized about a second after you stop talking. The engine switches languages during that silence so the other person's reply is heard correctly.
+
+## Where do my conversations go?
+They stay on your device. Transcripts and audio are stored in your browser's local database. There is no Parley account and no Parley server that sees your conversation. Speech recognition is done by your browser's engine and translation by public translation engines, or by your own LibreTranslate server if you set one up.
+
+## Which languages does Parley support?
+28 at the moment: English, Spanish, Portuguese, Chinese, Hindi, Thai, Korean, Japanese, French, German, Italian, Arabic, Russian, Indonesian, Vietnamese, Turkish, Dutch, Polish, Filipino, Swahili, Bengali, Urdu, Hebrew, Greek, Swedish, Ukrainian, Malay and Persian.
+
+## Does Parley work on a laptop?
+Yes, the same link works on macOS, Windows and Linux in Chrome or Edge, and in Safari on a Mac. It is handy for a desk conversation or a video call where the other person is in the room with you.
+
+## Can it speak the translation out loud?
+Yes. Turn on Read translations out loud. Voices come from Kokoro, an open-source neural text-to-speech model that downloads once and runs on your device.
+
+## How is Parley different from Google Translate or Apple Translate?
+Nothing to install, no account, the whole screen is the conversation, conversations replay with audio, and you can use your own translation server. The native apps cover more languages and can work fully offline. See the full comparison page.
+
+## What do supporters get?
+Unlimited conversation history instead of the last five, recordings kept until you delete them, transcript export, and a Keep setting to auto-trim history to any number you choose. It is pay what you want, one time, and the same email unlocks any other device.
+
+## Is Parley open source?
+The source is on GitHub. Underneath, Parley relies on open projects and credits them: Kokoro for voices, LibreTranslate and Argos Translate for self-hosted translation, and the ideas in Handy and whisper.cpp.
+
+## Who makes Parley?
+Parley is made by 0xROSSI Digital, an independent studio run by Frankie Rossi in Tulum, Mexico.
+
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
+
+Parley blog
+# Why we built a live conversation translator that runs in the browser
+2026-10-20 · by Frankie Rossi, 0xROSSI Digital
+Most translation apps were designed around a text box. Parley was designed around two people, a table, and a phone lying between them.
+
+## The moment we wanted to fix
+
+You are at a market, a clinic, a landlord's office, a dinner. The other person does not speak your language. Both of you reach for a phone, open an app, tap through screens, hold it up, wait. The conversation that was supposed to happen has become a demo of an app.
+
+We wanted the opposite: one link, one screen, both of you looking at the same bubbles, no account, nothing to set up beyond picking two languages. The whole app is the conversation.
+
+## Why the browser
+
+Chrome and Safari already ship excellent speech recognition, and open translation engines are a request away. By building Parley as a web app we skip the store, work on every phone and laptop with one link, and keep your words off our servers because there are no servers of ours in the loop. It also means Parley can be installed to the home screen and run full screen, like an app, in two taps.
+
+## What it cost us
+
+Browser speech engines only listen in one language at a time. A native app with its own speech model can identify the language from the sound; we cannot. So we built a different approach: decide from the first two words, switch during silences, never mid-word. We wrote about it in [How Parley knows which language is being spoken](https://parley-murex.vercel.app/blog/how-parley-knows-which-language-is-being-spoken).
+
+## What it made possible
+
+Free for everyone, because nothing meters. Private by construction. Replayable conversations, with audio, on your device. And a translation engine you can swap for your own server when you need unlimited, private use. Try it at [parley-murex.vercel.app/app](https://parley-murex.vercel.app/app).
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
+
+Parley blog
+# How Parley knows which language is being spoken
+2026-10-27 · by Frankie Rossi, 0xROSSI Digital
+The browser can only hear one language at a time. Here is how Parley turns that into a conversation that flips direction on its own.
+
+## The constraint
+
+Web speech recognition takes a language code when it starts. Start it in English and Spanish comes out as nonsense. So the question Parley has to answer, every time someone starts talking, is: which of the two languages is this, and how fast can we know?
+
+## Two words
+
+The first thing Parley does with an in-progress sentence is look at its first two words. For the common pairs that share an alphabet, like English and Spanish or Portuguese and Italian, a small list of each language's most frequent function words (the, a, is, yes; el, la, es, sí) usually decides it in zero milliseconds, on the device. For pairs with different scripts, Japanese and English for instance, the characters themselves answer the question.
+
+If neither trick is confident, Parley sends just those two words to the translation engine and asks it which language they are. That costs one short network round trip and happens while the person is still talking.
+
+## Switching without losing words
+
+When the guess says the other person is talking, Parley restarts the speech engine in their language and carries the words it already heard into the new bubble. When a line ends in silence, Parley commits it, translates it, and uses that same silence to switch the engine to the other language, because the reply usually comes next. If the same person keeps talking instead, the two-word check flips it back.
+
+## A manual override, always
+
+Automatic detection is a guess, and guesses are wrong sometimes. Both language chips at the bottom of the live screen are buttons; tapping one tells Parley who is speaking right now. It is the fastest fix there is and it never gets in the way when the guess is right.
+
+Read how the rest of the pipeline fits together in [How Parley works](https://parley-murex.vercel.app/how-it-works).
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
+
+Parley blog
+# Install Parley on iPhone, Android or your desktop in two taps
+2026-11-01 · by Frankie Rossi, 0xROSSI Digital
+Parley lives at one link. Installing it just means giving that link an icon and a full-screen window.
+
+## iPhone and iPad
+
+Open [parley-murex.vercel.app/app](https://parley-murex.vercel.app/app) in Safari. Tap the Share button, then "Add to Home Screen", then Add. Parley now opens full screen from its own icon. The first time you start a conversation, allow the microphone.
+
+## Android
+
+Open the same link in Chrome. Tap "Install on your phone" on the home page, or use the browser menu and choose "Install app". Chrome puts Parley in your app drawer and on the home screen.
+
+## Mac, Windows and Linux
+
+In Chrome or Edge, open the link and click the install icon at the right end of the address bar, or use the "Install on your phone" button on the home page, which installs on desktop too. Parley opens in its own window, which is handy on a desk when someone is sitting across from you.
+
+## Why not an app store?
+
+Because you should not need an account, a download, or an update prompt to have a conversation. Installing from the browser gives you the icon and the full-screen experience with none of that, and updates arrive automatically the next time you open it.
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
+
+Parley blog
+# Why Parley is free, and what supporters get
+2026-11-02 · by Frankie Rossi, 0xROSSI Digital
+There is no meter running when you use Parley, so there is nothing to charge you for. Here is the honest economics.
+
+## Nothing meters
+
+Speech recognition is done by your browser. Translation comes from public engines. Voices are an open-source model that runs on your device. Conversations are stored on your device. The only infrastructure is static hosting and a tiny payment endpoint. That is why the free tier is the whole product: unlimited live translation, every language, spoken playback, your last five conversations saved.
+
+## Pay what you want, once
+
+If Parley earns a place in your pocket, you can chip in whatever amount you choose, one time, no subscription. Supporters keep every conversation instead of the last five, keep audio recordings until they delete them, can export transcripts, and get a Keep setting that auto-trims history to any number they like. The email you paid with unlocks any other device.
+
+## What we will never do
+
+Sell your conversations, because we never see them. Add an account wall. Put live translation behind a paywall.
+
+Questions? See the [FAQ](https://parley-murex.vercel.app/faq) or just [open Parley](https://parley-murex.vercel.app/app).
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
+
+Parley blog
+# Parley vs Google Translate conversation mode: which one for a face-to-face chat?
+2026-11-03 · by Frankie Rossi, 0xROSSI Digital
+Google Translate's conversation mode is good. Here is where Parley does better, where it does not, and how to decide in ten seconds.
+
+## Getting started
+
+Parley: open a link, pick two languages, tap Start. Google Translate: install the app, sign in or skip, choose Conversation, pick languages. Both are quick; Parley wins when the other person's phone is the one you are using, because there is nothing to install.
+
+## Detecting who is talking
+
+Google's app listens for both languages at once with its own speech models. Parley decides from the first two words and switches the browser's engine during silences, which we describe in [this post](https://parley-murex.vercel.app/blog/how-parley-knows-which-language-is-being-spoken). In everyday conversation both feel immediate; Google has the edge when both languages sound alike and the opening words are ambiguous.
+
+## What happens to your words
+
+Google Translate sends audio to Google. Parley's speech recognition runs through your browser's engine and translation through public engines, with no Parley server in between, and you can point Parley at your own LibreTranslate server for fully private use. Conversations stay on your device in both cases, but Parley saves the audio too and replays it bubble by bubble.
+
+## Languages
+
+Google covers over a hundred languages. Parley covers 28, chosen for in-person conversations. If your language is not on [the list](https://parley-murex.vercel.app/faq), use Google.
+
+## The decision
+
+Need a rare language or fully offline use: Google Translate. Want to open a link on any device, keep the conversation and its audio, and keep it private: [Parley](https://parley-murex.vercel.app/app). The full table is on the [comparison page](https://parley-murex.vercel.app/compare), which also covers Apple Translate.
+ [How Parley works](https://parley-murex.vercel.app/how-it-works) · [Parley vs Google Translate vs Apple Translate](https://parley-murex.vercel.app/compare) · [Frequently asked questions](https://parley-murex.vercel.app/faq) · [All posts](https://parley-murex.vercel.app/blog/) · [Open Parley, it's free](https://parley-murex.vercel.app/app)
+
+---
