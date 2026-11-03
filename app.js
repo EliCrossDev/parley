@@ -44,10 +44,11 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'sea', keep: 0,
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false,
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
+  if (!prefs.paletteV2) { prefs.palette = 'night'; prefs.paletteV2 = true; } // Night became the default for everyone
   const T = (k) => (window.I18N ? I18N.t(k) : k);
   function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {} }
 
@@ -311,7 +312,7 @@
 
   const BG = window.Aurora ? Aurora.mount($('app-bg'), { dim: 0.9, maxDpr: 1, colors: [cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3')] }) : null;
   function applyPalette(p) {
-    prefs.palette = p || 'sea'; if (prefs.palette === 'sea') document.documentElement.removeAttribute('data-palette'); else document.documentElement.setAttribute('data-palette', prefs.palette);
+    prefs.palette = p || 'night'; document.documentElement.setAttribute('data-palette', prefs.palette);
     if (BG) BG.setColors(cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3'));
     document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.pal === prefs.palette));
     const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Sky', dawn: 'Dawn', sea: 'Sea', dusk: 'Dusk', night: 'Night', tide: 'Tide', volt: 'Volt' }[prefs.palette] || 'Sea';

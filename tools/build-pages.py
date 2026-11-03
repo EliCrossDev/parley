@@ -7,7 +7,7 @@ SITE = 'https://parley-murex.vercel.app'
 TODAY = datetime.date.today().isoformat()
 
 HEAD = '''<!doctype html>
-<html lang="en">
+<html lang="en" data-palette="night">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -26,7 +26,7 @@ HEAD = '''<!doctype html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<script>try{{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{{}}").palette;if(p&&p!=="sea")document.documentElement.setAttribute("data-palette",p)}}catch(e){{}}</script>
+<script>try{{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{{}}").palette;document.documentElement.setAttribute("data-palette",p||"night")}}catch(e){{}}</script>
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/landing.css">
 <link rel="stylesheet" href="/pages.css">

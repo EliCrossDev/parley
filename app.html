@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-palette="night">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-<script>try{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{}").palette;if(p&&p!=="sea")document.documentElement.setAttribute("data-palette",p)}catch(e){}</script>
+<script>try{var p=JSON.parse(localStorage.getItem("parley.prefs.v1")||"{}").palette;document.documentElement.setAttribute("data-palette",p||"night")}catch(e){}</script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="app.css">
 </head>
@@ -242,11 +242,11 @@
         <div class="setting-row">
           <div><p class="setting-title" data-i18n="set.colors">Colors</p><p class="setting-sub" id="palette-sub">Sea</p></div>
           <div class="seg palette-seg" id="palette-seg">
+            <button class="seg-btn" data-pal="night" aria-label="Night"><i style="background:linear-gradient(180deg,#070a14,#1b2a44 55%,#3a3550)"></i></button>
             <button class="seg-btn" data-pal="sea" aria-label="Sea"><i style="background:linear-gradient(180deg,#0f2f3f,#3fb8a8 55%,#d8f3e6)"></i></button>
             <button class="seg-btn" data-pal="aurora" aria-label="Sky"><i style="background:linear-gradient(180deg,#5b93d6,#8fc6d8 55%,#f3cdb0)"></i></button>
             <button class="seg-btn" data-pal="dawn" aria-label="Dawn"><i style="background:linear-gradient(180deg,#2a1f4a,#c97aa0 55%,#ffd9a8)"></i></button>
             <button class="seg-btn" data-pal="dusk" aria-label="Dusk"><i style="background:linear-gradient(180deg,#2b0a3d,#ff3d7a 55%,#ffd36b)"></i></button>
-            <button class="seg-btn" data-pal="night" aria-label="Night"><i style="background:linear-gradient(180deg,#070a14,#1b2a44 55%,#3a3550)"></i></button>
           </div>
         </div>
         <div class="setting-row">
