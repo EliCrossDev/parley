@@ -166,3 +166,18 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .phone-top { color: rgba(247,247,251,.85); } #demo-status { color: #f7f7fb !important; letter-spacing: .06em; text-transform: uppercase; }
 .phone-bottom { background: rgba(10,12,26,.35); border-radius: 0 0 36px 36px; margin: 0 -8px -12px; padding: 10px 14px 12px; }
 .phone .stop { background: #f7f7fb; } .phone .stop::after { background: #0e0e16; }
+
+/* headline language flip */
+.flip { display: inline-block; white-space: nowrap; transform-origin: 50% 100%; }
+.flip.in { animation: flipin .18s cubic-bezier(.2,.8,.2,1); }
+.flip.flipping { color: rgba(247,247,251,.85); }
+.flip.settled { animation: settle .5s cubic-bezier(.2,.9,.2,1.2); color: #f7f7fb; }
+@keyframes flipin { from { opacity: .2; transform: translateY(.12em) rotateX(55deg); } to { opacity: 1; transform: none; } }
+@keyframes settle { 0% { transform: scale(.96); letter-spacing: -.06em; } 60% { transform: scale(1.015); } 100% { transform: none; } }
+/* readability where the sky gets bright */
+.site-head { transition: background .3s, backdrop-filter .3s; }
+.site-head.scrolled { background: rgba(8,10,20,.42); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+.demo-copy { position: relative; padding: 28px 28px 28px 0; }
+.demo-copy::before { content: ""; position: absolute; inset: -10px -40px -10px -40px; z-index: -1; border-radius: 32px; background: radial-gradient(70% 70% at 40% 50%, rgba(8,10,20,.6), rgba(8,10,20,0) 100%); filter: blur(10px); }
+.demo-copy h2, .demo-copy p { text-shadow: 0 2px 18px rgba(0,0,0,.45); }
+.how .eyebrow, .how h2, .pricing h2, .pricing .eyebrow, .languages h2, .languages .eyebrow, .open h2, .open .eyebrow, .open-sub, .final h2 { text-shadow: 0 2px 18px rgba(0,0,0,.45); }

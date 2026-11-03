@@ -10,6 +10,27 @@
   // Hero is visible at rest
   document.querySelectorAll('.hero .reveal').forEach((n) => n.classList.add('in'));
 
+  /* ---------- Language flip on the headline ---------- */
+  (function flip() {
+    const el = document.getElementById('flip-word'); if (!el || reduce) return;
+    const words = ['Traducción', 'Tradução', '翻訳', '번역', 'Übersetzung', 'Traduction', 'अनुवाद', 'การแปล', 'Traduzione', '翻译', 'Перевод', 'ترجمة', 'Translation'];
+    let i = 0; el.textContent = words[0]; el.classList.add('flipping');
+    const step = () => {
+      i++; const last = i === words.length - 1;
+      el.classList.remove('in'); void el.offsetWidth; el.textContent = words[i]; el.classList.add('in');
+      if (last) { el.classList.remove('flipping'); el.classList.add('settled'); return; }
+      setTimeout(step, 90 + i * 14);
+    };
+    setTimeout(step, 260);
+  })();
+
+  /* ---------- Header scrim once scrolled ---------- */
+  (function headScrim() {
+    const head = document.querySelector('.site-head'); if (!head) return;
+    const on = () => head.classList.toggle('scrolled', window.scrollY > 40);
+    window.addEventListener('scroll', on, { passive: true }); on();
+  })();
+
   /* ---------- Shader hero ---------- */
   const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   (function () { const c = document.getElementById('hero-canvas'); if (c && window.Aurora) Aurora.mount(c, { scrollTilt: true, dim: 1, maxDpr: 1, colors: [cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3')] }); })();
