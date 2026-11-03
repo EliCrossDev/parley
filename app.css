@@ -315,3 +315,46 @@ body.live .app-bg::after { background: linear-gradient(180deg, rgba(5,5,5,.1) 0%
 .stage-status.a, .stage-status.b { color: var(--fg); }
 .stage-status.err { color: var(--danger); }
 .who-btn { backdrop-filter: blur(10px); background: rgba(5,5,5,.35); }
+
+/* ===== Frosted glass pass (Hark-style: colors show through, nothing sharp) ===== */
+.frost { position: fixed; inset: 0; z-index: 1; pointer-events: none; backdrop-filter: blur(44px) saturate(1.7); -webkit-backdrop-filter: blur(44px) saturate(1.7); }
+.siri, .grain { display: none !important; }
+.topbar { background: rgba(10,10,18,.35); border-bottom: 1px solid var(--glass-line); }
+.topnav { background: var(--glass); border: 1px solid var(--glass-line); }
+.speaker-card { background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.speaker-card::before { display: none; }
+.speaker-a:hover, .speaker-b:hover { border-color: rgba(255,255,255,.35); }
+.speaker-change { background: var(--glass); border-color: var(--glass-line); color: var(--fg-2); }
+.swap-btn { background: var(--glass-2); border-color: var(--glass-line); }
+.toggle-track { background: var(--glass); border-color: var(--glass-line); }
+.toggle input:checked + .toggle-track { background: rgba(255,255,255,.85); border-color: rgba(255,255,255,.9); }
+.toggle input:checked + .toggle-track .toggle-knob { background: #0e0e16; }
+.btn-volt { background: #f7f7fb; color: #0e0e16; box-shadow: 0 10px 30px -10px rgba(0,0,0,.5); }
+.btn-volt:hover { box-shadow: 0 14px 40px -10px rgba(255,255,255,.35); }
+.live-stage { background: transparent; }
+.stage-top { color: var(--fg-2); text-shadow: none; }
+.kb-btn { background: var(--glass); border-color: var(--glass-line); }
+.bubble.a { background: rgba(255,255,255,.9); color: #0e0e16; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 10px 30px -12px rgba(0,0,0,.45); }
+.bubble.b { background: rgba(14,14,24,.6); color: #f7f7fb; border: 1px solid var(--glass-line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 10px 30px -12px rgba(0,0,0,.6); }
+body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,0,0,.6); }
+.stage-bottom { background: rgba(10,10,18,.35); border-top: 1px solid var(--glass-line); }
+.who-btn { background: var(--glass); border: 1px solid var(--glass-line); color: var(--fg-2); }
+.who-a.is-live { background: rgba(255,255,255,.9); border-color: rgba(255,255,255,.9); color: #0e0e16; }
+.who-b.is-live { background: rgba(14,14,24,.7); border-color: rgba(255,255,255,.45); color: #f7f7fb; }
+.who-a .who-dot { background: #fff; } .who-b .who-dot { background: #16162a; border: 1px solid rgba(255,255,255,.6); }
+.stop-btn { background: #f7f7fb; }
+.history-item, .profile-card, .player, .edit-panel, .sheet { background: rgba(14,14,24,.55); border-color: var(--glass-line); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+.history-empty { border-color: var(--glass-line); }
+.pro-card { background: var(--glass); border-color: var(--glass-line); backdrop-filter: blur(20px); }
+.pro-tag { color: var(--fg-2); }
+.btn-blue { background: rgba(255,255,255,.9); color: #0e0e16; }
+.field input, .field-select, .sheet-search, .type-row input { background: var(--glass); border-color: var(--glass-line); }
+.setting-row { border-color: var(--glass-line); } .settings-list { border-color: var(--glass-line); }
+.seg { background: var(--glass); border: 1px solid var(--glass-line); }
+.lang-row.is-selected, .lang-row:hover, .engine-row.is-selected { background: var(--glass-2); }
+.lang-row.is-selected .lang-check, .lang-row.is-selected.b .lang-check { background: #f7f7fb; }
+.engine-row { border-color: var(--glass-line); } .engine-row.is-selected { border-color: rgba(255,255,255,.6); }
+.ribbon-wrap { height: 56px; } body.live .ribbon-wrap { height: 64px; }
+.type-send { background: #f7f7fb; color: #0e0e16; }
+.row-play:hover, .row-play.playing { color: #0e0e16; border-color: #f7f7fb; background: #f7f7fb; }
+.dl-bar i { background: #f7f7fb; }

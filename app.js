@@ -275,7 +275,7 @@
     }
     function start(canvas) { if (!ribbon && window.Ribbon) ribbon = Ribbon.mount(canvas); active = true; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
     function stop() { active = false; cancelAnimationFrame(raf); analyser = null; level = 0; if (ribbon) { ribbon.setLevel(0); ribbon.setTalking(false); } }
-    function setSpeaker(who) { if (ribbon) ribbon.setColor(cssVar(who === 'b' ? '--blue' : '--volt')); }
+    function setSpeaker(who) { if (ribbon) ribbon.setColor(who === 'b' ? 'rgba(255,255,255,0.75)' : '#ffffff'); }
     function setTalking(b) { if (ribbon) ribbon.setTalking(b); }
     return { start, stop, attach, setSpeaker, setTalking, level: () => level };
   })();
@@ -295,7 +295,7 @@
     prefs.palette = p || 'aurora'; if (prefs.palette === 'aurora') document.documentElement.removeAttribute('data-palette'); else document.documentElement.setAttribute('data-palette', prefs.palette);
     if (BG) BG.setColors(cssVar('--bg-c1'), cssVar('--bg-c2'), cssVar('--bg-c3'));
     document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.pal === prefs.palette));
-    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Sunset', dusk: 'Dusk', tide: 'Tide', volt: 'Volt' }[prefs.palette] || 'Sunset';
+    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Sky', dawn: 'Dawn', sea: 'Sea', dusk: 'Dusk', tide: 'Tide', volt: 'Volt' }[prefs.palette] || 'Sky';
     const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = '#050505';
   }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
@@ -303,7 +303,7 @@
   function setExpected(who, forced) {
     live.expected = who; if (forced !== undefined) live.forced = forced;
     $('who-a').classList.toggle('is-live', who === 'a'); $('who-b').classList.toggle('is-live', who === 'b');
-    Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--blue' : '--volt'), 0.7);
+    Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--bg-c1' : '--bg-c3'), 0.5);
     const sg = $('siri'); sg.className = 'siri on ' + who;
     setStatus('Listening', who);
   }

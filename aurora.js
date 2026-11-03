@@ -16,60 +16,35 @@ float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
 float fbm(vec2 p){ float v = 0.0, a = 0.5; mat2 m = mat2(1.6, 1.2, -1.2, 1.6); for (int i = 0; i < 5; i++) { v += a*noise(p); p = m*p; a *= 0.5; } return v; }
 void main(){
   vec2 uv = (gl_FragCoord.xy - 0.5*uRes) / uRes.y;
-  float t = uTime * 0.05;
+  float t = uTime * 0.03;
   float e = uEnergy;
-  vec2 m = uMouse * vec2(0.05, 0.03);
-  float horizon = -0.08 - uScroll * 0.25 + m.y;
-  float y = uv.y - horizon;                 // 0 at horizon, + up, - down
-  // ---- sky: stacked warm gradient
-  vec3 cTop = uC1;                           // sky top (palette)
-  vec3 cMid = uC2;                           // mid band (palette)
-  vec3 cHor = uC3;                           // horizon (palette)
-  vec3 cHi  = mix(cTop, cMid, 0.45);
-  vec3 cLow = mix(cMid, cHor, 0.55);
-  float sy = clamp(y / 0.9, 0.0, 1.0);
-  vec3 sky = mix(cHor, cLow, smoothstep(0.0, 0.14, sy));
-  sky = mix(sky, cMid, smoothstep(0.10, 0.36, sy));
-  sky = mix(sky, cHi, smoothstep(0.32, 0.62, sy));
-  sky = mix(sky, cTop, smoothstep(0.58, 1.0, sy));
-  // ---- sun
-  vec2 sunP = vec2(0.12 + m.x * 0.5, horizon + 0.05);
-  float sd = length((uv - sunP) * vec2(1.0, 1.08));
-  float sunR = 0.11 + e * 0.02;
-  float disc = 1.0 - smoothstep(sunR - 0.004, sunR + 0.004, sd);
-  float glow = exp(-sd * (6.0 - e * 2.5)) * (1.2 + e * 0.8);
-  float halo = exp(-sd * 2.2) * 0.35;
-  vec3 sunCol = vec3(1.0, 0.93, 0.78);
-  // ---- clouds: long streaks, warm lit undersides near the sun
-  vec2 cp = vec2(uv.x * 1.2 + t * 1.6, y * 5.5);
-  float cl = fbm(cp * 1.4 + vec2(0.0, 3.0)) * fbm(cp * 0.6 - t);
-  float cmask = smoothstep(0.22, 0.42, cl) * smoothstep(0.0, 0.08, y) * smoothstep(0.95, 0.25, y);
-  vec3 cloudCol = mix(vec3(0.55, 0.18, 0.45), vec3(1.0, 0.72, 0.45), exp(-sd * 3.0) * 0.9 + 0.15);
-  vec3 col = sky;
-  col = mix(col, cloudCol, cmask * 0.75);
-  col += sunCol * glow * (1.0 - cmask * 0.5);
-  col += sunCol * halo;
-  col += sunCol * disc * (1.6 - cmask * 0.8);
-  // ---- water below the horizon: mirrored sky, darker, with a shimmering sun path
-  if (y < 0.0) {
-    float depth = -y;
-    float ripple = fbm(vec2(uv.x * 14.0 + t * 8.0, depth * 60.0 - uTime * 0.6)) - 0.5;
-    vec3 wsky = mix(cHor, cLow, smoothstep(0.0, 0.2, depth));
-    wsky = mix(wsky, vec3(0.16, 0.06, 0.26), smoothstep(0.05, 0.7, depth));
-    float path = exp(-abs(uv.x - sunP.x + ripple * 0.09) * (9.0 + depth * 30.0)) * exp(-depth * 3.5);
-    float glint = smoothstep(0.35, 0.6, fbm(vec2(uv.x * 40.0 + uTime * 1.5, depth * 90.0)) + ripple) * path;
-    col = wsky * 0.75 + sunCol * (path * (0.9 + e * 0.6) + glint * 0.8) + ripple * 0.03;
-    col = mix(col, col * 0.5, smoothstep(0.0, 0.8, depth));
-  }
-  // horizon haze
-  col += cHor * exp(-abs(y) * 40.0) * 0.25;
-  // speaker tint (subtle) and voice warmth
-  col = mix(col, uTintCol * dot(col, vec3(0.33)) * 1.1, uTint * 0.22);
-  col *= 1.0 + e * 0.25;
-  // grain + vignette
-  col += (fbm(uv * 9.0 + uTime) - 0.5) * 0.025;
-  col *= 1.0 - smoothstep(0.75, 1.5, length(uv * vec2(0.75, 1.1)));
-  col = pow(col / (1.0 + col * 0.45), vec3(0.95)); col = mix(vec3(dot(col, vec3(0.33))), col, 1.25);
+  vec2 m = uMouse * vec2(0.03, 0.02);
+  float y = uv.y + 0.1 - uScroll * 0.2 + m.y;
+  // sky gradient: top -> mid -> horizon haze
+  float sy = clamp(y * 0.9 + 0.5, 0.0, 1.0);
+  vec3 sky = mix(uC2, uC1, smoothstep(0.35, 1.0, sy));
+  sky = mix(uC3, sky, smoothstep(-0.05, 0.42, sy));
+  // sun / haze glow low on one side, breathes with voice
+  vec2 sunP = vec2(0.42 + m.x, -0.32);
+  float sd = length((uv - sunP) * vec2(1.0, 1.4));
+  vec3 glowCol = mix(uC3, vec3(1.0, 0.96, 0.9), 0.5);
+  sky += glowCol * exp(-sd * (3.2 - e * 1.0)) * (0.55 + e * 0.5);
+  // clouds: two drifting layers of soft fbm
+  vec2 cp1 = vec2(uv.x * 1.1 + t * 1.3, uv.y * 2.4 + 2.0);
+  vec2 cp2 = vec2(uv.x * 0.7 - t * 0.8 + 5.0, uv.y * 1.6 - 1.0);
+  float c1 = fbm(cp1 * 1.3); float c2 = fbm(cp2 * 1.1 + c1 * 0.4);
+  float cl = smoothstep(0.38, 0.72, c1 * 0.6 + c2 * 0.55);
+  float lit = fbm(cp1 * 2.6 + 1.7);
+  vec3 cloud = mix(mix(uC1, uC2, 0.5) * 0.9, vec3(1.0, 0.98, 0.97), 0.55 + 0.45 * lit);
+  cloud = mix(cloud, glowCol, exp(-sd * 2.0) * 0.6);
+  float band = smoothstep(-0.55, 0.05, y) * smoothstep(0.9, 0.1, y);
+  vec3 col = mix(sky, cloud, cl * (0.55 + 0.45 * band));
+  // speaker tint (gentle)
+  col = mix(col, uTintCol * dot(col, vec3(0.33)) * 1.15, uTint * 0.18);
+  col += (fbm(uv * 8.0 + uTime * 0.5) - 0.5) * 0.02;
+  col *= 1.0 - smoothstep(0.8, 1.6, length(uv * vec2(0.7, 1.0)));
+  col = mix(vec3(dot(col, vec3(0.33))), col, 1.35) * 1.25;
+  col = col / (1.0 + col * 0.25);
   gl_FragColor = vec4(col * uDim, 1.0);
 }`;
   function hexToRgb(h) { h = String(h).trim().replace('#', ''); if (h.length === 3) h = h.split('').map((c) => c + c).join(''); const n = parseInt(h, 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }

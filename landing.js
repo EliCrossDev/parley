@@ -51,7 +51,7 @@
 
     // Siri ribbon for the demo
     const rb = window.Ribbon ? Ribbon.mount(document.getElementById('demo-ribbon')) : null;
-    (function pulse(t) { requestAnimationFrame(pulse); if (!rb) return; rb.setColor(cssVar(demoSpeaker === 'b' ? '--blue' : '--volt')); rb.setTalking(demoTalk); rb.setLevel(demoTalk ? 0.35 + 0.45 * Math.abs(Math.sin(t / 170) * Math.sin(t / 430)) : 0); })(0);
+    (function pulse(t) { requestAnimationFrame(pulse); if (!rb) return; rb.setColor(demoSpeaker === 'b' ? 'rgba(255,255,255,0.75)' : '#ffffff'); rb.setTalking(demoTalk); rb.setLevel(demoTalk ? 0.35 + 0.45 * Math.abs(Math.sin(t / 170) * Math.sin(t / 430)) : 0); })(0);
   })();
 
   /* ---------- Language marquee ---------- */
