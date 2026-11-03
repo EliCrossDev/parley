@@ -12,10 +12,9 @@
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10;
   display: flex; align-items: center; gap: 20px;
   padding-left: var(--gutter-l); padding-right: var(--gutter-r); padding-block: 14px;
-  background: linear-gradient(to bottom, rgba(5,5,5,.9), rgba(5,5,5,0));
-  backdrop-filter: blur(10px);
+  background: transparent;
 }
-.landing::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 11; background: var(--bg); }
+.landing::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 11; background: transparent; }
 .brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
 .brand-mark { width: 13px; height: 13px; border-radius: 3px; background: linear-gradient(135deg, var(--volt) 50%, var(--blue) 50%); }
 .site-nav { margin-left: auto; display: none; gap: 26px; font-size: 14px; color: var(--fg-2); }
@@ -139,7 +138,7 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 
 /* glass pass */
 .btn-volt { background: #f7f7fb; color: #0e0e16; }
-.step, .plan, .credit, .feature, .lang-tile { background: rgba(14,14,24,.5); border-color: rgba(255,255,255,.16); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+.step, .plan, .credit, .feature, .lang-tile { background: rgba(10,12,26,.55); border-color: rgba(255,255,255,.16); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
 .plan.pro { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.08); }
 .btn-blue { background: rgba(255,255,255,.9); color: #0e0e16; }
 .phone .bubble.a { background: rgba(255,255,255,.92); color: #0e0e16; }
@@ -149,4 +148,4 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .pill.a i { background: #fff; } .pill.b i { background: #16162a; border: 1px solid rgba(255,255,255,.6); }
 .step-n, .step:nth-child(3) .step-n { color: #f7f7fb; }
 .lang-tile:nth-child(3n) b, .lang-tile:nth-child(3n+1) b { color: #f7f7fb; }
-.brand-mark { background: linear-gradient(135deg, #f7f7fb 50%, #16162a 50%); border: 1px solid rgba(255,255,255,.4); }
+.brand-mark { display: none; }

@@ -58,7 +58,7 @@
   display: flex; flex-direction: column; gap: 18px;
 }
 .setup-title { font-size: clamp(34px, 8.5vw, 50px); font-weight: 700; line-height: 1.02; }
-.setup-sub { color: var(--fg-2); max-width: 42ch; }
+.setup-sub { color: rgba(245,245,242,.9); max-width: 42ch; text-shadow: 0 1px 10px rgba(0,0,0,.2); }
 .speaker-cards { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
 .speaker-card {
   flex: 0 0 auto; text-align: left; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto auto; gap: 2px 12px;
@@ -319,9 +319,13 @@ body.live .app-bg::after { background: linear-gradient(180deg, rgba(5,5,5,.1) 0%
 /* ===== Frosted glass pass (Hark-style: colors show through, nothing sharp) ===== */
 .frost { position: fixed; inset: 0; z-index: 1; pointer-events: none; backdrop-filter: blur(44px) saturate(1.7); -webkit-backdrop-filter: blur(44px) saturate(1.7); }
 .siri, .grain { display: none !important; }
-.topbar { background: rgba(10,10,18,.35); border-bottom: 1px solid var(--glass-line); }
+.topbar { background: transparent; border-bottom: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.brand-mark { display: none; }
+.brand { font-size: 18px; letter-spacing: -0.02em; text-shadow: 0 1px 10px rgba(0,0,0,.25); }
 .topnav { background: var(--glass); border: 1px solid var(--glass-line); }
-.speaker-card { background: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.speaker-card { background: rgba(10,12,26,.55); border: 1px solid rgba(255,255,255,.24); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); box-shadow: 0 16px 40px -18px rgba(0,0,0,.55); }
+.speaker-tag { color: rgba(245,245,242,.7); }
+.speaker-native { color: rgba(245,245,242,.85); }
 .speaker-card::before { display: none; }
 .speaker-a:hover, .speaker-b:hover { border-color: rgba(255,255,255,.35); }
 .speaker-change { background: var(--glass); border-color: var(--glass-line); color: var(--fg-2); }
@@ -337,7 +341,7 @@ body.live .app-bg::after { background: linear-gradient(180deg, rgba(5,5,5,.1) 0%
 .bubble.a { background: rgba(255,255,255,.9); color: #0e0e16; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 10px 30px -12px rgba(0,0,0,.45); }
 .bubble.b { background: rgba(14,14,24,.6); color: #f7f7fb; border: 1px solid var(--glass-line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 10px 30px -12px rgba(0,0,0,.6); }
 body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,0,0,.6); }
-.stage-bottom { background: rgba(10,10,18,.35); border-top: 1px solid var(--glass-line); }
+.stage-bottom { background: rgba(10,12,26,.4); border-top: 1px solid var(--glass-line); }
 .who-btn { background: var(--glass); border: 1px solid var(--glass-line); color: var(--fg-2); }
 .who-a.is-live { background: rgba(255,255,255,.9); border-color: rgba(255,255,255,.9); color: #0e0e16; }
 .who-b.is-live { background: rgba(14,14,24,.7); border-color: rgba(255,255,255,.45); color: #f7f7fb; }
@@ -358,3 +362,8 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .type-send { background: #f7f7fb; color: #0e0e16; }
 .row-play:hover, .row-play.playing { color: #0e0e16; border-color: #f7f7fb; background: #f7f7fb; }
 .dl-bar i { background: #f7f7fb; }
+
+.setup-note { color: rgba(245,245,242,.75); text-shadow: 0 1px 8px rgba(0,0,0,.25); }
+.toggle-label { color: rgba(245,245,242,.9); }
+.eyebrow { color: rgba(245,245,242,.7); }
+.setting-sub, .hi-sub, .profile-plan { color: rgba(245,245,242,.65); }

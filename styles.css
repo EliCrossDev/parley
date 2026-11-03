@@ -19,10 +19,10 @@
   --blue-dim: rgba(22, 22, 42, 0.5);
   --mid: #7fb7c7;
   /* sky: top, mid, horizon haze */
-  --bg-c1: #1d2a5e; --bg-c2: #6fb0c6; --bg-c3: #f3c6a6;
-  --glass: rgba(255, 255, 255, 0.08);
-  --glass-2: rgba(255, 255, 255, 0.14);
-  --glass-line: rgba(255, 255, 255, 0.18);
+  --bg-c1: #5b93d6; --bg-c2: #8fc6d8; --bg-c3: #f3cdb0;
+  --glass: rgba(10, 12, 26, 0.5);
+  --glass-2: rgba(10, 12, 26, 0.62);
+  --glass-line: rgba(255, 255, 255, 0.22);
   --danger: #ff4d5a;
   --font-display: "Outfit", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
