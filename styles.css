@@ -10,12 +10,14 @@
   --fg: #f5f5f2;
   --fg-2: rgba(245, 245, 242, 0.62);
   --fg-3: rgba(245, 245, 242, 0.38);
-  --volt: #d9ff3b;        /* Person 1 */
-  --volt-ink: #0a0b00;
-  --volt-dim: rgba(217, 255, 59, 0.14);
-  --blue: #2f6bff;        /* Person 2 */
-  --blue-ink: #ffffff;
-  --blue-dim: rgba(47, 107, 255, 0.18);
+  /* Speaker colors. --volt = language one, --blue = language two (names kept for the stylesheet; palettes below swap the values). */
+  --volt: #ff6fb5;        /* Aurora pink */
+  --volt-ink: #2a0017;
+  --volt-dim: rgba(255, 111, 181, 0.16);
+  --blue: #4ed8e8;        /* Aurora aqua */
+  --blue-ink: #002a2e;
+  --blue-dim: rgba(78, 216, 232, 0.16);
+  --mid: #7b61ff;         /* the color between them, for the background field */
   --danger: #ff4d5a;
   --font-display: "Outfit", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
@@ -28,6 +30,11 @@
   --sab: env(safe-area-inset-bottom, 0px);
   color-scheme: dark;
 }
+
+/* Palettes — set data-palette on <html>. */
+:root[data-palette="volt"] { --volt: #d9ff3b; --volt-ink: #0a0b00; --volt-dim: rgba(217,255,59,.14); --blue: #2f6bff; --blue-ink: #ffffff; --blue-dim: rgba(47,107,255,.18); --mid: #3a7bff; }
+:root[data-palette="ember"] { --volt: #ff8a3d; --volt-ink: #2a0e00; --volt-dim: rgba(255,138,61,.16); --blue: #cfe8ff; --blue-ink: #0b1a26; --blue-dim: rgba(207,232,255,.14); --mid: #ff4d6d; }
+:root[data-palette="mono"] { --volt: #f5f5f2; --volt-ink: #050505; --volt-dim: rgba(245,245,242,.12); --blue: #8a8a92; --blue-ink: #ffffff; --blue-dim: rgba(138,138,146,.18); --mid: #5a5a62; }
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; }

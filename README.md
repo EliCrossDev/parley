@@ -3,9 +3,10 @@
 Two people, two languages, one screen. Static site + installable web app (PWA). No build step.
 
 ## Files
-- `index.html` / `landing.css` / `landing.js` — landing page (Three.js voxel hero, looping demo, pricing, credits)
+- `index.html` / `landing.css` / `landing.js` — landing page (Aurora shader hero, looping demo, pricing, credits)
+- `aurora.js` — shared Siri-style aurora background shader + the voice ribbon
 - `app.html` / `app.css` / `app.js` — the app (live translation, history + playback, profile)
-- `styles.css` — shared design tokens (black / white / volt yellow `#d9ff3b` / electric blue `#2f6bff`)
+- `styles.css` — shared design tokens. Palettes: Aurora (pink/aqua, default), Volt (yellow/blue), Ember (orange/ice), Mono. Switch in Profile → Colors.
 - `manifest.webmanifest`, `sw.js`, `icon*.{svg,png}` — PWA install + offline shell
 - `vercel.json` — clean URLs, microphone permission header
 

@@ -44,7 +44,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 0, engine: 'auto', libreUrl: '', libreKey: '', pro: false,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {},
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'aurora',
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -126,13 +126,23 @@
     const j = await r.json();
     return { text: j.translatedText, detected: j.detectedLanguage ? j.detectedLanguage.language : null, provider: 'libre' };
   }
+  const tCache = new Map();
   async function translate(text, from, to) {
+    const key = from + '|' + to + '|' + text; if (tCache.has(key)) return tCache.get(key);
     const chain = prefs.engine === 'libre' ? [viaLibre, viaGoogle, viaMyMemory]
       : prefs.engine === 'mymemory' ? [viaMyMemory, viaGoogle]
       : [viaGoogle, viaMyMemory];
-    let lastErr;
-    for (const fn of chain) { try { return await fn(text, from, to); } catch (e) { lastErr = e; } }
-    throw lastErr || new Error('translation failed');
+    // Primary gets a 900 ms head start; if it hasn't answered (or fails), the fallbacks fire and the first good answer wins.
+    const result = await new Promise((resolve, reject) => {
+      let settled = false, failed = 0, fallbacksStarted = false, lastErr = null;
+      const startFallbacks = () => { if (fallbacksStarted) return; fallbacksStarted = true; chain.slice(1).forEach(attempt); if (chain.length === 1) check(); };
+      const check = () => { if (!settled && failed >= chain.length) reject(lastErr || new Error('translation failed')); };
+      const attempt = (fn) => fn(text, from, to).then((r) => { if (!settled) { settled = true; resolve(r); } }).catch((e) => { lastErr = e; failed++; if (!fallbacksStarted) startFallbacks(); else check(); });
+      attempt(chain[0]);
+      setTimeout(() => { if (!settled) startFallbacks(); }, 900);
+    });
+    if (tCache.size > 300) tCache.clear(); tCache.set(key, result);
+    return result;
   }
 
   /* ---------------- Script-based language hints ---------------- */
@@ -246,77 +256,30 @@
   })();
   function speak(text, lang) { Voice.speak(text, lang); }
 
-  /* ---------------- Voxel waveform (Three.js) ---------------- */
+  /* ---------------- Mic level + Siri ribbon ---------------- */
   const Wave = (() => {
-    let renderer, scene, camera, mesh, cols = 56, rows = 7, dummy, colorA, colorB, colorBase, analyser, data, raf, active = false, mix = 0, targetMix = 0, level = 0;
-    const heights = new Float32Array(cols);
-    function init(canvas) {
-      if (!window.THREE || renderer) return;
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-      scene = new THREE.Scene();
-      camera = new THREE.OrthographicCamera(-cols / 2, cols / 2, rows, -rows, -50, 50);
-      camera.position.set(0, 6, 20); camera.lookAt(0, 0, 0);
-      const geo = new THREE.BoxGeometry(0.72, 0.72, 0.72);
-      const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, metalness: 0.1 });
-      mesh = new THREE.InstancedMesh(geo, mat, cols * rows);
-      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      scene.add(mesh);
-      scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-      const dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(-4, 10, 12); scene.add(dl);
-      dummy = new THREE.Object3D();
-      colorA = new THREE.Color(0xd9ff3b); colorB = new THREE.Color(0x2f6bff); colorBase = new THREE.Color(0x1d1d22);
-      resize(); window.addEventListener('resize', resize);
-      // Instance colors
-      const c = new THREE.Color();
-      for (let i = 0; i < cols * rows; i++) mesh.setColorAt(i, c.copy(colorBase));
-      mesh.instanceColor.needsUpdate = true;
-    }
-    function resize() { if (!renderer) return; const c = renderer.domElement; const w = c.clientWidth || 300, h = c.clientHeight || 96; renderer.setSize(w, h, false); const aspect = w / h; camera.left = -cols / 2; camera.right = cols / 2; camera.top = (cols / 2) / aspect; camera.bottom = -(cols / 2) / aspect; camera.updateProjectionMatrix(); }
+    let analyser = null, data = null, level = 0, raf = null, active = false, ribbon = null;
     function attach(stream) {
       try {
         const AC = window.AudioContext || window.webkitAudioContext; const ctx = new AC();
-        const src = ctx.createMediaStreamSource(stream); analyser = ctx.createAnalyser(); analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.78; src.connect(analyser);
+        const src = ctx.createMediaStreamSource(stream); analyser = ctx.createAnalyser(); analyser.fftSize = 512; analyser.smoothingTimeConstant = 0.7; src.connect(analyser);
         data = new Uint8Array(analyser.frequencyBinCount);
         if (ctx.state === 'suspended') ctx.resume();
       } catch (e) { analyser = null; }
     }
-    function setSpeaker(who) { targetMix = who === 'b' ? 1 : 0; }
-    function frame(t) {
-      if (!active) return; raf = requestAnimationFrame(frame);
-      if (!renderer) return;
-      mix += (targetMix - mix) * 0.08;
-      let sum = 0;
-      if (analyser) { analyser.getByteFrequencyData(data); for (let i = 0; i < 48; i++) sum += data[i]; level = sum / (48 * 255); }
+    function tick() {
+      if (!active) return; raf = requestAnimationFrame(tick);
+      if (analyser) { analyser.getByteFrequencyData(data); let sum = 0; for (let i = 2; i < 60; i++) sum += data[i]; const raw = sum / (58 * 255); level += (raw - level) * 0.35; }
       else level = 0;
-      const tint = colorA.clone().lerp(colorB, mix);
-      const c = new THREE.Color();
-      for (let x = 0; x < cols; x++) {
-        let v;
-        if (analyser) { const bin = Math.floor((x / cols) * 40) + 1; v = data[bin] / 255; }
-        else v = 0.08 + 0.06 * Math.sin(t / 420 + x * 0.35);
-        // Mirror around the center so it reads as a waveform
-        const d = Math.abs(x - cols / 2) / (cols / 2); v = v * (1 - d * 0.55) + 0.04;
-        heights[x] += (v - heights[x]) * 0.25;
-        const lit = Math.round(heights[x] * rows);
-        for (let y = 0; y < rows; y++) {
-          const i = x * rows + y; const on = y < lit;
-          const yy = (y - rows / 2 + 0.5) * 0.95;
-          dummy.position.set(x - cols / 2 + 0.5, yy, on ? Math.sin(t / 600 + x * 0.3) * 0.6 : 0);
-          const s = on ? 1 : 0.55; dummy.scale.set(s, s, s); dummy.updateMatrix();
-          mesh.setMatrixAt(i, dummy.matrix);
-          const fade = on ? 0.55 + 0.45 * (1 - y / rows) : 0;
-          c.copy(colorBase).lerp(tint, fade);
-          mesh.setColorAt(i, c);
-        }
-      }
-      mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
-      renderer.render(scene, camera);
+      if (ribbon) ribbon.setLevel(Math.min(1, level * 2.4));
     }
-    function start(canvas) { init(canvas); active = true; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); }
-    function stop() { active = false; cancelAnimationFrame(raf); analyser = null; }
-    return { start, stop, attach, setSpeaker, level: () => level };
+    function start(canvas) { if (!ribbon && window.Ribbon) ribbon = Ribbon.mount(canvas); active = true; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
+    function stop() { active = false; cancelAnimationFrame(raf); analyser = null; level = 0; if (ribbon) { ribbon.setLevel(0); ribbon.setTalking(false); } }
+    function setSpeaker(who) { if (ribbon) ribbon.setColor(cssVar(who === 'b' ? '--blue' : '--volt')); }
+    function setTalking(b) { if (ribbon) ribbon.setTalking(b); }
+    return { start, stop, attach, setSpeaker, setTalking, level: () => level };
   })();
+  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
   /* ---------------- Live session ---------------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -327,14 +290,20 @@
   const langOf = (who) => who === 'a' ? prefs.langA : prefs.langB;
   const other = (who) => who === 'a' ? 'b' : 'a';
 
-  const BG = window.GlyphBG ? GlyphBG.mount($('app-bg'), { tilt: 0.25, dim: 0.75, maxDpr: 1.25 }) : null;
-  const VOLT_RGB = [0.85, 1.0, 0.23], BLUE_RGB = [0.18, 0.42, 1.0];
+  const BG = window.Aurora ? Aurora.mount($('app-bg'), { dim: 0.9, maxDpr: 1, colors: [cssVar('--volt'), cssVar('--mid'), cssVar('--blue')] }) : null;
+  function applyPalette(p) {
+    prefs.palette = p || 'aurora'; if (prefs.palette === 'aurora') document.documentElement.removeAttribute('data-palette'); else document.documentElement.setAttribute('data-palette', prefs.palette);
+    if (BG) BG.setColors(cssVar('--volt'), cssVar('--mid'), cssVar('--blue'));
+    document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.pal === prefs.palette));
+    const sub = $('palette-sub'); if (sub) sub.textContent = { aurora: 'Aurora', volt: 'Volt', ember: 'Ember', mono: 'Mono' }[prefs.palette] || 'Aurora';
+    const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = '#050505';
+  }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
   function showError(msg) { const s = $('stage-status'); s.textContent = msg; s.className = 'stage-status err'; toast(msg); }
   function setExpected(who, forced) {
     live.expected = who; if (forced !== undefined) live.forced = forced;
     $('who-a').classList.toggle('is-live', who === 'a'); $('who-b').classList.toggle('is-live', who === 'b');
-    Wave.setSpeaker(who); if (BG) BG.setTint(who === 'b' ? BLUE_RGB : VOLT_RGB, 0.85);
+    Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--blue' : '--volt'), 0.7);
     const sg = $('siri'); sg.className = 'siri on ' + who;
     setStatus('Listening · ' + byCode(langOf(who)).name, who);
   }
@@ -425,10 +394,11 @@
         if (!live.interimEl) live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true));
         else { live.interimEl.querySelector('.trans').textContent = shown; $('convo').scrollTop = $('convo').scrollHeight; }
         if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus('Hearing…', live.expected); }
-        scheduleInterimTranslate(shown);
+        Wave.setTalking(true); scheduleInterimTranslate(shown);
         // Snappy turns: if the interim text stops changing, force the final now instead of waiting for the engine.
         armEndpoint(r, shown);
       }
+      if (finals.length) Wave.setTalking(false);
       for (const f of finals) if (f) handleFinal(live.carry ? (live.carry + ' ' + f) : f);
     };
     r.onerror = (ev) => {
@@ -460,7 +430,7 @@
           $('convo').scrollTop = $('convo').scrollHeight;
         }
       } catch (e) {}
-    }, 300);
+    }, 180);
   }
 
   /* ---- Natural endpointing ----
@@ -472,7 +442,7 @@
     clearInterval(live.epId); live.epQuiet = 0; live.epText = text;
     const words = wordCount(text);
     const open = TRAILING.test(text.trim()) || /[,;:]$/.test(text.trim()) || words < 3;
-    const needQuiet = open ? 1500 : (words > 14 ? 800 : 950);   // ms of real silence required
+    const needQuiet = open ? 1400 : (words > 14 ? 700 : 850);   // ms of real silence required
     live.epId = setInterval(() => {
       if (!live.on || live.rec !== r || !live.interimEl) { clearInterval(live.epId); return; }
       const quiet = Wave.level() < 0.045;                        // mic level, not just "no new words"
@@ -532,7 +502,7 @@
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint">Start talking. Either of you.</p>';
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
-    Wave.start($('wave')); renderSpeakBtn(); Voice.warm();
+    Wave.start($('ribbon')); renderSpeakBtn(); Voice.warm();
     setExpected('a'); startRecognizer(prefs.langA);
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
@@ -815,6 +785,8 @@
 
   /* ---------------- Boot ---------------- */
   if ('speechSynthesis' in window) { try { speechSynthesis.getVoices(); } catch (e) {} }
+  applyPalette(prefs.palette);
+  document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.addEventListener('click', () => { applyPalette(b.dataset.pal); savePrefs(); }));
   renderSetup(); renderProfile();
   const hash = (location.hash || '').replace('#', '');
   if (['history', 'profile'].includes(hash)) showView(hash);
@@ -822,7 +794,7 @@
   if (/[?&]demo=1/.test(location.search)) {
     $('live-setup').hidden = true; $('live-stage').hidden = false; $('rec-dot').classList.add('off'); document.body.classList.add('live');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
-    Wave.start($('wave')); setExpected('b');
+    Wave.start($('ribbon')); setExpected('b');
     [['a', 'Hey, is this table free?', 'Oye, ¿está libre esta mesa?'], ['b', 'Sí, siéntense. ¿Qué les traigo?', 'Yes, sit down. What can I get you?'], ['a', 'Two cold beers and the fish tacos.', 'Dos cervezas frías y los tacos de pescado.']]
       .forEach((l) => appendBubble(makeBubble(l[0], l[1], l[2])));
   }

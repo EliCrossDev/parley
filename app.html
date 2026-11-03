@@ -13,6 +13,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://translate.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -100,8 +101,8 @@
         <button class="kb-btn" id="type-btn" aria-label="Type instead of speaking"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg></button>
       </div>
 
-      <div class="wave-wrap">
-        <canvas id="wave" aria-hidden="true"></canvas>
+      <div class="ribbon-wrap">
+        <canvas id="ribbon" aria-hidden="true"></canvas>
       </div>
 
       <div class="convo" id="convo" aria-live="polite">
@@ -222,6 +223,15 @@
           <button class="field-select small" id="engine-btn">Change</button>
         </div>
         <div class="setting-row">
+          <div><p class="setting-title">Colors</p><p class="setting-sub" id="palette-sub">Aurora</p></div>
+          <div class="seg palette-seg" id="palette-seg">
+            <button class="seg-btn" data-pal="aurora" aria-label="Aurora"><i style="background:linear-gradient(135deg,#ff6fb5 50%,#4ed8e8 50%)"></i></button>
+            <button class="seg-btn" data-pal="volt" aria-label="Volt"><i style="background:linear-gradient(135deg,#d9ff3b 50%,#2f6bff 50%)"></i></button>
+            <button class="seg-btn" data-pal="ember" aria-label="Ember"><i style="background:linear-gradient(135deg,#ff8a3d 50%,#cfe8ff 50%)"></i></button>
+            <button class="seg-btn" data-pal="mono" aria-label="Mono"><i style="background:linear-gradient(135deg,#f5f5f2 50%,#8a8a92 50%)"></i></button>
+          </div>
+        </div>
+        <div class="setting-row">
           <div><p class="setting-title">Talk-back voice</p><p class="setting-sub" id="voice-sub">Studio · Heart (EN)</p></div>
           <button class="field-select small" id="voice-btn">Change</button>
         </div>
@@ -304,8 +314,7 @@
 
 <div class="toast" id="toast" role="status"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="glyphbg.js"></script>
+<script src="aurora.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -1,5 +1,4 @@
 node_modules
 .vercel
 .DS_Store
-deploy.log
-*.bak
+glyphbg.js

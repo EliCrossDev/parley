@@ -11,7 +11,8 @@
   document.querySelectorAll('.hero .reveal').forEach((n) => n.classList.add('in'));
 
   /* ---------- Shader hero ---------- */
-  (function () { const c = document.getElementById('hero-canvas'); if (c && window.GlyphBG) GlyphBG.mount(c, { scrollTilt: true }); })();
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  (function () { const c = document.getElementById('hero-canvas'); if (c && window.Aurora) Aurora.mount(c, { scrollTilt: true, dim: 1, maxDpr: 1, colors: [cssVar('--volt'), cssVar('--mid'), cssVar('--blue')] }); })();
 
   /* ---------- Demo phone ---------- */
   let demoSpeaker = 'a', demoTalk = false;
@@ -48,29 +49,9 @@
     const pio = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting && !timer) step(); }), { threshold: 0.3 });
     pio.observe(phone);
 
-    // Small 2D voxel waveform for the demo
-    const cv = document.getElementById('demo-wave'); const ctx = cv.getContext('2d');
-    const bars = 36, hs = new Array(bars).fill(0.1);
-    function wave(t) {
-      requestAnimationFrame(wave);
-      const w = cv.clientWidth, h = cv.clientHeight; if (cv.width !== w * 2 || cv.height !== h * 2) { cv.width = w * 2; cv.height = h * 2; }
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      const col = demoSpeaker === 'b' ? '#2f6bff' : '#d9ff3b';
-      const cell = cv.width / bars, rows = 5, ch = cv.height / rows;
-      for (let x = 0; x < bars; x++) {
-        const d = Math.abs(x - bars / 2) / (bars / 2);
-        const target = demoTalk ? (0.35 + 0.65 * Math.abs(Math.sin(t / 150 + x * 0.6) * Math.sin(t / 530 + x))) * (1 - d * 0.6) : 0.08 + 0.05 * Math.sin(t / 400 + x * 0.4);
-        hs[x] += (target - hs[x]) * 0.2;
-        const lit = Math.round(hs[x] * rows);
-        for (let y = 0; y < rows; y++) {
-          const on = y < lit; ctx.fillStyle = on ? col : '#1a1a1e'; ctx.globalAlpha = on ? 0.5 + 0.5 * (1 - y / rows) : 1;
-          const s = on ? cell * 0.62 : cell * 0.36;
-          ctx.fillRect(x * cell + (cell - s) / 2, cv.height - (y + 1) * ch + (ch - s) / 2, s, s);
-        }
-      }
-      ctx.globalAlpha = 1;
-    }
-    requestAnimationFrame(wave);
+    // Siri ribbon for the demo
+    const rb = window.Ribbon ? Ribbon.mount(document.getElementById('demo-ribbon')) : null;
+    (function pulse(t) { requestAnimationFrame(pulse); if (!rb) return; rb.setColor(cssVar(demoSpeaker === 'b' ? '--blue' : '--volt')); rb.setTalking(demoTalk); rb.setLevel(demoTalk ? 0.35 + 0.45 * Math.abs(Math.sin(t / 170) * Math.sin(t / 430)) : 0); })(0);
   })();
 
   /* ---------- Language marquee ---------- */
