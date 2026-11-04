@@ -578,9 +578,7 @@
     if (who === live.expected) { setExpected(who); return; }                 // engine already aimed right; just light the chip
     // Engine was listening in the other language: what it heard so far is nonsense. Aim it, and keep the words Whisper heard.
     if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }
-    setExpected(who); startRecognizer(langOf(who));
-    const heard = await Ear.transcribe(r.audio, r.lang);
-    if (heard && live.on && live.detected === who && !live.interimEl) { live.carry = heard; live.interimEl = appendBubble(makeBubble(who, '', heard, true)); live.interimEl.dataset.words = heard; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 2600); scheduleInterimTranslate(heard); }
+    live.carry = null; setExpected(who); startRecognizer(langOf(who));
   }
   // The ear judges by accent; a telltale word is stronger evidence. "Hola" said with an English accent is still Spanish.
   function wordsOverrideEar(text) {
