@@ -353,32 +353,47 @@
   // Tiny offline lexicon of very common function words. Instant, no network. Covers the
   // same-alphabet pairs where script detection can't help (EN/ES/PT/FR/DE/IT...).
   const LEX = {
-    en: 'the a an and is are i you we they it this that what where how yes no hello hi thanks thank please can do have want need my your of to in on for with',
-    es: 'el la los las un una y es son yo tú usted nosotros ellos esto eso qué dónde cómo sí no hola gracias por favor puedo tengo quiero necesito mi tu de a en con para buenos buenas',
-    pt: 'o a os as um uma e é são eu você nós eles isto isso que onde como sim não olá obrigado obrigada por favor posso tenho quero preciso meu minha seu sua de em com para bom boa',
-    fr: 'le la les un une et est sont je tu vous nous ils ceci cela que où comment oui non bonjour merci s\'il peux j\'ai veux besoin mon ma votre de à en avec pour',
-    de: 'der die das ein eine und ist sind ich du sie wir dies was wo wie ja nein hallo danke bitte kann habe will brauche mein dein von zu in mit für',
-    it: 'il la lo gli le un una e è sono io tu lei noi loro questo quello che dove come sì no ciao grazie per favore posso ho voglio bisogno mio tuo di a in con per buongiorno',
-    nl: 'de het een en is zijn ik jij u wij zij dit dat wat waar hoe ja nee hallo dank bedankt alsjeblieft kan heb wil nodig mijn jouw van naar in met voor',
-    id: 'yang dan ini itu saya anda kami mereka apa di mana bagaimana ya tidak halo terima kasih tolong bisa punya mau perlu saya ke dari dengan untuk selamat',
-    ms: 'yang dan ini itu saya awak kami mereka apa di mana bagaimana ya tidak helo terima kasih tolong boleh ada mahu perlu ke dari dengan untuk selamat',
-    tr: 'bir ve bu şu ben sen biz onlar ne nerede nasıl evet hayır merhaba teşekkür lütfen var yok istiyorum benim senin için ile',
-    sw: 'na ni hii hiyo mimi wewe sisi wao nini wapi vipi ndiyo hapana habari asante tafadhali naweza nina nataka yangu yako kwa',
-    tl: 'ang ng mga at ay ako ikaw kami sila ito iyon ano saan paano oo hindi kumusta salamat paki pwede may gusto ko mo sa para',
-    pl: 'i jest są ja ty my oni to co gdzie jak tak nie cześć dziękuję proszę mogę mam chcę potrzebuję mój twój z do w na dla',
-    sv: 'och är jag du vi de det här vad var hur ja nej hej tack snälla kan har vill behöver min din av till i med för',
-    vi: 'và là tôi bạn chúng họ này đó gì đâu sao vâng không xin chào cảm ơn làm ơn có thể muốn cần của với cho',
+    en: "the a an and is are am was were be been i you he she we they it this that these those what where when how why who yes no not hello hi hey thanks thank please can could do does did have has had want need like my your his her our their of to in on for with from at by about just so very really okay ok sure maybe here there now today tomorrow good great fine sorry excuse me much many some any all one two three table check bill water beer food",
+    es: "el la los las un una unos unas y o es son soy eres está están estoy estás ser estar yo tú usted ustedes nosotros ellos ellas esto eso esta este qué dónde cuándo cómo por qué quién sí no hola buenos buenas días tardes noches gracias por favor puedo puede tengo tiene quiero quiere necesito necesita me te le mi tu su nuestro de a en con para sin muy bien mal mucho poco aquí allí ahora hoy mañana ahorita vale claro perdón disculpe oye mira pues entonces también todo nada algo uno dos tres mesa cuenta agua cerveza comida",
+    pt: "o a os as um uma uns umas e ou é são sou está estão estou ser estar eu você vocês nós eles elas isto isso este esta que onde quando como por que quem sim não olá oi bom boa dia tarde noite obrigado obrigada por favor posso pode tenho tem quero quer preciso precisa me te lhe meu minha seu sua nosso de em com para sem muito bem mal pouco aqui ali agora hoje amanhã tá beleza claro desculpa desculpe olha então também tudo nada algo um dois três mesa conta água cerveja comida",
+    fr: "le la les un une des et ou est sont suis es être je tu il elle on nous vous ils elles ceci cela ce cette que quoi où quand comment pourquoi qui oui non bonjour salut merci s'il vous plaît peux peut ai as a veux veut besoin me te lui mon ma ton ta son sa notre votre de à en avec pour sans très bien mal beaucoup peu ici là maintenant aujourd'hui demain d'accord bien sûr pardon excusez alors aussi tout rien quelque un deux trois table addition eau bière",
+    de: "der die das ein eine und oder ist sind bin bist sein ich du er sie es wir ihr dies das was wo wann wie warum wer ja nein hallo guten morgen tag abend danke bitte kann kannst habe hast hat will möchte brauche mich dich ihm mein dein sein ihr unser von zu in mit für ohne sehr gut schlecht viel wenig hier dort jetzt heute morgen okay klar entschuldigung also auch alles nichts etwas eins zwei drei tisch rechnung wasser bier essen",
+    it: "il lo la i gli le un uno una e o è sono sei essere io tu lui lei noi voi loro questo questa quello che cosa dove quando come perché chi sì no ciao buongiorno buonasera grazie per favore posso può ho hai ha voglio vuole bisogno mi ti gli mio mia tuo tua suo sua nostro di a in con per senza molto bene male tanto poco qui lì adesso oggi domani va bene certo scusa scusi allora anche tutto niente qualcosa uno due tre tavolo conto acqua birra cibo",
+    nl: "de het een en of is zijn ben bent ik jij je u wij we zij ze dit dat wat waar wanneer hoe waarom wie ja nee hallo hoi dank bedankt alsjeblieft kan kun heb hebt wil moet nodig mij me jou mijn jouw zijn haar ons van naar in met voor zonder heel goed slecht veel weinig hier daar nu vandaag morgen oké prima sorry dus ook alles niets iets een twee drie tafel rekening water bier eten",
+    id: "yang dan atau ini itu saya aku kamu anda kami kita mereka dia apa di mana kapan bagaimana mengapa siapa ya tidak halo selamat pagi siang malam terima kasih tolong bisa punya mau ingin perlu saya ke dari dengan untuk tanpa sangat baik buruk banyak sedikit sini sana sekarang hari ini besok oke jadi juga semua satu dua tiga meja air",
+    ms: "yang dan atau ini itu saya awak anda kami kita mereka dia apa di mana bila bagaimana kenapa siapa ya tidak helo selamat pagi tengah malam terima kasih tolong boleh ada mahu nak perlu ke dari dengan untuk tanpa sangat baik teruk banyak sedikit sini sana sekarang hari ini esok okey jadi juga semua satu dua tiga meja air",
+    tr: "bir ve veya bu şu o ben sen biz siz onlar ne nerede ne zaman nasıl neden kim evet hayır merhaba selam günaydın teşekkür teşekkürler lütfen var yok istiyorum lazım beni seni benim senin bizim için ile çok iyi kötü az burada orada şimdi bugün yarın tamam peki pardon yani de da her şey hiç bir iki üç masa hesap su bira",
+    sw: "na au ni hii hiyo hili mimi wewe yeye sisi ninyi wao nini wapi lini vipi kwa nini nani ndiyo hapana habari jambo asante tafadhali naweza nina nataka nahitaji yangu yako yake yetu kwa katika bila sana vizuri vibaya nyingi kidogo hapa pale sasa leo kesho sawa basi pia yote moja mbili tatu meza maji",
+    tl: "ang ng mga at o ay ako ikaw siya kami tayo sila ito iyon ano saan kailan paano bakit sino oo hindi kumusta magandang umaga hapon gabi salamat paki pwede may gusto kailangan ko mo niya akin iyo sa para nang napaka mabuti masama marami kaunti dito doon ngayon bukas sige okay pasensya kasi din lahat wala isa dalawa tatlo mesa tubig",
+    pl: "i lub to ten ta jest są jestem jesteś ja ty on ona my wy oni co gdzie kiedy jak dlaczego kto tak nie cześć dzień dobry dziękuję proszę mogę może mam masz chcę chce potrzebuję mnie cię mój twój nasz z do w na dla bez bardzo dobrze źle dużo mało tu tam teraz dzisiaj jutro okej jasne przepraszam więc też wszystko nic coś jeden dwa trzy stół rachunek woda piwo",
+    sv: "och eller är var jag du han hon vi ni de det här vad var när hur varför vem ja nej hej tack snälla kan har vill behöver mig dig min din vår av till i med för utan mycket bra dåligt många lite här där nu idag imorgon okej visst förlåt alltså också allt inget något ett två tre bord nota vatten öl",
+    vi: "và hoặc là tôi bạn anh chị em chúng họ này đó gì đâu khi nào sao tại sao ai vâng dạ không xin chào cảm ơn làm ơn có thể muốn cần của với cho rất tốt xấu nhiều ít đây kia bây giờ hôm nay ngày mai được rồi xin lỗi vậy cũng tất cả một hai ba bàn nước bia",
   };
+  // Words that settle it on their own: hearing one of these is enough.
+  const STRONG = {
+    en: "the hello thanks please yes okay sorry", es: "hola gracias sí buenos buenas está qué dónde pues claro vale perdón disculpe", pt: "olá obrigado obrigada não está você bom boa tudo beleza", fr: "bonjour merci oui s'il c'est très vous", de: "hallo danke bitte ich nicht guten", it: "ciao grazie sì buongiorno sono allora", nl: "hallo dank bedankt niet", id: "terima kasih selamat tidak", ms: "terima kasih selamat tidak", tr: "merhaba teşekkür evet hayır", sw: "habari asante jambo", tl: "salamat kumusta hindi", pl: "cześć dziękuję proszę nie", sv: "hej tack", vi: "xin chào cảm ơn không",
+  };
+  const STRONGSET = {}; Object.keys(STRONG).forEach((k) => { STRONGSET[k] = new Set(STRONG[k].split(' ')); });
+  function strongHit(words, code) { const s = STRONGSET[base(code)]; if (!s) return false; return words.some((w) => s.has(w)); }
   const LEXSET = {}; Object.keys(LEX).forEach((k) => { LEXSET[k] = new Set(LEX[k].split(' ')); });
   function lexScore(words, code) { const s = LEXSET[base(code)]; if (!s) return 0; let n = 0; for (const w of words) if (s.has(w)) n++; return n; }
   // Returns 'a' | 'b' | null - null means "can't tell offline".
   function guessOffline(text) {
     const sA = langScript(prefs.langA), sB = langScript(prefs.langB), sT = scriptOf(text);
     if (sA !== sB) { if (sT === sA) return 'a'; if (sT === sB) return 'b'; return null; }
-    const words = text.toLowerCase().replace(/[^\p{L}\p{M}' ]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 4);
+    const words = text.toLowerCase().replace(/[^\p{L}\p{M}' ]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 5);
     if (!words.length) return null;
+    const sa = strongHit(words, prefs.langA), sb = strongHit(words, prefs.langB);
+    if (sa && !sb) return 'a'; if (sb && !sa) return 'b';
     const a = lexScore(words, prefs.langA), b = lexScore(words, prefs.langB);
     if (a > b) return 'a'; if (b > a) return 'b'; return null;
+  }
+  // The engine is listening in the wrong language: its output is nonsense that matches neither word list.
+  // After a few words of that, flip the engine rather than wait for a guess that will never come.
+  function looksLikeNonsense(text, engineLang) {
+    const words = text.toLowerCase().replace(/[^\p{L}\p{M}' ]/gu, ' ').split(/\s+/).filter(Boolean);
+    if (words.length < 4) return false;
+    return lexScore(words, engineLang) === 0;
   }
   // Online: ask the translator to detect from the first two words. Cached per utterance.
   async function guessOnline(firstWords) {
@@ -395,15 +410,25 @@
   // Called as soon as two words are in. Decides speaker, recolors the bubble, swaps recognizer if needed.
   async function earlyDetect(interim) {
     if (live.forced || live.detected) return;
-    const firstTwo = interim.trim().split(/\s+/).slice(0, 2).join(' ');
-    let who = guessOffline(firstTwo);
-    if (!who) {
-      live.detectPending = firstTwo;
-      who = await guessOnline(firstTwo);
-      if (live.detectPending !== firstTwo || live.detected) return; // a newer utterance superseded this
+    const words = interim.trim().split(/\s+/);
+    const head = words.slice(0, 4).join(' ');
+    let who = guessOffline(head);
+    if (!who && words.length >= 2 && !live.detectPending) {
+      const probe = words.slice(0, 3).join(' ');
+      live.detectPending = probe;
+      who = await guessOnline(probe);
+      if (live.detectPending !== probe || live.detected) return; // a newer utterance superseded this
       live.detectPending = null;
     }
-    if (!who) return;
+    if (!who) {
+      // Nothing recognizable after several words: the engine is probably in the wrong language. Flip once.
+      if (!live.flipped && looksLikeNonsense(interim, langOf(live.expected))) {
+        live.flipped = true; live.detectPending = null; const next = other(live.expected);
+        if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }   // that text was never real words
+        live.carry = null; setExpected(next); startRecognizer(langOf(next));
+      }
+      return;
+    }
     live.detected = who;
     if (live.interimEl) { live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who); }
     if (who !== live.expected) {
@@ -431,7 +456,7 @@
           if (n.dataset.tr) n.querySelector('.orig').textContent = shown; else n.querySelector('.trans').textContent = shown;
           $('convo').scrollTop = $('convo').scrollHeight;
         }
-        if (!live.detected) { if (wordCount(interim) >= 2) earlyDetect(interim); else setStatus(T('live.listening'), live.expected); }
+        if (!live.detected) earlyDetect(interim);
         Wave.setTalking(true); scheduleInterimTranslate(shown);
         // Snappy turns: if the interim text stops changing, force the final now instead of waiting for the engine.
         armEndpoint(r, shown);
@@ -502,7 +527,7 @@
     if (cont && live.interimEl) { live.interimEl.remove(); }
     const node = cont ? last.node : (live.interimEl || appendBubble(makeBubble(guess, '', text, true)));
     if (cont) { text = (last.orig + ' ' + text).trim(); live.lines.pop(); }
-    live.interimEl = null; live.carry = null; live.detected = null; live.detectPending = null;
+    live.interimEl = null; live.carry = null; live.detected = null; live.detectPending = null; live.flipped = false;
     node.className = 'bubble ' + guess + ' interim';
     node.querySelector('.trans').textContent = text;
     setStatus(T('live.translating'), guess);
@@ -541,7 +566,7 @@
   async function startLive() {
     if (!SR) { toast('This browser has no speech recognition. Use Chrome or Safari.'); return; }
     if (prefs.langA === prefs.langB) { toast('Pick two different languages.'); return; }
-    live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null;
+    live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null; live.flipped = false;
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint"></p>'; $('convo-hint').textContent = T('live.hint');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
