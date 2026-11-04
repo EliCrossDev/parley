@@ -1,6 +1,6 @@
 /* Parley service worker — caches the app shell so it opens instantly and works as an installed app.
    Translation requests always go to the network. */
-const CACHE = 'parley-v71';
+const CACHE = 'parley-v72';
 const SHELL = ['index.html', 'app.html', 'styles.css', 'landing.css', 'app.css', 'app.js', 'landing.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'aurora.js', 'i18n.js', 'ear.js', 'reel.js', 'icon-192.png'];
 
 self.addEventListener('install', (e) => {
