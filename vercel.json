@@ -28,5 +28,18 @@
     "api/*.js": {
       "maxDuration": 10
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "parley-murex.vercel.app"
+        }
+      ],
+      "destination": "https://getparley.vercel.app/$1",
+      "permanent": true
+    }
+  ]
 }

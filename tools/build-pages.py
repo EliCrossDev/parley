@@ -3,7 +3,7 @@
 Run: python3 tools/build-pages.py   (from the repo root). Static output, no build step on Vercel."""
 import json, os, datetime
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SITE = 'https://parley-murex.vercel.app'
+SITE = 'https://getparley.vercel.app'
 TODAY = datetime.date.today().isoformat()
 
 HEAD = '''<!doctype html>
@@ -174,7 +174,7 @@ POSTS = [
 <h2>What it cost us</h2>
 <p>Browser speech engines only listen in one language at a time. A native app with its own speech model can identify the language from the sound; we cannot. So we built a different approach: decide from the first two words, switch during silences, never mid-word. We wrote about it in <a href="/blog/how-parley-knows-which-language-is-being-spoken">How Parley knows which language is being spoken</a>.</p>
 <h2>What it made possible</h2>
-<p>Free for everyone, because nothing meters. Private by construction. Replayable conversations, with audio, on your device. And a translation engine you can swap for your own server when you need unlimited, private use. Try it at <a href="/app">parley-murex.vercel.app/app</a>.</p>'''),
+<p>Free for everyone, because nothing meters. Private by construction. Replayable conversations, with audio, on your device. And a translation engine you can swap for your own server when you need unlimited, private use. Try it at <a href="/app">getparley.vercel.app/app</a>.</p>'''),
  ('how-parley-knows-which-language-is-being-spoken', '2026-10-27', 'How Parley knows which language is being spoken',
   'A look inside Parley\'s two-word language detection: on-device word lists, script detection, a translator fallback, and switching the speech engine only during silence.',
   '''<p class="lede">The browser can only hear one language at a time. Here is how Parley turns that into a conversation that flips direction on its own.</p>
@@ -192,7 +192,7 @@ POSTS = [
   'Parley is an installable web app. Here is how to put it on your home screen on iPhone and Android, and on your desktop in Chrome or Edge, with no app store involved.',
   '''<p class="lede">Parley lives at one link. Installing it just means giving that link an icon and a full-screen window.</p>
 <h2>iPhone and iPad</h2>
-<p>Open <a href="/app">parley-murex.vercel.app/app</a> in Safari. Tap the Share button, then "Add to Home Screen", then Add. Parley now opens full screen from its own icon. The first time you start a conversation, allow the microphone.</p>
+<p>Open <a href="/app">getparley.vercel.app/app</a> in Safari. Tap the Share button, then "Add to Home Screen", then Add. Parley now opens full screen from its own icon. The first time you start a conversation, allow the microphone.</p>
 <h2>Android</h2>
 <p>Open the same link in Chrome. Tap "Install on your phone" on the home page, or use the browser menu and choose "Install app". Chrome puts Parley in your app drawer and on the home screen.</p>
 <h2>Mac, Windows and Linux</h2>
