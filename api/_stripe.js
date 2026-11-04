@@ -63,6 +63,6 @@ async function emailHasPaid(email) {
 function json(res, status, obj) { res.status(status).setHeader('Content-Type', 'application/json'); res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(obj)); }
 async function readBody(req) { if (req.body && typeof req.body === 'object') return req.body; const chunks = []; for await (const c of req) chunks.push(c); try { return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); } catch (e) { return {}; } }
 // Only ever send people back to our own site, whatever the request headers say.
-function origin(req) { const host = String(req.headers['x-forwarded-host'] || req.headers.host || ''); const ok = /^([a-z0-9-]+\.)*parley[a-z0-9-]*\.vercel\.app$/i.test(host) || host === (process.env.SITE_HOST || ''); return 'https://' + (ok ? host : (process.env.SITE_HOST || 'getparley.vercel.app')); }
+function origin(req) { const host = String(req.headers['x-forwarded-host'] || req.headers.host || ''); const ok = /^(get)?parley[a-z0-9-]*\.vercel\.app$/i.test(host) || host === (process.env.SITE_HOST || ''); return 'https://' + (ok ? host : (process.env.SITE_HOST || 'getparley.vercel.app')); }
 
 module.exports = { configured, stripe, makeToken, checkToken, emailHasPaid, json, readBody, origin, PRICE, isOurPrice };
