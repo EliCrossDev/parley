@@ -24,7 +24,7 @@ window.Ear = (function () {
         T = await import(CDN); T.env.allowLocalModels = false;
         processor = await T.AutoProcessor.from_pretrained(MODEL);
         tokenizer = await T.AutoTokenizer.from_pretrained(MODEL);
-        model = await T.WhisperForConditionalGeneration.from_pretrained(MODEL, { dtype: { encoder_model: 'fp16', decoder_model_merged: 'fp16' }, device: 'webgpu' });
+        model = await T.WhisperForConditionalGeneration.from_pretrained(MODEL, { dtype: { encoder_model: 'fp32', decoder_model_merged: 'fp32' }, device: 'webgpu' });
         langIds = model.generation_config.lang_to_id;
         // Warm the GPU so the first real decision is fast.
         await identify(new Float32Array(16000), 'en', 'es');
