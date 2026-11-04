@@ -58,6 +58,7 @@ window.I18N = (function () {
       'live.hintfirst': "Who's talking first? Tap their language below, or just start talking.",
       'live.hintpicked': "Listening in {lang}. Go ahead.",
       'pb.sharefoot': "Translated live with Parley,", 'pb.copied': "Transcript copied",
+      'set.improve': "Help improve Parley", 'set.improvesub': "Keeps a private note on this device of how each line was detected. Nothing is sent anywhere.", 'set.improveexport': "Export notes",
       'confirm.cancel': 'Cancel', 'confirm.ok': 'Confirm',
     },
     es: {
@@ -114,6 +115,7 @@ window.I18N = (function () {
       'live.hintfirst': "¿Quién habla primero? Toca su idioma abajo, o simplemente empieza a hablar.",
       'live.hintpicked': "Escuchando en {lang}. Adelante.",
       'pb.sharefoot': "Traducido en vivo con Parley,", 'pb.copied': "Transcripción copiada",
+      'set.improve': "Ayuda a mejorar Parley", 'set.improvesub': "Guarda en este dispositivo una nota privada de cómo se detectó cada línea. No se envía nada.", 'set.improveexport': "Exportar notas",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     pt: {
@@ -170,6 +172,7 @@ window.I18N = (function () {
       'live.hintfirst': "Quem fala primeiro? Toque no idioma dele abaixo, ou simplesmente comece a falar.",
       'live.hintpicked': "Ouvindo em {lang}. Pode falar.",
       'pb.sharefoot': "Traduzido ao vivo com o Parley,", 'pb.copied': "Transcrição copiada",
+      'set.improve': "Ajude a melhorar o Parley", 'set.improvesub': "Guarda neste aparelho uma nota privada de como cada linha foi detectada. Nada é enviado.", 'set.improveexport': "Exportar notas",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     fr: {
@@ -226,6 +229,7 @@ window.I18N = (function () {
       'live.hintfirst': "Qui parle en premier ? Touchez sa langue ci-dessous, ou commencez simplement à parler.",
       'live.hintpicked': "À l'écoute en {lang}. Allez-y.",
       'pb.sharefoot': "Traduit en direct avec Parley,", 'pb.copied': "Transcription copiée",
+      'set.improve': "Aider à améliorer Parley", 'set.improvesub': "Garde sur cet appareil une note privée sur la détection de chaque ligne. Rien n'est envoyé.", 'set.improveexport': "Exporter les notes",
       'confirm.cancel': 'Annuler', 'confirm.ok': 'Confirmer',
     },
     de: {
@@ -282,6 +286,7 @@ window.I18N = (function () {
       'live.hintfirst': "Wer spricht zuerst? Unten die Sprache antippen, oder einfach losreden.",
       'live.hintpicked': "Höre auf {lang}. Leg los.",
       'pb.sharefoot': "Live übersetzt mit Parley,", 'pb.copied': "Transkript kopiert",
+      'set.improve': "Parley verbessern helfen", 'set.improvesub': "Speichert auf diesem Gerät eine private Notiz, wie jede Zeile erkannt wurde. Nichts wird gesendet.", 'set.improveexport': "Notizen exportieren",
       'confirm.cancel': 'Abbrechen', 'confirm.ok': 'Bestätigen',
     },
     it: {
@@ -338,6 +343,7 @@ window.I18N = (function () {
       'live.hintfirst': "Chi parla per primo? Tocca la sua lingua qui sotto, o inizia semplicemente a parlare.",
       'live.hintpicked': "In ascolto in {lang}. Vai pure.",
       'pb.sharefoot': "Tradotto dal vivo con Parley,", 'pb.copied': "Trascrizione copiata",
+      'set.improve': "Aiuta a migliorare Parley", 'set.improvesub': "Tiene su questo dispositivo una nota privata su come è stata rilevata ogni riga. Non viene inviato nulla.", 'set.improveexport': "Esporta note",
       'confirm.cancel': 'Annulla', 'confirm.ok': 'Conferma',
     },
     ko: {
@@ -394,6 +400,7 @@ window.I18N = (function () {
       'live.hintfirst': "누가 먼저 말하나요? 아래에서 그 언어를 누르거나, 그냥 말을 시작하세요.",
       'live.hintpicked': "{lang}로 듣고 있어요. 말씀하세요.",
       'pb.sharefoot': "Parley로 실시간 번역,", 'pb.copied': "대본이 복사되었습니다",
+      'set.improve': "Parley 개선 돕기", 'set.improvesub': "각 줄이 어떻게 감지됐는지 이 기기에만 비공개로 기록합니다. 어디에도 전송되지 않습니다.", 'set.improveexport': "기록 내보내기",
       'confirm.cancel': '취소', 'confirm.ok': '확인',
     },
     ja: {
@@ -450,6 +457,7 @@ window.I18N = (function () {
       'live.hintfirst': "先に話すのはどちら？下でその言語をタップするか、そのまま話し始めてください。",
       'live.hintpicked': "{lang}で聞いています。どうぞ。",
       'pb.sharefoot': "Parleyでライブ翻訳,", 'pb.copied': "文字起こしをコピーしました",
+      'set.improve': "Parleyの改善に協力", 'set.improvesub': "各行がどう判定されたかをこの端末内だけに記録します。どこにも送信されません。", 'set.improveexport': "記録を書き出す",
       'confirm.cancel': 'キャンセル', 'confirm.ok': '確認',
     },
     zh: {
@@ -506,6 +514,7 @@ window.I18N = (function () {
       'live.hintfirst': "谁先说？点按下方对应的语言，或者直接开口。",
       'live.hintpicked': "正在听{lang}。请说。",
       'pb.sharefoot': "由 Parley 实时翻译,", 'pb.copied': "文字记录已复制",
+      'set.improve': "帮助改进 Parley", 'set.improvesub': "在此设备上私密记录每一行是如何被识别的。不会发送到任何地方。", 'set.improveexport': "导出记录",
       'confirm.cancel': '取消', 'confirm.ok': '确认',
     },
   };

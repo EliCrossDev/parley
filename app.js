@@ -44,7 +44,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0,
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0, improve: false,
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -426,13 +426,13 @@
     if (!who) {
       // Nothing recognizable after several words: the engine is probably in the wrong language. Flip once.
       if (!live.flipped && looksLikeNonsense(interim, langOf(live.expected))) {
-        live.flipped = true; live.detectPending = null; const next = other(live.expected);
+        live.flipped = true; live.detectPending = null; const next = other(live.expected); note({ ev: 'nonsense-flip', from: live.expected, text: interim.slice(0, 60) });
         if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }   // that text was never real words
         live.carry = null; setExpected(next); startRecognizer(langOf(next));
       }
       return;
     }
-    live.detected = who; live.detectedBy = 'words'; leaveNeutral();
+    live.detected = who; live.detectedBy = 'words'; leaveNeutral(); note({ ev: 'words', who, expected: live.expected, head });
     if (live.interimEl) { live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who); }
     if (who !== live.expected) {
       // Wrong speaker guessed: switch recognizer to the right language now, keeping what we already heard.
@@ -556,6 +556,7 @@
     node.querySelector('.trans').textContent = result.text; node.querySelector('.trans').classList.remove('pending');
     setBubbleWho(node, who);
     $('convo').scrollTop = $('convo').scrollHeight;
+    note({ ev: 'line', who, by: live.forced ? 'tap' : (opts.who ? 'cont' : (live.detectedBy || 'guess')), words: text.split(/\s+/).length, detected: result.detected || null });
     live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node });
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     live.forced = null;
@@ -565,6 +566,20 @@
     // the ~0.4 s restart happens while nobody is talking. If the same person carries on, early detection flips back.
     const next = other(who); setExpected(next); startRecognizer(langOf(next));
   }
+  /* ---- Detection notes (opt-in, on device): how each line got its speaker, for tuning the guessing ---- */
+  const NOTES_KEY = 'parley.notes.v1';
+  function note(ev) {
+    if (!prefs.improve) return;
+    try { const all = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); all.push(Object.assign({ t: Date.now(), convo: live.convoId, langA: prefs.langA, langB: prefs.langB }, ev)); while (all.length > 2000) all.shift(); localStorage.setItem(NOTES_KEY, JSON.stringify(all)); } catch (e) {}
+  }
+  $('opt-improve').addEventListener('change', (e) => { prefs.improve = e.target.checked; savePrefs(); $('improve-export').hidden = !prefs.improve; });
+  $('improve-export').addEventListener('click', () => {
+    const data = localStorage.getItem(NOTES_KEY) || '[]';
+    const blob = new Blob([data], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'parley-notes.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('Notes exported');
+  });
+
   /* ---- The ear: Whisper on the device identifies the language from the sound itself, so the engine can be
      aimed without a tap. Only confident calls are acted on; when unsure, the word lists and the chips decide. */
   const EAR_MARGIN_AGREE = 4, EAR_MARGIN_FLIP = 6;   // flipping the engine costs a restart, so it needs stronger proof
@@ -576,6 +591,7 @@
   async function onEar(r) {
     if (!live.on || live.forced || live.detected) return;
     const who = r.lang === base(prefs.langA) ? 'a' : (r.lang === base(prefs.langB) ? 'b' : null); if (!who) return;
+    note({ ev: 'ear', lang: r.lang, margin: +r.margin.toFixed(2), ms: r.ms, expected: live.expected, acted: r.margin >= (who === live.expected ? EAR_MARGIN_AGREE : EAR_MARGIN_FLIP) });
     if (r.margin < (who === live.expected ? EAR_MARGIN_AGREE : EAR_MARGIN_FLIP)) return;
     live.detected = who; live.detectedBy = 'ear'; leaveNeutral();
     if (who === live.expected) { setExpected(who); return; }                 // engine already aimed right; just light the chip
@@ -588,7 +604,7 @@
     const words = text.toLowerCase().replace(/[^\p{L}\p{M}' ]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 5);
     const otherWho = other(live.detected);
     if (!strongHit(words, langOf(otherWho)) || strongHit(words, langOf(live.detected))) return;
-    live.detected = otherWho; live.detectedBy = 'words';
+    live.detected = otherWho; live.detectedBy = 'words'; note({ ev: 'words-override-ear', who: otherWho, text: text.slice(0, 60) });
     if (live.interimEl) { live.interimEl.className = 'bubble ' + otherWho + ' interim'; setBubbleWho(live.interimEl, otherWho); }
     if (otherWho !== live.expected) { live.carry = text.trim(); setExpected(otherWho); startRecognizer(langOf(otherWho)); } else setExpected(otherWho);
   }
@@ -705,6 +721,7 @@
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
     $('label-b').textContent = b.native; $('native-b').textContent = b.name;
     $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record;
+    const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
     const note = $('support-note');
     if (!SR) { note.textContent = 'Live speech needs Chrome, Edge, or Safari. Firefox does not support speech recognition yet.'; note.classList.add('warn'); }
     else note.textContent = 'Works best within arm\'s reach. Parley picks the language from the first two words. If it ever guesses wrong, tap the language chip.';
@@ -718,8 +735,8 @@
   $('opt-record').addEventListener('change', (e) => { prefs.record = e.target.checked; savePrefs(); });
   $('start-live').addEventListener('click', startLive);
   $('stop-live').addEventListener('click', stopLive);
-  $('who-a').addEventListener('click', () => { if (!live.on) return; leaveNeutral('a'); live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
-  $('who-b').addEventListener('click', () => { if (!live.on) return; leaveNeutral('b'); live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
+  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('a'); live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
+  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('b'); live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
   window.addEventListener('beforeunload', () => { if (live.on) stopLive(); });
 
   /* ---------------- History ---------------- */
