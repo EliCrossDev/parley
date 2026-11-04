@@ -1,24 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="sea" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#070a14"/><stop offset="0.55" stop-color="#1b2a44"/><stop offset="1" stop-color="#3a3550"/>
     </linearGradient>
-    <linearGradient id="dark" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#3a4766"/><stop offset="1" stop-color="#1e2740"/>
-    </linearGradient>
+    <!-- One speech bubble, tail drawn as part of the outline so it is a single shape -->
+    <path id="bubble" d="M258 92 C362 92 444 156 444 236 C444 316 362 380 258 380 C238 380 219 378 201 373 L118 428 C106 436 92 426 97 413 L124 348 C90 320 72 280 72 236 C72 156 154 92 258 92 Z"/>
+    <clipPath id="right"><use href="#bubble"/></clipPath>
   </defs>
-  <rect width="512" height="512" rx="116" fill="url(#sea)"/>
-  <!-- them: dark bubble, right, tail to the right -->
-  <g>
-    <rect x="200" y="196" width="236" height="150" rx="75" fill="url(#dark)" stroke="rgba(255,255,255,0.28)" stroke-width="4"/>
-    <path d="M436 300 L464 366 L388 338 Z" fill="#1e2740"/>
-  </g>
-  <!-- you: white bubble, left, tail to the left, overlapping -->
-  <g>
-    <rect x="76" y="142" width="236" height="150" rx="75" fill="#f7f7fb"/>
-    <path d="M76 246 L48 312 L124 284 Z" fill="#f7f7fb"/>
-  </g>
-  <!-- the overlap: mint equals, "understood" -->
-  <rect x="222" y="212" width="68" height="18" rx="9" fill="#7cffc4"/>
-  <rect x="222" y="250" width="68" height="18" rx="9" fill="#7cffc4"/>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <!-- left half: you (white) -->
+  <use href="#bubble" fill="#f7f7fb"/>
+  <!-- right half: them (mint), split on a gentle diagonal -->
+  <g clip-path="url(#right)"><path d="M286 60 L480 60 L480 440 L236 440 Z" fill="#7cffc4"/></g>
 </svg>
