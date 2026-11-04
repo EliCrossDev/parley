@@ -999,7 +999,7 @@
     $('reel-fill').style.width = '0%'; $('reel-status').textContent = '0%'; reelShown = c.id; sheetOpen('reel-sheet'); reelChip();
     setTimeout(() => { if (openSheet === 'reel-sheet' && reelShown === c.id) sheetClose(); }, 1800); // pops up briefly, then keeps going in the corner
     try {
-      j.blob = await Reel.make(c, { lineStart, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => {
+      j.blob = await Reel.make(c, { lineStart, lineSpan, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => {
         j.p = p; if (reelShown === c.id && openSheet === 'reel-sheet') { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; } reelChip();
       });
       if (j.state === 'gone') return; j.state = 'ready'; if (openSheet === 'reel-sheet') sheetClose(); reelChip(); toast(T('reel.ready'));
@@ -1028,12 +1028,15 @@
   }
   function closeAudio() { if (pb.audio) { try { pb.audio.pause(); } catch (e) {} } if (pb.url) URL.revokeObjectURL(pb.url); pb.audio = null; pb.url = null; pb.playing = false; cancelAnimationFrame(pb.raf); pb.elapsed = 0; $('pb-play').classList.remove('playing'); $('pb-scrub').value = 0; $('pb-cur').textContent = '0:00'; }
   // Lines saved before v31 carry the time the line was finalized, not when speech began; estimate the start from length.
+  // [start, end] in ms of when a line is being spoken; words are revealed across it
+  function lineSpan(c, i) { const l = c.lines[i]; const st = lineStart(c, i); const nxt = c.lines[i + 1] ? lineStart(c, i + 1) : (c.duration || 0) * 1000; const len = (l.s && l.dur) ? l.dur : 300 + l.orig.split(/\s+/).length * 330; return [st, Math.max(st + 400, Math.min(nxt, st + len))]; }
+  function wordSpans(parent, text) { const out = []; text.split(' ').forEach((w, k, arr) => { const s = el('span', 'w', w); out.push(s); parent.appendChild(s); if (k < arr.length - 1) parent.appendChild(document.createTextNode(' ')); }); return out; }
   function lineStart(c, i) { const l = c.lines[i]; if (l.s) return l.t; const est = l.t - Math.min(12000, 300 + l.orig.split(/\s+/).length * 330); const prev = i ? lineStart(c, i - 1) + 800 : 0; return Math.max(prev, est, 0); }
   function renderPlaybackLines(timeMs) {
     const box = $('pb-convo'); const liveMode = $('pb-livemode').checked;
     if (!box.childElementCount) {
       pb.c.lines.forEach((l) => {
-        const b = el('div', 'bubble ' + l.who); b.appendChild(el('div', 'orig', l.orig)); b.appendChild(el('div', 'trans', l.trans)); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = lineStart(pb.c, pb.c.lines.indexOf(l)); box.appendChild(b);
+        const b = el('div', 'bubble ' + l.who); const od = el('div', 'orig'), td = el('div', 'trans'); b._o = wordSpans(od, l.orig); b._t = wordSpans(td, l.trans); b.appendChild(od); b.appendChild(td); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = lineStart(pb.c, pb.c.lines.indexOf(l)); box.appendChild(b);
       });
     }
     // Which line is being said right now? (saved lines carry t and dur; older ones get dur from the next line)
@@ -1046,6 +1049,10 @@
       b.classList.toggle('hidden-replay', hidden);
       b.classList.toggle('now', liveMode && i === nowIdx);
       b.classList.toggle('past', liveMode && !hidden && i !== nowIdx);
+      // words appear as they are spoken
+      const sp = lineSpan(pb.c, i); const f = !liveMode ? 1 : Math.max(0, Math.min(1, (timeMs - sp[0]) / Math.max(1, sp[1] - sp[0])));
+      const no = Math.ceil(f * b._o.length), nt = Math.ceil(f * b._t.length);
+      if (b._no !== no || b._nt !== nt) { b._o.forEach((s, k) => s.classList.toggle('on', k < no)); b._t.forEach((s, k) => s.classList.toggle('on', k < nt)); b._no = no; b._nt = nt; }
     });
     if (newest) newest.scrollIntoView({ block: 'end', behavior: 'smooth' });
     const who = nowIdx >= 0 ? lines[nowIdx].who : null;

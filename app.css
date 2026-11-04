@@ -498,3 +498,5 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .reel-chip span { position: relative; }
 .reel-chip.ready { background: #fff; color: #0e0e16; }
 .reel-chip.ready i { display: none; }
+.bubble .w { opacity: 0; transition: opacity .18s; }
+.bubble .w.on { opacity: 1; }

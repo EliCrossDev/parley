@@ -18,7 +18,7 @@ window.Reel = (function () {
   const ease = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
 
   async function make(c, helpers, onProgress) {
-    const { lineStart, short, native, avatarImg } = helpers;
+    const { lineStart, lineSpan, short, native, avatarImg } = helpers;
     const starts = c.lines.map((_, i) => lineStart(c, i));
     const total = Math.max(c.duration * 1000, (starts[starts.length - 1] || 0) + 2500) + 1200;
 
@@ -38,6 +38,8 @@ window.Reel = (function () {
 
     // Pre-render avatars
     const avA = await avatarImg(c.avatarA ?? 3), avB = await avatarImg(c.avatarB ?? 5);
+    const logo = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = 'icon-192.png'; });
+    const spans = c.lines.map((_, i) => lineSpan(c, i));
 
     function draw(t) {
       // Background: the Night sky
@@ -46,7 +48,9 @@ window.Reel = (function () {
       const v = ctx.createRadialGradient(W * 0.3, H * 0.25, 100, W * 0.3, H * 0.25, H * 0.9); v.addColorStop(0, 'rgba(255,255,255,0.10)'); v.addColorStop(1, 'rgba(0,0,0,0.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
 
       // Header: wordmark, timer, live dot
-      ctx.fillStyle = '#f7f7fb'; ctx.font = '700 54px ' + FONT_D; ctx.textBaseline = 'middle'; ctx.fillText('Parley', 72, 150);
+      if (logo) { ctx.save(); rr(ctx, 72, 104, 92, 92, 22); ctx.clip(); ctx.drawImage(logo, 72, 104, 92, 92); ctx.restore(); }
+      const tx = logo ? 186 : 72; ctx.fillStyle = '#f7f7fb'; ctx.font = '700 56px ' + FONT_D; ctx.textBaseline = 'middle'; ctx.fillText('Parley', tx, 132);
+      ctx.fillStyle = 'rgba(247,247,251,.78)'; ctx.font = '500 27px ' + FONT_M; ctx.fillText('getparley.vercel.app', tx, 176);
       ctx.fillStyle = '#ff5a7a'; ctx.beginPath(); ctx.arc(W - 300, 150, 10, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(247,247,251,.8)'; ctx.font = '500 34px ' + FONT_M; const s = Math.floor(t / 1000); ctx.fillText(String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), W - 270, 150);
 
@@ -64,7 +68,7 @@ window.Reel = (function () {
         const l = v2.l; ctx.font = '400 34px ' + FONT_B; const origLines = wrap(ctx, l.orig, maxW - 80);
         ctx.font = '600 58px ' + FONT_D; const transLines = wrap(ctx, l.trans, maxW - 80);
         const h = 40 + origLines.length * 44 + 14 + transLines.length * 68 + 24 + 56 + 36; const w = Math.min(maxW, 80 + Math.max(...origLines.map((x) => { ctx.font = '400 34px ' + FONT_B; return ctx.measureText(x).width; }), ...transLines.map((x) => { ctx.font = '600 58px ' + FONT_D; return ctx.measureText(x).width; })));
-        boxes.push({ l, w, h, origLines, transLines, age: v2.age, now: v2.i === nowIdx });
+        const sp = spans[v2.i]; const f = Math.max(0, Math.min(1, (t - sp[0]) / Math.max(1, sp[1] - sp[0]))); boxes.push({ l, w, h, origLines, transLines, age: v2.age, now: v2.i === nowIdx, f });
       }
       let y = H - 330; for (let k = boxes.length - 1; k >= 0; k--) { const b = boxes[k]; y -= b.h + 22; b.y = y; }
       for (const b of boxes) {
@@ -76,8 +80,8 @@ window.Reel = (function () {
         if (b.l.who === 'b') { ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2; ctx.stroke(); }
         const ink = b.l.who === 'a' ? '#0e0e16' : '#f7f7fb'; let ty = yy + 40;
         ctx.fillStyle = b.l.who === 'a' ? 'rgba(14,14,22,.7)' : 'rgba(247,247,251,.72)'; ctx.font = '400 34px ' + FONT_B; ctx.textBaseline = 'top';
-        for (const line of b.origLines) { ctx.fillText(line, x + 40, ty); ty += 44; } ty += 14;
-        ctx.fillStyle = ink; ctx.font = '600 58px ' + FONT_D; for (const line of b.transLines) { ctx.fillText(line, x + 40, ty); ty += 68; } ty += 24;
+        let ow = Math.ceil(b.f * b.origLines.join(' ').split(/\s+/).length); for (const line of b.origLines) { const ws = line.split(' '); ctx.fillText(ws.slice(0, Math.max(0, ow)).join(' '), x + 40, ty); ow -= ws.length; ty += 44; } ty += 14;
+        ctx.fillStyle = ink; ctx.font = '600 58px ' + FONT_D; let tw = Math.ceil(b.f * b.transLines.join(' ').split(/\s+/).length); for (const line of b.transLines) { const ws = line.split(' '); ctx.fillText(ws.slice(0, Math.max(0, tw)).join(' '), x + 40, ty); tw -= ws.length; ty += 68; } ty += 24;
         const av = b.l.who === 'a' ? avA : avB; if (av) { ctx.save(); ctx.beginPath(); ctx.arc(x + 40 + 24, ty + 24, 24, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(av, x + 40, ty, 48, 48); ctx.restore(); }
         ctx.fillStyle = b.l.who === 'a' ? 'rgba(14,14,22,.6)' : 'rgba(247,247,251,.6)'; ctx.font = '500 24px ' + FONT_M; ctx.textBaseline = 'middle'; ctx.fillText(short(b.l.from) + ' → ' + short(b.l.to), x + 40 + 64, ty + 24);
         ctx.restore();
@@ -88,7 +92,7 @@ window.Reel = (function () {
       const chip = (label, x, lit, av) => { ctx.save(); ctx.font = '600 36px ' + FONT_B; const w = 100 + ctx.measureText(label).width + 56; rr(ctx, x < 0 ? W + x - w : x, H - 250, w, 96, 48); ctx.fillStyle = lit ? 'rgba(255,255,255,.94)' : 'rgba(255,255,255,.1)'; ctx.fill(); ctx.strokeStyle = lit ? '#fff' : 'rgba(255,255,255,.45)'; ctx.lineWidth = 3; ctx.stroke(); const bx = (x < 0 ? W + x - w : x); if (av) { ctx.save(); ctx.beginPath(); ctx.arc(bx + 50, H - 202, 22, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(av, bx + 28, H - 224, 44, 44); ctx.restore(); } ctx.fillStyle = lit ? '#0e0e16' : '#f7f7fb'; ctx.textBaseline = 'middle'; ctx.fillText(label, bx + 92, H - 202); ctx.restore(); };
       chip(native(c.langA), 60, who === 'a', avA); chip(native(c.langB), -60, who === 'b', avB);
       // Footer
-      ctx.fillStyle = 'rgba(247,247,251,.75)'; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('LIVE TRANSLATION · GETPARLEY.VERCEL.APP', W / 2, H - 100); ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(247,247,251,.75)'; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('LIVE TRANSLATION', W / 2, H - 100); ctx.textAlign = 'left';
     }
 
     // Fonts: make sure they are loaded before the first frame
