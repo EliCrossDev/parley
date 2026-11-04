@@ -1029,7 +1029,7 @@
   function closeAudio() { if (pb.audio) { try { pb.audio.pause(); } catch (e) {} } if (pb.url) URL.revokeObjectURL(pb.url); pb.audio = null; pb.url = null; pb.playing = false; cancelAnimationFrame(pb.raf); pb.elapsed = 0; $('pb-play').classList.remove('playing'); $('pb-scrub').value = 0; $('pb-cur').textContent = '0:00'; }
   // Lines saved before v31 carry the time the line was finalized, not when speech began; estimate the start from length.
   // [start, end] in ms of when a line is being spoken; words are revealed across it
-  function lineSpan(c, i) { const l = c.lines[i]; const st = lineStart(c, i); const nxt = c.lines[i + 1] ? lineStart(c, i + 1) : (c.duration || 0) * 1000; const len = (l.s && l.dur) ? l.dur : 300 + l.orig.split(/\s+/).length * 330; return [st, Math.max(st + 400, Math.min(nxt, st + len))]; }
+  function lineSpan(c, i) { const l = c.lines[i]; const st = lineStart(c, i); const nxt = c.lines[i + 1] ? lineStart(c, i + 1) : (c.duration || 0) * 1000; const len = (l.s && l.dur) ? l.dur : 300 + l.orig.split(/\s+/).length * 330; const end = Math.max(st + 400, Math.min(nxt, st + len)); return [st, st + (end - st) * 0.78]; } // reveal runs a bit ahead of the voice so words never trail it
   function wordSpans(parent, text) { const out = []; text.split(' ').forEach((w, k, arr) => { const s = el('span', 'w', w); out.push(s); parent.appendChild(s); if (k < arr.length - 1) parent.appendChild(document.createTextNode(' ')); }); return out; }
   function lineStart(c, i) { const l = c.lines[i]; if (l.s) return l.t; const est = l.t - Math.min(12000, 300 + l.orig.split(/\s+/).length * 330); const prev = i ? lineStart(c, i - 1) + 800 : 0; return Math.max(prev, est, 0); }
   function renderPlaybackLines(timeMs) {
