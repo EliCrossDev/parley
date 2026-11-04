@@ -974,22 +974,41 @@
     return (c.title || 'Conversation') + ' · ' + new Date(c.startedAt).toLocaleString() + '\n' + byCode(c.langA).name + ' ↔ ' + byCode(c.langB).name + '\n\n' + lines + '\n\n' + T('pb.sharefoot') + ' getparley.vercel.app';
   }
   /* Share a conversation as a vertical video, rendered on the device */
-  let reelBlob = null, reelCancel = false, reelMode = 'share';
+  const reelJobs = {}; // per conversation: { blob, p, mode, conv, state: 'working'|'ready'|'error' }
+  let reelShown = null;
   function avatarImg(i) { return new Promise((res) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(avatarSVG(i)); }); }
-  async function makeReel(mode) {
-    reelMode = mode; if (!pb.c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
-    closeAudio(); reelBlob = null; reelCancel = false; $('reel-fill').style.width = '0%'; $('reel-status').textContent = '0%'; $('reel-save').hidden = true; sheetOpen('reel-sheet');
-    try {
-      const blob = await Reel.make(pb.c, { lineStart, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; });
-      if (reelCancel) return; reelBlob = blob; $('reel-status').textContent = T('reel.ready'); $('reel-save').hidden = false;
-    } catch (e) { $('reel-status').textContent = 'Could not render: ' + e.message; }
+  function reelChip() {
+    const j = Object.values(reelJobs).find((x) => x.state !== 'gone' && !x.delivered); const chip = $('reel-chip');
+    if (!j) { chip.hidden = true; return; }
+    chip.hidden = false; chip.dataset.id = j.conv.id; chip.classList.toggle('ready', j.state === 'ready');
+    $('reel-chip-fill').style.width = Math.round((j.state === 'ready' ? 1 : j.p) * 100) + '%';
+    $('reel-chip-text').textContent = j.state === 'ready' ? T('reel.chipready') : j.state === 'error' ? 'Could not render' : T('reel.chipmaking') + ' ' + Math.round(j.p * 100) + '%';
   }
-  $('reel-cancel').addEventListener('click', () => { reelCancel = true; sheetClose(); });
-  $('reel-save').addEventListener('click', async () => {
-    if (!reelBlob) return; const ext = reelBlob.type.includes('mp4') ? 'mp4' : 'webm';
-    const file = new File([reelBlob], 'parley-' + new Date(pb.c.startedAt).toISOString().slice(0, 10) + '.' + ext, { type: reelBlob.type });
-    try { if (reelMode === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Parley' }); sheetClose(); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-    const url = URL.createObjectURL(reelBlob); const a = document.createElement('a'); a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); sheetClose(); toast(T('reel.saved'));
+  async function deliverReel(j) {
+    const ext = j.blob.type.includes('mp4') ? 'mp4' : 'webm';
+    const file = new File([j.blob], 'parley-' + new Date(j.conv.startedAt).toISOString().slice(0, 10) + '.' + ext, { type: j.blob.type });
+    try { if (j.mode === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Parley' }); j.delivered = true; reelChip(); return; } } catch (e) { if (e && e.name === 'AbortError') { reelChip(); return; } }
+    const url = URL.createObjectURL(j.blob); const a = document.createElement('a'); a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); j.delivered = true; reelChip(); toast(T('reel.saved'));
+  }
+  async function makeReel(mode) {
+    const c = pb.c; if (!c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
+    let j = reelJobs[c.id];
+    if (j && j.state === 'ready') { j.mode = mode; j.delivered = false; deliverReel(j); return; } // already made: no re-render
+    if (j && j.state === 'working') { j.mode = mode; reelShown = c.id; sheetOpen('reel-sheet'); return; }
+    closeAudio(); j = reelJobs[c.id] = { conv: c, blob: null, p: 0, mode, state: 'working' };
+    $('reel-fill').style.width = '0%'; $('reel-status').textContent = '0%'; reelShown = c.id; sheetOpen('reel-sheet'); reelChip();
+    setTimeout(() => { if (openSheet === 'reel-sheet' && reelShown === c.id) sheetClose(); }, 1800); // pops up briefly, then keeps going in the corner
+    try {
+      j.blob = await Reel.make(c, { lineStart, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => {
+        j.p = p; if (reelShown === c.id && openSheet === 'reel-sheet') { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; } reelChip();
+      });
+      if (j.state === 'gone') return; j.state = 'ready'; if (openSheet === 'reel-sheet') sheetClose(); reelChip(); toast(T('reel.ready'));
+    } catch (e) { j.state = 'error'; reelChip(); setTimeout(() => { delete reelJobs[c.id]; reelChip(); }, 4000); }
+  }
+  $('reel-cancel').addEventListener('click', () => { const j = reelJobs[reelShown]; if (j) { j.state = 'gone'; delete reelJobs[reelShown]; } sheetClose(); reelChip(); });
+  $('reel-chip').addEventListener('click', () => {
+    const j = reelJobs[$('reel-chip').dataset.id]; if (!j) return;
+    if (j.state === 'ready') deliverReel(j); else if (j.state === 'working') { reelShown = j.conv.id; sheetOpen('reel-sheet'); }
   });
   $('pb-share').addEventListener('click', () => makeReel('share'));
   $('pb-export').addEventListener('click', () => makeReel('download'));
