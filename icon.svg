@@ -3,13 +3,12 @@
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#070a14"/><stop offset="0.55" stop-color="#1b2a44"/><stop offset="1" stop-color="#3a3550"/>
     </linearGradient>
-    <!-- One speech bubble, tail drawn as part of the outline so it is a single shape -->
-    <path id="bubble" d="M258 92 C362 92 444 156 444 236 C444 316 362 380 258 380 C238 380 219 378 201 373 L118 428 C106 436 92 426 97 413 L124 348 C90 320 72 280 72 236 C72 156 154 92 258 92 Z"/>
-    <clipPath id="right"><use href="#bubble"/></clipPath>
+    <!-- One bubble outline with the tail drawn into it; reused mirrored for the second speaker -->
+    <path id="bubble" d="M160 0 C248 0 318 52 318 118 C318 184 248 236 160 236 C144 236 128 234 113 230 L44 276 C34 283 22 274 26 263 L48 210 C18 186 2 154 2 118 C2 52 72 0 160 0 Z"/>
   </defs>
   <rect width="512" height="512" rx="116" fill="url(#bg)"/>
-  <!-- left half: you (white) -->
-  <use href="#bubble" fill="#f7f7fb"/>
-  <!-- right half: them (mint), split on a gentle diagonal -->
-  <g clip-path="url(#right)"><path d="M286 60 L480 60 L480 440 L236 440 Z" fill="#7cffc4"/></g>
+  <!-- them: mint, behind, tail to the right -->
+  <use href="#bubble" fill="#7cffc4" transform="translate(484 164) scale(-1 1)"/>
+  <!-- you: white, in front, tail to the left -->
+  <use href="#bubble" fill="#f7f7fb" transform="translate(40 92)"/>
 </svg>
