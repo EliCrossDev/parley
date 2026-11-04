@@ -44,7 +44,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false,
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0,
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -107,7 +107,7 @@
     const r = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined);
     const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.error || 'Something went wrong.'); return j;
   }
-  function setPro(on, token, email) { prefs.pro = !!on; prefs.license = on ? token : ''; prefs.proEmail = on ? (email || '') : ''; savePrefs(); renderProfile(); renderHistory(); }
+  function setPro(on, token, email) { prefs.pro = !!on; if (on) { const n = $('nudge'); if (n) n.hidden = true; } prefs.license = on ? token : ''; prefs.proEmail = on ? (email || '') : ''; savePrefs(); renderProfile(); renderHistory(); }
 
   const FREE_LIMIT = 5;
   function keepLimit() { return prefs.pro ? (Number(prefs.keep) || 0) : FREE_LIMIT; } // 0 = keep everything
@@ -623,6 +623,18 @@
   $('pick-a').addEventListener('click', () => openLangPicker('a', T('sheet.lang1')));
   $('pick-b').addEventListener('click', () => openLangPicker('b', T('sheet.lang2')));
 
+  // Every 2 to 5 visits, a quiet suggestion to support. Never once they have.
+  function maybeNudge() {
+    const n = $('nudge'); if (!n) return;
+    if (prefs.pro) { n.hidden = true; return; }
+    prefs.visits = (prefs.visits || 0) + 1;
+    if (!prefs.nudgeAt) prefs.nudgeAt = prefs.visits + 1 + Math.floor(Math.random() * 4); // first one after 2 to 5 visits
+    const due = prefs.visits >= prefs.nudgeAt;
+    if (due) prefs.nudgeAt = prefs.visits + 2 + Math.floor(Math.random() * 4);           // next one 2 to 5 visits later
+    savePrefs(); n.hidden = !due;
+  }
+  $('nudge-no').addEventListener('click', () => { $('nudge').hidden = true; });
+  $('nudge-yes').addEventListener('click', () => { $('nudge').hidden = true; openPro(); });
   function renderSetup() {
     renderAvatarsUI(); renderRecent();
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
@@ -923,7 +935,7 @@
     I18N.apply(); sub();
   })();
   document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.addEventListener('click', () => { applyPalette(b.dataset.pal); savePrefs(); }));
-  renderSetup(); renderProfile();
+  renderSetup(); renderProfile(); maybeNudge();
   const hash = (location.hash || '').replace('#', '');
   if (['history', 'profile'].includes(hash)) showView(hash);
   // ?demo=1 - preview the live screen with sample lines, no microphone

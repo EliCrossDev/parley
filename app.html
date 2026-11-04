@@ -85,6 +85,10 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         Start conversation
       </button>
+      <div class="nudge" id="nudge" hidden>
+        <p><b data-i18n="nudge.title">Enjoying Parley?</b> <span data-i18n="nudge.sub">It stays free. If it has helped you, chip in whatever you want, one time.</span></p>
+        <div class="nudge-actions"><button class="btn btn-ghost small" id="nudge-no" data-i18n="nudge.no">Not now</button><button class="btn btn-volt small" id="nudge-yes" data-i18n="nudge.yes">Support</button></div>
+      </div>
       <div class="recent" id="recent">
         <button class="recent-head" id="recent-toggle" aria-expanded="false" aria-controls="recent-list">
           <span class="speaker-tag" data-i18n="hist.title">Conversations</span>

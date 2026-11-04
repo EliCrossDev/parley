@@ -438,3 +438,12 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .inst-steps li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid var(--line); font-size: 15px; line-height: 1.4; }
 .inst-steps li::before { counter-increment: st; content: counter(st); flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
 .inst-steps li svg { display: inline-block; width: 18px; height: 18px; vertical-align: -4px; margin: 0 2px; }
+
+/* Gentle support nudge on the start screen */
+.nudge { flex: 0 0 auto; margin-top: 10px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--line); background: rgba(13,13,15,.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; animation: nudge-in .4s ease-out; }
+.nudge[hidden] { display: none; }
+.nudge p { margin: 0; flex: 1 1 240px; font-size: 14px; line-height: 1.45; color: var(--fg-2); }
+.nudge p b { color: var(--fg); font-weight: 600; }
+.nudge-actions { display: flex; gap: 8px; }
+.btn.small { height: 36px; padding: 0 14px; font-size: 13px; }
+@keyframes nudge-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
