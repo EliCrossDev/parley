@@ -295,7 +295,7 @@
 
   /* ---------------- Mic level + Siri ribbon ---------------- */
   const Wave = (() => {
-    let analyser = null, data = null, level = 0, raf = null, active = false, ribbon = null;
+    let analyser = null, data = null, level = 0, raf = null, active = false, ribbon = null, floor = 0.02;
     function attach(stream) {
       try {
         const AC = window.AudioContext || window.webkitAudioContext; const ctx = new AC();
@@ -306,20 +306,26 @@
     }
     function tick() {
       if (!active) return; raf = requestAnimationFrame(tick);
-      if (analyser) { analyser.getByteFrequencyData(data); let sum = 0; for (let i = 2; i < 60; i++) sum += data[i]; const raw = sum / (58 * 255); level += (raw - level) * 0.35; }
+      if (analyser) { analyser.getByteFrequencyData(data); let sum = 0; for (let i = 2; i < 60; i++) sum += data[i]; const raw = sum / (58 * 255); level += (raw - level) * 0.35;
+        // Ambient floor: falls quickly toward quiet moments, rises slowly, so a noisy room still has a usable "quiet".
+        floor = level < floor ? floor + (level - floor) * 0.05 : floor + (level - floor) * 0.002; }
       else level = 0;
       if (ribbon) ribbon.setLevel(Math.min(1, level * 2.4));
     }
     function start(canvas) { if (!ribbon && window.Ribbon) ribbon = Ribbon.mount(canvas); active = true; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
-    function stop() { active = false; cancelAnimationFrame(raf); analyser = null; level = 0; if (ribbon) { ribbon.setLevel(0); ribbon.setTalking(false); } }
+    function stop() { active = false; cancelAnimationFrame(raf); analyser = null; level = 0; floor = 0.02; if (ribbon) { ribbon.setLevel(0); ribbon.setTalking(false); } }
     function setSpeaker(who) { if (ribbon) ribbon.setColor(who === 'b' ? 'rgba(255,255,255,0.75)' : '#ffffff'); }
     function setTalking(b) { if (ribbon) ribbon.setTalking(b); }
-    return { start, stop, attach, setSpeaker, setTalking, level: () => level };
+    // "Quiet" means close to the room's own floor, not an absolute number.
+    function quiet() { return level < Math.max(0.03, floor * 1.6 + 0.012); }
+    return { start, stop, attach, setSpeaker, setTalking, level: () => level, floor: () => floor, quiet };
   })();
   function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
   /* ---------------- Live session ---------------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Two people at different distances: let the device lift the far voice and tame the room.
+  const MIC = { audio: { autoGainControl: true, noiseSuppression: true, echoCancellation: true } };
   const live = {
     on: false, rec: null, stream: null, recorder: null, chunks: [], startedAt: 0, timerId: null,
     avatars: { a: 3, b: -1 },
@@ -466,7 +472,8 @@
     r.lang = byCode(lang).sr; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
     r.onresult = (ev) => {
       let interim = '', finals = [];
-      for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) finals.push(res[0].transcript.trim()); else interim += res[0].transcript; }
+      const clean = (t) => String(t).replace(/<\/?\s*(s|unk|noise|eps)\s*>/gi, ' ').replace(/\s+/g, ' ');
+      for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) finals.push(clean(res[0].transcript).trim()); else interim += clean(res[0].transcript); }
       interim = interim.trim();
       if (interim) {
         const shown = live.carry ? (live.carry + ' ' + interim) : interim;
@@ -529,11 +536,13 @@
     const words = wordCount(text);
     const open = TRAILING.test(text.trim()) || /[,;:]$/.test(text.trim()) || words < 3;
     const needQuiet = open ? 1400 : (words > 14 ? 700 : 850);   // ms of real silence required
+    let stable = 0;
     live.epId = setInterval(() => {
       if (!live.on || live.rec !== r || !live.interimEl) { clearInterval(live.epId); return; }
-      const quiet = Wave.level() < 0.045;                        // mic level, not just "no new words"
-      live.epQuiet = quiet ? live.epQuiet + 100 : 0;
-      if (live.epQuiet >= needQuiet) { clearInterval(live.epId); softCommit(text); }
+      const quiet = Wave.quiet();                                // relative to the room's own noise floor
+      live.epQuiet = quiet ? live.epQuiet + 100 : 0; stable += 100;
+      // Commit when the room goes quiet, or when the words have stopped changing for a while even if the room never does.
+      if (live.epQuiet >= needQuiet || (stable >= (open ? 2600 : 2000) && words >= 3)) { clearInterval(live.epId); softCommit(text); }
     }, 100);
   }
 
@@ -611,7 +620,7 @@
   async function startOffline() {
     const ok = await Ear.load({ full: true });
     if (!ok || !live.on) { toast('Offline mode needs a device with GPU support. Using live mode.'); if (live.on) startRecognizer(langOf(live.expected)); return; }
-    if (!live.stream) { try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); } catch (e) { return; } }
+    if (!live.stream) { try { live.stream = await navigator.mediaDevices.getUserMedia(MIC); Wave.attach(live.stream); } catch (e) { return; } }
     Off.on = true; Off.ctx = new (window.AudioContext || window.webkitAudioContext)(); Off.rate = Off.ctx.sampleRate;
     Off.src = Off.ctx.createMediaStreamSource(live.stream); Off.proc = Off.ctx.createScriptProcessor(2048, 1, 1);
     Off.chunks = []; Off.have = 0; Off.speaking = false; Off.silence = 0;
@@ -708,7 +717,7 @@
     // Nobody has spoken yet: show both chips as choices, light one only once we know who is talking.
     live.neutral = true; $('live-stage').classList.add('neutral'); $('who-a').classList.remove('is-live'); $('who-b').classList.remove('is-live'); $('convo-hint').textContent = T('live.hintfirst');
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
-    try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
+    try { live.stream = await navigator.mediaDevices.getUserMedia(MIC); Wave.attach(live.stream); }
     catch (e) { live.stream = null; toast('Mic stream unavailable. Transcription still runs, no waveform or recording.'); }
     if (prefs.offline) startOffline(); else startEar();
     live.levelId = setInterval(() => { const lv = Math.min(1, Wave.level() * 2.2); if (BG) BG.setEnergy(lv); document.documentElement.style.setProperty('--lv', lv.toFixed(3)); }, 80);
