@@ -974,37 +974,25 @@
     return (c.title || 'Conversation') + ' · ' + new Date(c.startedAt).toLocaleString() + '\n' + byCode(c.langA).name + ' ↔ ' + byCode(c.langB).name + '\n\n' + lines + '\n\n' + T('pb.sharefoot') + ' getparley.vercel.app';
   }
   /* Share a conversation as a vertical video, rendered on the device */
-  let reelBlob = null, reelCancel = false;
+  let reelBlob = null, reelCancel = false, reelMode = 'share';
   function avatarImg(i) { return new Promise((res) => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(avatarSVG(i)); }); }
-  $('pb-reel').addEventListener('click', async () => {
-    if (!pb.c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
+  async function makeReel(mode) {
+    reelMode = mode; if (!pb.c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
     closeAudio(); reelBlob = null; reelCancel = false; $('reel-fill').style.width = '0%'; $('reel-status').textContent = '0%'; $('reel-save').hidden = true; sheetOpen('reel-sheet');
     try {
       const blob = await Reel.make(pb.c, { lineStart, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; });
       if (reelCancel) return; reelBlob = blob; $('reel-status').textContent = T('reel.ready'); $('reel-save').hidden = false;
     } catch (e) { $('reel-status').textContent = 'Could not render: ' + e.message; }
-  });
+  }
   $('reel-cancel').addEventListener('click', () => { reelCancel = true; sheetClose(); });
   $('reel-save').addEventListener('click', async () => {
     if (!reelBlob) return; const ext = reelBlob.type.includes('mp4') ? 'mp4' : 'webm';
     const file = new File([reelBlob], 'parley-' + new Date(pb.c.startedAt).toISOString().slice(0, 10) + '.' + ext, { type: reelBlob.type });
-    try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Parley' }); sheetClose(); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { if (reelMode === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Parley' }); sheetClose(); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     const url = URL.createObjectURL(reelBlob); const a = document.createElement('a'); a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); sheetClose(); toast(T('reel.saved'));
   });
-  $('pb-share').addEventListener('click', async () => {
-    if (!pb.c) return; const text = transcriptText(pb.c);
-    try { if (navigator.share) { await navigator.share({ title: 'Parley', text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-    try { await navigator.clipboard.writeText(text); toast(T('pb.copied')); } catch (e) { toast('Could not share'); }
-  });
-  $('pb-export').addEventListener('click', () => {
-    if (!pb.c) return;
-    if (!prefs.pro) { openPro(); return; }
-    const lines = pb.c.lines.map((l) => '[' + fmtTime(l.t / 1000) + '] ' + byCode(l.from).short + ': ' + l.orig + '\n    ' + byCode(l.to).short + ': ' + l.trans).join('\n\n');
-    const head = 'Parley · ' + new Date(pb.c.startedAt).toLocaleString() + '\n' + byCode(pb.c.langA).name + ' ↔ ' + byCode(pb.c.langB).name + '\n\n';
-    const blob = new Blob([head + lines], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'parley-' + new Date(pb.c.startedAt).toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('Transcript exported');
-  });
+  $('pb-share').addEventListener('click', () => makeReel('share'));
+  $('pb-export').addEventListener('click', () => makeReel('download'));
 
   /* ---------------- Playback ---------------- */
   const pb = { c: null, audio: null, url: null, raf: null, playing: false, start: 0, elapsed: 0 };
