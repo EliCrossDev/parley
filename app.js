@@ -322,6 +322,8 @@
   function showError(msg) { const s = $('stage-status'); s.textContent = msg; s.className = 'stage-status err'; toast(msg); }
   function leaveNeutral(picked) { if (!live.neutral) return; live.neutral = false; $('live-stage').classList.remove('neutral'); const h = $('convo-hint'); if (h) h.textContent = picked ? T('live.hintpicked').replace('{lang}', byCode(langOf(picked)).native) : T('live.hint'); }
   function setExpected(who, forced) {
+    if (live.on && !live.neutral && live.litWho && live.litWho !== who && navigator.vibrate) { try { navigator.vibrate(8); } catch (e) {} }
+    live.litWho = who;
     live.expected = who; if (forced !== undefined) live.forced = forced;
     $('who-a').classList.toggle('is-live', !live.neutral && who === 'a'); $('who-b').classList.toggle('is-live', !live.neutral && who === 'b');
     Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--bg-c1' : '--bg-c3'), 0.5);
@@ -565,15 +567,16 @@
   }
   /* ---- The ear: Whisper on the device identifies the language from the sound itself, so the engine can be
      aimed without a tap. Only confident calls are acted on; when unsure, the word lists and the chips decide. */
-  const EAR_MIN_MARGIN = 5;
+  const EAR_MARGIN_AGREE = 4, EAR_MARGIN_FLIP = 6;   // flipping the engine costs a restart, so it needs stronger proof
   async function startEar() {
     if (!window.Ear || !Ear.supported || !live.stream) return;
     const ok = await Ear.load(); if (!ok || !live.on || !live.stream) return;
     Ear.start(live.stream, base(prefs.langA), base(prefs.langB), onEar);
   }
   async function onEar(r) {
-    if (!live.on || live.forced || live.detected || r.margin < EAR_MIN_MARGIN) return;
+    if (!live.on || live.forced || live.detected) return;
     const who = r.lang === base(prefs.langA) ? 'a' : (r.lang === base(prefs.langB) ? 'b' : null); if (!who) return;
+    if (r.margin < (who === live.expected ? EAR_MARGIN_AGREE : EAR_MARGIN_FLIP)) return;
     live.detected = who; live.detectedBy = 'ear'; leaveNeutral();
     if (who === live.expected) { setExpected(who); return; }                 // engine already aimed right; just light the chip
     // Engine was listening in the other language: what it heard so far is nonsense. Aim it, and keep the words Whisper heard.
@@ -613,11 +616,15 @@
       catch (e) { live.recorder = null; $('rec-dot').classList.add('off'); }
     } else { live.recorder = null; $('rec-dot').classList.add('off'); }
     live.timerId = setInterval(() => { $('stage-timer').textContent = fmtTimer((Date.now() - live.startedAt) / 1000); }, 500);
-    try { if (navigator.wakeLock) navigator.wakeLock.request('screen').catch(() => {}); } catch (e) {}
+    requestWake();
   }
 
+  let wake = null;
+  async function requestWake() { try { if (navigator.wakeLock && live.on) wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && live.on) requestWake(); });
   async function stopLive() {
     if (!live.on) return;
+    try { if (wake) { wake.release(); wake = null; } } catch (e) {}
     if (window.Ear) Ear.stop();
     live.on = false; live.neutral = false; $('live-stage').classList.remove('neutral'); clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId);  clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
     try { if (live.rec) { live.rec.onend = null; live.rec.stop(); } } catch (e) {}
@@ -799,6 +806,15 @@
     catch (e) { if (/401|not|invalid/i.test(e.message)) { setPro(false); toast('Pro needs to be restored on this device'); } }
   })();
   // Export transcript (Pro)
+  function transcriptText(c) {
+    const lines = c.lines.map((l) => byCode(l.from).short + ': ' + l.orig + '\n' + byCode(l.to).short + ': ' + l.trans).join('\n\n');
+    return (c.title || 'Conversation') + ' · ' + new Date(c.startedAt).toLocaleString() + '\n' + byCode(c.langA).name + ' ↔ ' + byCode(c.langB).name + '\n\n' + lines + '\n\n' + T('pb.sharefoot') + ' getparley.vercel.app';
+  }
+  $('pb-share').addEventListener('click', async () => {
+    if (!pb.c) return; const text = transcriptText(pb.c);
+    try { if (navigator.share) { await navigator.share({ title: 'Parley', text }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(text); toast(T('pb.copied')); } catch (e) { toast('Could not share'); }
+  });
   $('pb-export').addEventListener('click', () => {
     if (!pb.c) return;
     if (!prefs.pro) { openPro(); return; }

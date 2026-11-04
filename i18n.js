@@ -57,6 +57,7 @@ window.I18N = (function () {
       'hero.androidtip': "On Android: tap the three-dot menu in Chrome, then \"Install app\" or \"Add to Home screen\". Parley becomes a full-screen app with its own icon.",
       'live.hintfirst': "Who's talking first? Tap their language below, or just start talking.",
       'live.hintpicked': "Listening in {lang}. Go ahead.",
+      'pb.sharefoot': "Translated live with Parley,", 'pb.copied': "Transcript copied",
       'confirm.cancel': 'Cancel', 'confirm.ok': 'Confirm',
     },
     es: {
@@ -112,6 +113,7 @@ window.I18N = (function () {
       'hero.androidtip': "En Android: toca el menú de tres puntos en Chrome y luego \"Instalar app\" o \"Añadir a pantalla de inicio\". Parley se convierte en una app a pantalla completa con su propio icono.",
       'live.hintfirst': "¿Quién habla primero? Toca su idioma abajo, o simplemente empieza a hablar.",
       'live.hintpicked': "Escuchando en {lang}. Adelante.",
+      'pb.sharefoot': "Traducido en vivo con Parley,", 'pb.copied': "Transcripción copiada",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     pt: {
@@ -167,6 +169,7 @@ window.I18N = (function () {
       'hero.androidtip': "No Android: toque no menu de três pontos no Chrome e depois em \"Instalar app\" ou \"Adicionar à tela inicial\". O Parley vira um app em tela cheia com ícone próprio.",
       'live.hintfirst': "Quem fala primeiro? Toque no idioma dele abaixo, ou simplesmente comece a falar.",
       'live.hintpicked': "Ouvindo em {lang}. Pode falar.",
+      'pb.sharefoot': "Traduzido ao vivo com o Parley,", 'pb.copied': "Transcrição copiada",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     fr: {
@@ -222,6 +225,7 @@ window.I18N = (function () {
       'hero.androidtip': "Sur Android : touchez le menu à trois points dans Chrome, puis « Installer l'application » ou « Ajouter à l'écran d'accueil ». Parley devient une app plein écran avec sa propre icône.",
       'live.hintfirst': "Qui parle en premier ? Touchez sa langue ci-dessous, ou commencez simplement à parler.",
       'live.hintpicked': "À l'écoute en {lang}. Allez-y.",
+      'pb.sharefoot': "Traduit en direct avec Parley,", 'pb.copied': "Transcription copiée",
       'confirm.cancel': 'Annuler', 'confirm.ok': 'Confirmer',
     },
     de: {
@@ -277,6 +281,7 @@ window.I18N = (function () {
       'hero.androidtip': "Auf Android: in Chrome das Drei-Punkte-Menü antippen, dann „App installieren“ oder „Zum Startbildschirm hinzufügen“. Parley wird zur Vollbild-App mit eigenem Icon.",
       'live.hintfirst': "Wer spricht zuerst? Unten die Sprache antippen, oder einfach losreden.",
       'live.hintpicked': "Höre auf {lang}. Leg los.",
+      'pb.sharefoot': "Live übersetzt mit Parley,", 'pb.copied': "Transkript kopiert",
       'confirm.cancel': 'Abbrechen', 'confirm.ok': 'Bestätigen',
     },
     it: {
@@ -332,6 +337,7 @@ window.I18N = (function () {
       'hero.androidtip': "Su Android: tocca il menu a tre puntini in Chrome, poi \"Installa app\" o \"Aggiungi a schermata Home\". Parley diventa un'app a schermo intero con la sua icona.",
       'live.hintfirst': "Chi parla per primo? Tocca la sua lingua qui sotto, o inizia semplicemente a parlare.",
       'live.hintpicked': "In ascolto in {lang}. Vai pure.",
+      'pb.sharefoot': "Tradotto dal vivo con Parley,", 'pb.copied': "Trascrizione copiata",
       'confirm.cancel': 'Annulla', 'confirm.ok': 'Conferma',
     },
     ko: {
@@ -387,6 +393,7 @@ window.I18N = (function () {
       'hero.androidtip': "Android에서는 Chrome의 점 세 개 메뉴를 누른 뒤 \"앱 설치\" 또는 \"홈 화면에 추가\"를 선택하세요. Parley가 아이콘이 있는 전체 화면 앱이 됩니다.",
       'live.hintfirst': "누가 먼저 말하나요? 아래에서 그 언어를 누르거나, 그냥 말을 시작하세요.",
       'live.hintpicked': "{lang}로 듣고 있어요. 말씀하세요.",
+      'pb.sharefoot': "Parley로 실시간 번역,", 'pb.copied': "대본이 복사되었습니다",
       'confirm.cancel': '취소', 'confirm.ok': '확인',
     },
     ja: {
@@ -442,6 +449,7 @@ window.I18N = (function () {
       'hero.androidtip': "Androidでは、Chromeの三点メニューから「アプリをインストール」または「ホーム画面に追加」を選んでください。Parleyがアイコン付きの全画面アプリになります。",
       'live.hintfirst': "先に話すのはどちら？下でその言語をタップするか、そのまま話し始めてください。",
       'live.hintpicked': "{lang}で聞いています。どうぞ。",
+      'pb.sharefoot': "Parleyでライブ翻訳,", 'pb.copied': "文字起こしをコピーしました",
       'confirm.cancel': 'キャンセル', 'confirm.ok': '確認',
     },
     zh: {
@@ -497,6 +505,7 @@ window.I18N = (function () {
       'hero.androidtip': "在 Android 上：点按 Chrome 的三点菜单，再选\"安装应用\"或\"添加到主屏幕\"。Parley 就会成为带图标的全屏应用。",
       'live.hintfirst': "谁先说？点按下方对应的语言，或者直接开口。",
       'live.hintpicked': "正在听{lang}。请说。",
+      'pb.sharefoot': "由 Parley 实时翻译,", 'pb.copied': "文字记录已复制",
       'confirm.cancel': '取消', 'confirm.ok': '确认',
     },
   };
