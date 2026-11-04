@@ -1010,6 +1010,15 @@
     const j = reelJobs[$('reel-chip').dataset.id]; if (!j) return;
     if (j.state === 'ready') deliverReel(j); else if (j.state === 'working') { reelShown = j.conv.id; sheetOpen('reel-sheet'); }
   });
+  // Transcript export is a supporter perk (the video is free for everyone)
+  $('pb-text').addEventListener('click', () => {
+    if (!pb.c) return; if (!prefs.pro) { openPro(); return; }
+    const lines = pb.c.lines.map((l) => '[' + fmtTime(l.t / 1000) + '] ' + byCode(l.from).short + ': ' + l.orig + '\n    ' + byCode(l.to).short + ': ' + l.trans).join('\n\n');
+    const head = 'Parley · ' + new Date(pb.c.startedAt).toLocaleString() + '\n' + byCode(pb.c.langA).name + ' ↔ ' + byCode(pb.c.langB).name + '\n\n';
+    const blob = new Blob([head + lines + '\n\n' + 'getparley.vercel.app'], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'parley-' + new Date(pb.c.startedAt).toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Transcript exported');
+  });
   $('pb-share').addEventListener('click', () => makeReel('share'));
   $('pb-export').addEventListener('click', () => makeReel('download'));
 
