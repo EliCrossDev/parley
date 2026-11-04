@@ -457,3 +457,4 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 #who-a.is-live, #who-b.is-live { background: rgba(255,255,255,.92); border-color: #fff; color: #0e0e16; }
 .live-stage.neutral #who-a, .live-stage.neutral #who-b { animation: chip-hint 1.6s ease-in-out infinite; }
 @keyframes chip-hint { 0%, 100% { border-color: rgba(255,255,255,.45); } 50% { border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.12); } }
+.toggle-sub { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); margin-top: 2px; }

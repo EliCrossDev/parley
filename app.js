@@ -44,7 +44,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0, improve: false,
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0, improve: false, offline: false,
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -146,8 +146,26 @@
     return { text: j.translatedText, detected: j.detectedLanguage ? j.detectedLanguage.language : null, provider: 'libre' };
   }
   const tCache = new Map();
+  /* Built-in browser translator (Chrome 138+, downloads language packs, runs on the device, works offline). */
+  const builtin = { cache: new Map() };
+  async function viaBuiltin(text, from, to) {
+    if (!('Translator' in self)) throw new Error('no built-in translator');
+    const src = base(from) === 'auto' ? null : base(from), dst = base(to);
+    if (!src) throw new Error('built-in translator needs a source language');
+    const key = src + '>' + dst;
+    if (!builtin.cache.has(key)) {
+      const avail = await Translator.availability({ sourceLanguage: src, targetLanguage: dst });
+      if (avail === 'unavailable') throw new Error('pair unavailable');
+      builtin.cache.set(key, Translator.create({ sourceLanguage: src, targetLanguage: dst }));
+    }
+    const tr = await builtin.cache.get(key);
+    return { text: await tr.translate(text), detected: src };
+  }
   async function translate(text, from, to) {
     const key = from + '|' + to + '|' + text; if (tCache.has(key)) return tCache.get(key);
+    if (prefs.offline || !navigator.onLine) {
+      try { const r = await viaBuiltin(text, from, to); tCache.set(key, r); return r; } catch (e) { if (!navigator.onLine) throw new Error('offline'); }
+    }
     const chain = prefs.engine === 'libre' ? [viaLibre, viaGoogle, viaMyMemory]
       : prefs.engine === 'mymemory' ? [viaMyMemory, viaGoogle]
       : [viaGoogle, viaMyMemory];
@@ -572,6 +590,13 @@
     if (!prefs.improve) return;
     try { const all = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); all.push(Object.assign({ t: Date.now(), convo: live.convoId, langA: prefs.langA, langB: prefs.langB }, ev)); while (all.length > 2000) all.shift(); localStorage.setItem(NOTES_KEY, JSON.stringify(all)); } catch (e) {}
   }
+  $('opt-offline').addEventListener('change', async (e) => {
+    prefs.offline = e.target.checked; savePrefs(); if (!prefs.offline) return;
+    toast(T('setup.offlineprep'));
+    if (window.Ear) Ear.load({ full: true });
+    // Language packs for the built-in translator download only on a tap, so start them now, both directions.
+    if ('Translator' in self) { for (const [f, t] of [[prefs.langA, prefs.langB], [prefs.langB, prefs.langA]]) { try { await viaBuiltin('ok', f, t); } catch (err) {} } }
+  });
   $('opt-improve').addEventListener('change', (e) => { prefs.improve = e.target.checked; savePrefs(); $('improve-export').hidden = !prefs.improve; });
   $('improve-export').addEventListener('click', () => {
     const data = localStorage.getItem(NOTES_KEY) || '[]';
@@ -579,6 +604,67 @@
     const a = document.createElement('a'); a.href = url; a.download = 'parley-notes.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     toast('Notes exported');
   });
+
+  /* ---- Offline mode: Whisper on the device does the listening, in bursts; the built-in translator (when the
+     browser has one) does the translating. No network needed once the models are on the device. ---- */
+  const Off = { ctx: null, src: null, proc: null, on: false, chunks: [], have: 0, speaking: false, silence: 0, busy: false, rate: 48000 };
+  async function startOffline() {
+    const ok = await Ear.load({ full: true });
+    if (!ok || !live.on) { toast('Offline mode needs a device with GPU support. Using live mode.'); if (live.on) startRecognizer(langOf(live.expected)); return; }
+    if (!live.stream) { try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); } catch (e) { return; } }
+    Off.on = true; Off.ctx = new (window.AudioContext || window.webkitAudioContext)(); Off.rate = Off.ctx.sampleRate;
+    Off.src = Off.ctx.createMediaStreamSource(live.stream); Off.proc = Off.ctx.createScriptProcessor(2048, 1, 1);
+    Off.chunks = []; Off.have = 0; Off.speaking = false; Off.silence = 0;
+    const SIL_FRAMES = Math.round(0.8 * Off.rate / 2048), MAX = 8 * Off.rate, MIN = 0.5 * Off.rate;
+    Off.proc.onaudioprocess = (e) => {
+      if (!Off.on) return;
+      const d = e.inputBuffer.getChannelData(0); let rms = 0; for (let i = 0; i < d.length; i++) rms += d[i] * d[i]; rms = Math.sqrt(rms / d.length);
+      const loud = rms > 0.02;
+      if (!Off.speaking) { if (!loud) { Off.chunks.push(new Float32Array(d)); Off.have += d.length; while (Off.have > Off.rate * 0.4 && Off.chunks.length > 1) { Off.have -= Off.chunks.shift().length; } return; } Off.speaking = true; Off.silence = 0; Wave.setTalking(true); }
+      Off.chunks.push(new Float32Array(d)); Off.have += d.length;
+      if (loud) Off.silence = 0; else Off.silence++;
+      if ((Off.silence >= SIL_FRAMES && Off.have >= MIN) || Off.have >= MAX) {
+        const all = new Float32Array(Off.have); let o = 0; for (const c of Off.chunks) { all.set(c, o); o += c.length; }
+        Off.chunks = []; Off.have = 0; Off.speaking = false; Wave.setTalking(false);
+        offlineUtterance(all, Date.now() - live.startedAt - Math.round(1000 * all.length / Off.rate));
+      }
+    };
+    Off.src.connect(Off.proc); Off.proc.connect(Off.ctx.destination);
+    setStatus(T('live.offline'), live.expected);
+  }
+  function stopOffline() { Off.on = false; try { Off.proc && Off.proc.disconnect(); Off.src && Off.src.disconnect(); Off.ctx && Off.ctx.close(); } catch (e) {} Off.proc = Off.src = Off.ctx = null; }
+  async function to16k(samples, rate) {
+    if (rate === 16000) return samples;
+    const off = new OfflineAudioContext(1, Math.ceil(samples.length * 16000 / rate), 16000);
+    const buf = off.createBuffer(1, samples.length, rate); buf.copyToChannel(samples, 0);
+    const srcN = off.createBufferSource(); srcN.buffer = buf; srcN.connect(off.destination); srcN.start();
+    return (await off.startRendering()).getChannelData(0);
+  }
+  const offQueue = []; let offBusy = false;
+  async function offlineUtterance(samples, startMs) {
+    offQueue.push({ samples, startMs }); if (offBusy) return; offBusy = true;
+    while (offQueue.length && live.on) {
+      const { samples, startMs } = offQueue.shift();
+      setStatus(T('live.transcribing'), live.expected);
+      try {
+        const audio = await to16k(samples, Off.rate);
+        const r = await Ear.hear(audio, base(prefs.langA), base(prefs.langB));
+        if (r && r.text && !/^[\[(]/.test(r.text)) {
+          const who = live.forced || (r.lang === base(prefs.langA) ? 'a' : 'b'); live.forced = null; leaveNeutral();
+          const node = appendBubble(makeBubble(who, r.text, '', false)); node.querySelector('.trans').textContent = r.text; node.querySelector('.trans').classList.add('pending');
+          let trans = ''; try { trans = (await translate(r.text, langOf(who), langOf(other(who)))).text; } catch (e) { trans = ''; }
+          node.querySelector('.orig').textContent = r.text; node.querySelector('.trans').textContent = trans || r.text; node.querySelector('.trans').classList.toggle('pending', !trans);
+          if (!trans) node.querySelector('.ml').textContent += ' · ' + T('live.notrans');
+          $('convo').scrollTop = $('convo').scrollHeight;
+          live.lines.push({ who, orig: r.text, trans: trans || r.text, from: langOf(who), to: langOf(other(who)), t: Math.max(0, startMs), dur: Math.round(1000 * samples.length / Off.rate), node });
+          note({ ev: 'line', who, by: 'offline', words: r.text.split(/\s+/).length, margin: +r.margin.toFixed(2) });
+          setExpected(other(who)); if (trans) speak(trans, langOf(other(who)));
+        }
+      } catch (e) { console.warn('offline utterance:', e.message); }
+      setStatus(T('live.offline'), live.expected);
+    }
+    offBusy = false;
+  }
 
   /* ---- The ear: Whisper on the device identifies the language from the sound itself, so the engine can be
      aimed without a tap. Only confident calls are acted on; when unsure, the word lists and the chips decide. */
@@ -611,20 +697,20 @@
   function softCommit(text) { if (live.interimEl) handleFinal(text, { soft: true }); }
 
   async function startLive() {
-    if (!SR) { toast('This browser has no speech recognition. Use Chrome or Safari.'); return; }
+    if (!SR && !prefs.offline) { toast('This browser has no speech recognition. Use Chrome or Safari.'); return; }
     if (prefs.langA === prefs.langB) { toast('Pick two different languages.'); return; }
     live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null; live.flipped = false;
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint"></p>'; $('convo-hint').textContent = T('live.hint');
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
     pickAvatars(); Wave.start($('ribbon')); renderSpeakBtn(); Voice.warm();
-    setExpected('a'); startRecognizer(prefs.langA);
+    setExpected('a'); if (!prefs.offline) startRecognizer(prefs.langA);
     // Nobody has spoken yet: show both chips as choices, light one only once we know who is talking.
     live.neutral = true; $('live-stage').classList.add('neutral'); $('who-a').classList.remove('is-live'); $('who-b').classList.remove('is-live'); $('convo-hint').textContent = T('live.hintfirst');
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
     catch (e) { live.stream = null; toast('Mic stream unavailable. Transcription still runs, no waveform or recording.'); }
-    startEar();
+    if (prefs.offline) startOffline(); else startEar();
     live.levelId = setInterval(() => { const lv = Math.min(1, Wave.level() * 2.2); if (BG) BG.setEnergy(lv); document.documentElement.style.setProperty('--lv', lv.toFixed(3)); }, 80);
     // Recording
     if (live.stream && prefs.record && 'MediaRecorder' in window) {
@@ -641,7 +727,7 @@
   async function stopLive() {
     if (!live.on) return;
     try { if (wake) { wake.release(); wake = null; } } catch (e) {}
-    if (window.Ear) Ear.stop();
+    if (window.Ear) Ear.stop(); stopOffline(); offQueue.length = 0;
     live.on = false; live.neutral = false; $('live-stage').classList.remove('neutral'); clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId);  clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
     try { if (live.rec) { live.rec.onend = null; live.rec.stop(); } } catch (e) {}
     let audioBlob = null;
@@ -722,6 +808,7 @@
     $('label-b').textContent = b.native; $('native-b').textContent = b.name;
     $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record;
     const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
+    const orow = $('offline-row'); if (orow) { orow.hidden = !(window.Ear && Ear.supported); $('opt-offline').checked = !!prefs.offline; }
     const note = $('support-note');
     if (!SR) { note.textContent = 'Live speech needs Chrome, Edge, or Safari. Firefox does not support speech recognition yet.'; note.classList.add('warn'); }
     else note.textContent = 'Works best within arm\'s reach. Parley picks the language from the first two words. If it ever guesses wrong, tap the language chip.';
@@ -735,8 +822,8 @@
   $('opt-record').addEventListener('change', (e) => { prefs.record = e.target.checked; savePrefs(); });
   $('start-live').addEventListener('click', startLive);
   $('stop-live').addEventListener('click', stopLive);
-  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('a'); live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
-  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('b'); live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
+  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('a'); if (prefs.offline) { live.forced = 'a'; setExpected('a', 'a'); return; } live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
+  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('b'); if (prefs.offline) { live.forced = 'b'; setExpected('b', 'b'); return; } live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
   window.addEventListener('beforeunload', () => { if (live.on) stopLive(); });
 
   /* ---------------- History ---------------- */

@@ -7,7 +7,7 @@
 window.Ear = (function () {
   const CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.5/+esm';
   const MOBILE = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-  const MODEL = MOBILE ? 'onnx-community/whisper-tiny' : 'onnx-community/whisper-base';
+  let MODEL = MOBILE ? 'onnx-community/whisper-tiny' : 'onnx-community/whisper-base';
   const CLIP_S = 2.0;           // seconds of speech per decision
   const ONSET = 0.03, QUIET = 0.012;
   let T = null, processor = null, tokenizer = null, model = null, langIds = null, loading = null, failed = false;
@@ -15,7 +15,9 @@ window.Ear = (function () {
 
   const supported = !!navigator.gpu;
 
-  async function load() {
+  // full: the base model everywhere (better words), needed for offline transcription
+  async function load(opts) {
+    if (opts && opts.full && MODEL !== 'onnx-community/whisper-base') { if (model) { try { await model.dispose(); } catch (e) {} } model = null; loading = null; failed = false; MODEL = 'onnx-community/whisper-base'; }
     if (model) return true; if (failed) return false; if (loading) return loading;
     loading = (async () => {
       try {
@@ -44,10 +46,10 @@ window.Ear = (function () {
     return { lang: sa >= sb ? a : b, margin: Math.abs(sa - sb), ms: Math.round(performance.now() - t0), audio: audio16 };
   }
   // Rough words for the clip, used to keep what was said before the engine could be aimed.
-  async function transcribe(audio16, lang) {
+  async function transcribe(audio16, lang, maxTokens) {
     try {
       const feats = await processor(audio16);
-      const gen = await model.generate({ inputs: feats.input_features, language: lang, task: 'transcribe', max_new_tokens: 24 });
+      const gen = await model.generate({ inputs: feats.input_features, language: lang, task: 'transcribe', max_new_tokens: maxTokens || 24 });
       const text = tokenizer.batch_decode(gen, { skip_special_tokens: true })[0].trim();
       return /^[\[(]/.test(text) ? '' : text; // "[BLANK_AUDIO]", "(coughing)" and friends are not words
     } catch (e) { return ''; }
@@ -88,5 +90,11 @@ window.Ear = (function () {
   }
   function stop() { active = false; try { proc && proc.disconnect(); src && src.disconnect(); ctx && ctx.close(); } catch (e) {} proc = src = ctx = null; busy = false; }
 
-  return { supported, load, start, stop, transcribe, get ready() { return !!model; }, get mobile() { return MOBILE; } };
+  // Offline mode: a whole utterance in. Which language, and what was said.
+  async function hear(audio16, a, b) {
+    const id = await identify(audio16, a, b); if (!id) return null;
+    const text = await transcribe(audio16, id.lang, 96);
+    return { lang: id.lang, margin: id.margin, text };
+  }
+  return { supported, load, start, stop, transcribe, hear, identify, get ready() { return !!model; }, get mobile() { return MOBILE; } };
 })();
