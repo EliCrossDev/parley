@@ -55,7 +55,7 @@ FOOT = '''
     <nav aria-label="Pages">
       <a href="/">Home</a><a href="/app">Open the app</a><a href="/how-it-works">How it works</a><a href="/compare">Parley vs Google Translate vs Apple Translate</a><a href="/faq">FAQ</a><a href="/blog/">Blog</a><a href="/llms.txt">llms.txt</a><a href="https://github.com/EliCrossDev/parley">Source on GitHub</a>
     </nav>
-    <p class="mono" style="margin-top:14px">Speech by your browser · Translation by open engines · Your data stays on your device · Made by 0xROSSI Digital in Tulum, Mexico</p>
+    <p class="mono" style="margin-top:14px">Speech by your browser · Translation by open engines · Your data stays on your device · Made by 0xROSSI Digital</p>
   </div>
 </footer>
 </body>
@@ -144,12 +144,13 @@ FAQ = [
  ("Is there a delay?", "The translation starts appearing while the sentence is still being said and is finalized about a second after you stop talking. The engine switches languages during that silence so the other person's reply is heard correctly."),
  ("Where do my conversations go?", "They stay on your device. Transcripts and audio are stored in your browser's local database. There is no Parley account and no Parley server that sees your conversation. Speech recognition is done by your browser's engine and translation by public translation engines, or by your own LibreTranslate server if you set one up."),
  ("Which languages does Parley support?", "28 at the moment: English, Spanish, Portuguese, Chinese, Hindi, Thai, Korean, Japanese, French, German, Italian, Arabic, Russian, Indonesian, Vietnamese, Turkish, Dutch, Polish, Filipino, Swahili, Bengali, Urdu, Hebrew, Greek, Swedish, Ukrainian, Malay and Persian."),
+ ("Does Parley work offline?", "Not yet. Parley needs an internet connection for two things: the browser's speech recognition and the translation itself. Cellular data is fine and the amount used is small, about the same as a voice note. Spoken playback does work offline once the voice has downloaded. Fully offline translation would mean running the speech and translation models on the phone, which is on the roadmap for newer phones."),
  ("Does Parley work on a laptop?", "Yes, the same link works on macOS, Windows and Linux in Chrome or Edge, and in Safari on a Mac. It is handy for a desk conversation or a video call where the other person is in the room with you."),
  ("Can it speak the translation out loud?", "Yes. Turn on Read translations out loud. Voices come from Kokoro, an open-source neural text-to-speech model that downloads once and runs on your device."),
  ("How is Parley different from Google Translate or Apple Translate?", "Nothing to install, no account, the whole screen is the conversation, conversations replay with audio, and you can use your own translation server. The native apps cover more languages and can work fully offline. See the full comparison page."),
  ("What do supporters get?", "Unlimited conversation history instead of the last five, recordings kept until you delete them, transcript export, and a Keep setting to auto-trim history to any number you choose. It is pay what you want, one time, and the same email unlocks any other device."),
  ("Is Parley open source?", "The source is on GitHub. Underneath, Parley relies on open projects and credits them: Kokoro for voices, LibreTranslate and Argos Translate for self-hosted translation, and the ideas in Handy and whisper.cpp."),
- ("Who makes Parley?", "Parley is made by 0xROSSI Digital, an independent studio run by Frankie Rossi in Tulum, Mexico."),
+ ("Who makes Parley?", "Parley is made by 0xROSSI Digital, an independent studio run by Frankie Rossi."),
 ]
 faq_body = ['<article><p class="eyebrow">FAQ</p><h1>Questions people ask about Parley</h1>']
 for q, a in FAQ:
@@ -242,7 +243,7 @@ open(os.path.join(ROOT, 'llms.txt'), 'w').write(f'''# Parley
 
 > Parley is a free live conversation translator for two people in the same room. Pick two languages, put the phone between you, and each person sees what the other said in their own language as they say it. It runs in the browser (Chrome, Edge, Safari), installs to the home screen as a web app, needs no account, and keeps conversations on the device.
 
-Made by 0xROSSI Digital (Frankie Rossi, Tulum, Mexico). Live at {SITE}. Source: https://github.com/EliCrossDev/parley
+Made by 0xROSSI Digital (Frankie Rossi). Live at {SITE}. Source: https://github.com/EliCrossDev/parley
 
 ## What it does
 - Live, two-way translation of an in-person conversation (no call): light bubbles are one language, dark bubbles the other, big enough to read across a table.
