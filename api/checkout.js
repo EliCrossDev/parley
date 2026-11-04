@@ -11,7 +11,6 @@ module.exports = async (req, res) => {
       'line_items[0][quantity]': '1',
       success_url: base + '/app?session_id={CHECKOUT_SESSION_ID}#profile',
       cancel_url: base + '/app#profile',
-      allow_promotion_codes: 'true',
     });
     return json(res, 200, { url: s.url });
   } catch (e) { return json(res, 500, { error: e.message }); }
