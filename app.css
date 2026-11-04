@@ -458,3 +458,10 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .live-stage.neutral #who-a, .live-stage.neutral #who-b { animation: chip-hint 1.6s ease-in-out infinite; }
 @keyframes chip-hint { 0%, 100% { border-color: rgba(255,255,255,.45); } 50% { border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.12); } }
 .toggle-sub { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); margin-top: 2px; }
+/* Settings rows: text column may shrink, controls never wrap or squash */
+.setting-row > div:first-child { min-width: 0; flex: 1 1 auto; padding-right: 8px; }
+.setting-row > .field-select, .setting-row > .row-actions, .setting-row > .seg, .setting-row > .ui-lang-select { flex: 0 0 auto; }
+.row-actions { align-items: center; gap: 10px; }
+.field-select.small { white-space: nowrap; display: inline-flex; align-items: center; }
+.row-actions .toggle { gap: 0; }
+.setting-sub { max-width: 52ch; line-height: 1.5; }
