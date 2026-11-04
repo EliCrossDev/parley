@@ -44,7 +44,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0, improve: false, offline: false,
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0, improve: false, offline: false, tabletop: false,
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -344,12 +344,21 @@
   }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
   function showError(msg) { const s = $('stage-status'); s.textContent = msg; s.className = 'stage-status err'; toast(msg); }
+  const GO = { en: 'Ready, go ahead', es: 'Listo, habla', pt: 'Pronto, pode falar', fr: 'Prêt, parlez', de: 'Bereit, sprich', it: 'Pronto, parla', zh: '准备好了，请说', ja: '準備完了、どうぞ', ko: '준비됐어요, 말씀하세요', hi: 'तैयार, बोलिए', th: 'พร้อมแล้ว พูดได้เลย', ar: 'جاهز، تفضل', ru: 'Готово, говорите', id: 'Siap, silakan bicara', vi: 'Sẵn sàng, mời nói', tr: 'Hazır, konuşun', nl: 'Klaar, zeg het maar', pl: 'Gotowe, mów' };
+  function goCue(who) { return GO[base(langOf(who))] || GO.en; }
+  let cueTid = null;
+  function showCue(who) {
+    const txt = goCue(who); const near = $('near-cue'), far = $('far-cue');
+    if (near) { near.textContent = txt; near.classList.add('show'); }
+    if (far) { far.textContent = who === 'b' ? txt : ''; far.classList.toggle('show', who === 'b'); }
+    clearTimeout(cueTid); cueTid = setTimeout(() => { near && near.classList.remove('show'); far && far.classList.remove('show'); }, 2800);
+  }
   function leaveNeutral(picked) { if (!live.neutral) return; live.neutral = false; $('live-stage').classList.remove('neutral'); const h = $('convo-hint'); if (h) h.textContent = picked ? T('live.hintpicked').replace('{lang}', byCode(langOf(picked)).native) : T('live.hint'); }
   function setExpected(who, forced) {
     if (live.on && !live.neutral && live.litWho && live.litWho !== who && navigator.vibrate) { try { navigator.vibrate(8); } catch (e) {} }
     live.litWho = who;
     live.expected = who; if (forced !== undefined) live.forced = forced;
-    $('who-a').classList.toggle('is-live', !live.neutral && who === 'a'); $('who-b').classList.toggle('is-live', !live.neutral && who === 'b');
+    $('who-a').classList.toggle('is-live', !live.neutral && who === 'a'); $('who-b').classList.toggle('is-live', !live.neutral && who === 'b'); const ft = $('far-talk'); if (ft) ft.classList.toggle('is-live', !live.neutral && who === 'b');
     Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--bg-c1' : '--bg-c3'), 0.5);
     const sg = $('siri'); sg.className = 'siri on ' + who;
     setStatus(T('live.listening'), who);
@@ -501,6 +510,7 @@
       if (e === 'language-not-supported') { showError(byCode(lang).name + ' speech is not supported in this browser.'); return; }
       /* no-speech / aborted: restart in onend */
     };
+    r.onstart = () => { if (live.rec !== r) return; document.querySelectorAll('#who-a, #who-b, #far-talk').forEach((b) => b.classList.remove('arming')); if (live.cueOnStart) { live.cueOnStart = false; showCue(live.expected); } };
     r.onend = () => { if (live.on && live.rec === r) setTimeout(() => { if (live.on && live.rec === r) startRecognizer(langOf(live.expected)); }, 0); };
     try { r.start(); } catch (e) {}
   }
@@ -593,6 +603,31 @@
     // the ~0.4 s restart happens while nobody is talking. If the same person carries on, early detection flips back.
     const next = other(who); setExpected(next); startRecognizer(langOf(next));
   }
+  /* ---- Face-to-face mode: the top half is turned around for the person across the table. They see their side of
+     every line (your words translated into their language, their own words as heard), live, right side up. ---- */
+  function renderFar() {
+    const far = $('far-convo'); if (!far || $('pane-far').hidden) return;
+    const frag = document.createDocumentFragment();
+    document.querySelectorAll('#convo .bubble').forEach((b) => {
+      const who = b.classList.contains('b') ? 'b' : 'a'; const interim = b.classList.contains('interim');
+      const orig = b.querySelector('.orig') ? b.querySelector('.orig').textContent : '', trans = b.querySelector('.trans') ? b.querySelector('.trans').textContent : '';
+      // For the far person: A's lines matter as the translation (into their language); B's own lines as what was heard.
+      const main = who === 'a' ? (trans || orig) : (orig || trans); if (!main) return;
+      const d = document.createElement('div'); d.className = 'fb ' + who + (interim ? ' interim' : ''); d.textContent = main;
+      if (who === 'b' && trans && trans !== orig && !interim) { const sm = document.createElement('small'); sm.textContent = trans; d.appendChild(sm); }
+      frag.appendChild(d);
+    });
+    far.innerHTML = ''; far.appendChild(frag); far.scrollTop = far.scrollHeight;
+  }
+  new MutationObserver(() => { if (!$('pane-far').hidden) renderFar(); }).observe($('convo'), { childList: true, subtree: true, characterData: true });
+  function setTabletop(on) {
+    prefs.tabletop = !!on; savePrefs();
+    $('live-stage').classList.toggle('tabletop', prefs.tabletop); $('pane-far').hidden = !prefs.tabletop; $('table-btn').setAttribute('aria-pressed', String(prefs.tabletop));
+    if (prefs.tabletop) renderFar();
+  }
+  $('table-btn').addEventListener('click', () => setTabletop(!prefs.tabletop));
+  $('far-talk').addEventListener('click', () => $('who-b').click());
+
   /* ---- Detection notes (opt-in, on device): how each line got its speaker, for tuning the guessing ---- */
   const NOTES_KEY = 'parley.notes.v1';
   function note(ev) {
@@ -711,10 +746,11 @@
     live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null; live.flipped = false;
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint"></p>'; $('convo-hint').textContent = T('live.hint');
-    $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
+    $('who-a-label').textContent = byCode(prefs.langA).native; $('who-b-label').textContent = byCode(prefs.langB).native; $('far-talk-label').textContent = byCode(prefs.langB).native;
     pickAvatars(); Wave.start($('ribbon')); renderSpeakBtn(); Voice.warm();
     setExpected('a'); if (!prefs.offline) startRecognizer(prefs.langA);
     // Nobody has spoken yet: show both chips as choices, light one only once we know who is talking.
+    setTabletop(prefs.tabletop);
     live.neutral = true; $('live-stage').classList.add('neutral'); $('who-a').classList.remove('is-live'); $('who-b').classList.remove('is-live'); $('convo-hint').textContent = T('live.hintfirst');
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia(MIC); Wave.attach(live.stream); }
@@ -831,8 +867,8 @@
   $('opt-record').addEventListener('change', (e) => { prefs.record = e.target.checked; savePrefs(); });
   $('start-live').addEventListener('click', startLive);
   $('stop-live').addEventListener('click', stopLive);
-  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('a'); if (prefs.offline) { live.forced = 'a'; setExpected('a', 'a'); return; } live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
-  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('b'); if (prefs.offline) { live.forced = 'b'; setExpected('b', 'b'); return; } live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
+  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('a'); if (prefs.offline) { live.forced = 'a'; setExpected('a', 'a'); showCue('a'); return; } $('who-a').classList.add('arming'); live.cueOnStart = true; live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
+  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('b'); if (prefs.offline) { live.forced = 'b'; setExpected('b', 'b'); showCue('b'); return; } $('who-b').classList.add('arming'); $('far-talk').classList.add('arming'); live.cueOnStart = true; live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
   window.addEventListener('beforeunload', () => { if (live.on) stopLive(); });
 
   /* ---------------- History ---------------- */
@@ -1137,7 +1173,7 @@
   // ?demo=1 - preview the live screen with sample lines, no microphone
   if (/[?&]demo=1/.test(location.search)) {
     $('live-setup').hidden = true; $('live-stage').hidden = false; $('rec-dot').classList.add('off'); document.body.classList.add('live');
-    $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
+    $('who-a-label').textContent = byCode(prefs.langA).native; $('who-b-label').textContent = byCode(prefs.langB).native; $('far-talk-label').textContent = byCode(prefs.langB).native;
     pickAvatars(); Wave.start($('ribbon')); setExpected('b');
     [['a', 'Hey, is this table free?', 'Oye, ¿está libre esta mesa?'], ['b', 'Sí, siéntense. ¿Qué les traigo?', 'Yes, sit down. What can I get you?'], ['a', 'Two cold beers and the fish tacos.', 'Dos cervezas frías y los tacos de pescado.']]
       .forEach((l) => appendBubble(makeBubble(l[0], l[1], l[2])));
