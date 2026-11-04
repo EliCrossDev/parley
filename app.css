@@ -490,3 +490,6 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .live-stage.tabletop .convo { flex: 1 1 50%; }
 .live-stage.tabletop .bubble .orig { display: none; }
 .kb-btn[aria-pressed="true"] { background: rgba(255,255,255,.9); color: #0e0e16; }
+.reel-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 8px; }
+.reel-bar i { display: block; height: 100%; width: 0; background: #fff; border-radius: 999px; transition: width .2s; }
+.reel-btn { color: var(--fg); border-color: rgba(255,255,255,.5); }

@@ -62,6 +62,7 @@ window.I18N = (function () {
       'setup.offline': "Offline mode", 'setup.offlinesub': "No signal needed. Words arrive in short bursts instead of live.", 'live.offline': "Offline", 'live.transcribing': "Transcribing…", 'live.notrans': "no translation offline",
       'setup.offlineprep': "Preparing offline mode: downloading the models once…",
       'setup.cues': "Sound when the turn switches",
+      'reel.title': "Making your video", 'reel.sub': "The conversation plays once while it renders. Keep this screen open.", 'reel.share': "Share video", 'reel.ready': "Ready", 'reel.saved': "Video saved",
       'confirm.cancel': 'Cancel', 'confirm.ok': 'Confirm',
     },
     es: {
@@ -122,6 +123,7 @@ window.I18N = (function () {
       'setup.offline': "Modo sin conexión", 'setup.offlinesub': "No necesita señal. Las palabras llegan en ráfagas cortas en vez de en vivo.", 'live.offline': "Sin conexión", 'live.transcribing': "Transcribiendo…", 'live.notrans': "sin traducción sin conexión",
       'setup.offlineprep': "Preparando el modo sin conexión: descargando los modelos una vez…",
       'setup.cues': "Sonido al cambiar de turno",
+      'reel.title': "Creando tu video", 'reel.sub': "La conversación se reproduce una vez mientras se genera. Mantén esta pantalla abierta.", 'reel.share': "Compartir video", 'reel.ready': "Listo", 'reel.saved': "Video guardado",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     pt: {
@@ -182,6 +184,7 @@ window.I18N = (function () {
       'setup.offline': "Modo offline", 'setup.offlinesub': "Não precisa de sinal. As palavras chegam em blocos curtos em vez de ao vivo.", 'live.offline': "Offline", 'live.transcribing': "Transcrevendo…", 'live.notrans': "sem tradução offline",
       'setup.offlineprep': "Preparando o modo offline: baixando os modelos uma vez…",
       'setup.cues': "Som ao trocar de turno",
+      'reel.title': "Criando seu vídeo", 'reel.sub': "A conversa toca uma vez enquanto é gerada. Mantenha esta tela aberta.", 'reel.share': "Compartilhar vídeo", 'reel.ready': "Pronto", 'reel.saved': "Vídeo salvo",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     fr: {
@@ -242,6 +245,7 @@ window.I18N = (function () {
       'setup.offline': "Mode hors ligne", 'setup.offlinesub': "Aucun réseau requis. Les mots arrivent par courtes salves plutôt qu'en direct.", 'live.offline': "Hors ligne", 'live.transcribing': "Transcription…", 'live.notrans': "pas de traduction hors ligne",
       'setup.offlineprep': "Préparation du mode hors ligne : téléchargement unique des modèles…",
       'setup.cues': "Son au changement de tour",
+      'reel.title': "Création de votre vidéo", 'reel.sub': "La conversation est lue une fois pendant le rendu. Gardez cet écran ouvert.", 'reel.share': "Partager la vidéo", 'reel.ready': "Prêt", 'reel.saved': "Vidéo enregistrée",
       'confirm.cancel': 'Annuler', 'confirm.ok': 'Confirmer',
     },
     de: {
@@ -302,6 +306,7 @@ window.I18N = (function () {
       'setup.offline': "Offline-Modus", 'setup.offlinesub': "Kein Netz nötig. Die Wörter kommen in kurzen Schüben statt live.", 'live.offline': "Offline", 'live.transcribing': "Transkribiere…", 'live.notrans': "keine Übersetzung offline",
       'setup.offlineprep': "Offline-Modus wird vorbereitet: Modelle werden einmalig geladen…",
       'setup.cues': "Ton beim Wechsel",
+      'reel.title': "Dein Video wird erstellt", 'reel.sub': "Das Gespräch läuft einmal durch, während gerendert wird. Bildschirm offen lassen.", 'reel.share': "Video teilen", 'reel.ready': "Fertig", 'reel.saved': "Video gespeichert",
       'confirm.cancel': 'Abbrechen', 'confirm.ok': 'Bestätigen',
     },
     it: {
@@ -362,6 +367,7 @@ window.I18N = (function () {
       'setup.offline': "Modalità offline", 'setup.offlinesub': "Nessun segnale necessario. Le parole arrivano a brevi raffiche invece che dal vivo.", 'live.offline': "Offline", 'live.transcribing': "Trascrizione…", 'live.notrans': "nessuna traduzione offline",
       'setup.offlineprep': "Preparazione della modalità offline: download dei modelli una volta sola…",
       'setup.cues': "Suono al cambio di turno",
+      'reel.title': "Creazione del video", 'reel.sub': "La conversazione viene riprodotta una volta durante il rendering. Tieni aperta questa schermata.", 'reel.share': "Condividi video", 'reel.ready': "Pronto", 'reel.saved': "Video salvato",
       'confirm.cancel': 'Annulla', 'confirm.ok': 'Conferma',
     },
     ko: {
@@ -422,6 +428,7 @@ window.I18N = (function () {
       'setup.offline': "오프라인 모드", 'setup.offlinesub': "신호가 필요 없습니다. 실시간 대신 짧은 단위로 단어가 도착합니다.", 'live.offline': "오프라인", 'live.transcribing': "받아쓰는 중…", 'live.notrans': "오프라인에서는 번역 없음",
       'setup.offlineprep': "오프라인 모드 준비 중: 모델을 한 번만 내려받습니다…",
       'setup.cues': "차례가 바뀔 때 소리",
+      'reel.title': "영상을 만드는 중", 'reel.sub': "렌더링하는 동안 대화가 한 번 재생됩니다. 이 화면을 유지하세요.", 'reel.share': "영상 공유", 'reel.ready': "완료", 'reel.saved': "영상 저장됨",
       'confirm.cancel': '취소', 'confirm.ok': '확인',
     },
     ja: {
@@ -482,6 +489,7 @@ window.I18N = (function () {
       'setup.offline': "オフラインモード", 'setup.offlinesub': "電波不要。ライブではなく短い区切りで言葉が届きます。", 'live.offline': "オフライン", 'live.transcribing': "書き起こし中…", 'live.notrans': "オフラインでは翻訳なし",
       'setup.offlineprep': "オフラインモードを準備中：モデルを一度だけダウンロードします…",
       'setup.cues': "交代時に音を鳴らす",
+      'reel.title': "動画を作成中", 'reel.sub': "レンダリング中に会話が一度再生されます。この画面を開いたままにしてください。", 'reel.share': "動画を共有", 'reel.ready': "完了", 'reel.saved': "動画を保存しました",
       'confirm.cancel': 'キャンセル', 'confirm.ok': '確認',
     },
     zh: {
@@ -542,6 +550,7 @@ window.I18N = (function () {
       'setup.offline': "离线模式", 'setup.offlinesub': "无需信号。文字以短段落而非实时方式出现。", 'live.offline': "离线", 'live.transcribing': "转写中…", 'live.notrans': "离线无翻译",
       'setup.offlineprep': "正在准备离线模式：仅下载一次模型…",
       'setup.cues': "切换时提示音",
+      'reel.title': "正在生成视频", 'reel.sub': "渲染时对话会播放一次。请保持此页面打开。", 'reel.share': "分享视频", 'reel.ready': "完成", 'reel.saved': "视频已保存",
       'confirm.cancel': '取消', 'confirm.ok': '确认',
     },
   };

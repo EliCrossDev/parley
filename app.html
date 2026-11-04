@@ -200,6 +200,9 @@
           <p class="eyebrow" id="pb-date"></p>
           <h1 class="page-title" id="pb-title"></h1>
         </div>
+        <button class="icon-btn reel-btn" id="pb-reel" aria-label="Share as video">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="13" height="14" rx="3"/><path d="M16 10l5-3v10l-5-3z"/></svg>
+        </button>
         <button class="icon-btn" id="pb-share" aria-label="Share transcript">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
         </button>
@@ -383,6 +386,14 @@
   </div>
 </div>
 
+<!-- Reel sheet -->
+<div class="sheet" id="reel-sheet" role="dialog" aria-modal="true" hidden>
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" data-i18n="reel.title">Making your video</h2><p class="confirm-sub" data-i18n="reel.sub">The conversation plays once while it renders. Keep this screen open.</p></div>
+  <div class="reel-bar"><i id="reel-fill"></i></div>
+  <p class="field-label" id="reel-status" style="margin-top:10px">0%</p>
+  <div class="edit-actions"><button class="btn btn-ghost" id="reel-cancel" data-i18n="confirm.cancel">Cancel</button><button class="btn btn-volt" id="reel-save" hidden data-i18n="reel.share">Share video</button></div>
+</div>
 <!-- Confirm sheet -->
 
   <!-- Install sheet -->
@@ -406,6 +417,7 @@
 <script src="i18n.js"></script>
 <script src="aurora.js"></script>
 <script src="ear.js"></script>
+<script src="reel.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
