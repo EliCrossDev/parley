@@ -8,7 +8,7 @@
   </defs>
   <rect width="512" height="512" rx="116" fill="url(#bg)"/>
   <!-- them: mint, behind, tail to the right -->
-  <use href="#bubble" fill="#7cffc4" transform="translate(484 164) scale(-1 1)"/>
+  <use href="#bubble" fill="#7cffc4" stroke="#0e0e16" stroke-width="14" stroke-linejoin="round" transform="translate(484 164) scale(-1 1)"/>
   <!-- you: white, in front, tail to the left -->
-  <use href="#bubble" fill="#f7f7fb" transform="translate(40 92)"/>
+  <use href="#bubble" fill="#f7f7fb" stroke="#0e0e16" stroke-width="14" stroke-linejoin="round" transform="translate(40 92)"/>
 </svg>
