@@ -47,7 +47,9 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .demo-copy p:not(.eyebrow) { color: var(--fg-2); font-size: 17px; max-width: 44ch; }
 .phone {
   width: 100%; max-width: 380px; aspect-ratio: 9 / 18.5; margin: 0 auto;
-  border-radius: 44px; border: 1px solid var(--line-2); background: linear-gradient(180deg, var(--bg-c1) 0%, var(--bg-c2) 55%, var(--bg-c3) 100%);
+  border-radius: 44px; border: 1px solid var(--line-2);
+  /* The phone is a window onto the same sky the live screen uses, frosted the same way */
+  background: linear-gradient(180deg, rgba(5,5,5,.12) 0%, rgba(5,5,5,.04) 45%, rgba(5,5,5,.35) 100%); backdrop-filter: blur(44px) saturate(1.7); -webkit-backdrop-filter: blur(44px) saturate(1.7);
   box-shadow: 0 40px 120px rgba(0,0,0,.7), inset 0 0 0 6px #0b0b0d;
   padding: 18px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; position: relative;
 }
@@ -194,5 +196,6 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .foot-nav { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13px; width: 100%; margin-top: 6px; }
 .foot-nav a { color: rgba(247,247,251,.75); text-decoration: none; } .foot-nav a:hover { color: #fff; }
 /* Night on the home page: same black-and-grey depth as the app, not the saturated navy */
-:root[data-palette="night"] .hero-bg::before { backdrop-filter: blur(40px) saturate(.75) brightness(.78); -webkit-backdrop-filter: blur(40px) saturate(.75) brightness(.78); }
-:root[data-palette="night"] .hero-bg::after { background: linear-gradient(180deg, rgba(3,4,10,.45) 0%, rgba(3,4,10,.35) 45%, rgba(3,4,10,.65) 100%); }
+:root[data-palette="night"] .hero-bg::before { backdrop-filter: blur(44px) saturate(1.2) brightness(.75); -webkit-backdrop-filter: blur(44px) saturate(1.2) brightness(.75); }
+:root[data-palette="night"] .hero-bg::after { background: linear-gradient(180deg, rgba(3,4,10,.35) 0%, rgba(3,4,10,.3) 50%, rgba(3,4,10,.55) 100%); }
+:root[data-palette="night"] .phone { background: linear-gradient(180deg, rgba(3,4,10,.12) 0%, rgba(3,4,10,.08) 50%, rgba(3,4,10,.35) 100%); backdrop-filter: blur(44px) saturate(1.2) brightness(1.05); -webkit-backdrop-filter: blur(44px) saturate(1.2) brightness(1.05); }
