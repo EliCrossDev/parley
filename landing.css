@@ -193,3 +193,6 @@ section h2 { font-size: clamp(32px, 6vw, 60px); font-weight: 800; line-height: 1
 .hero-tip { font-size: 14px; line-height: 1.45; color: #f7f7fb; background: rgba(14,14,24,.45); border: 1px solid rgba(255,255,255,.25); border-radius: 14px; padding: 12px 14px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); max-width: 520px; }
 .foot-nav { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13px; width: 100%; margin-top: 6px; }
 .foot-nav a { color: rgba(247,247,251,.75); text-decoration: none; } .foot-nav a:hover { color: #fff; }
+/* Night on the home page: same black-and-grey depth as the app, not the saturated navy */
+:root[data-palette="night"] .hero-bg::before { backdrop-filter: blur(40px) saturate(.75) brightness(.78); -webkit-backdrop-filter: blur(40px) saturate(.75) brightness(.78); }
+:root[data-palette="night"] .hero-bg::after { background: linear-gradient(180deg, rgba(3,4,10,.45) 0%, rgba(3,4,10,.35) 45%, rgba(3,4,10,.65) 100%); }
