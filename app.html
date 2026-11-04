@@ -88,6 +88,7 @@
       <div class="nudge" id="nudge" hidden>
         <p><b data-i18n="nudge.title">Enjoying Parley?</b> <span data-i18n="nudge.sub">It stays free. If it has helped you, chip in whatever you want, one time.</span></p>
         <div class="nudge-actions"><button class="btn btn-ghost small" id="nudge-no" data-i18n="nudge.no">Not now</button><button class="btn btn-volt small" id="nudge-yes" data-i18n="nudge.yes">Support</button></div>
+        <button class="nudge-restore" id="nudge-restore" data-i18n="nudge.restore">Already chipped in?</button>
       </div>
       <div class="recent" id="recent">
         <button class="recent-head" id="recent-toggle" aria-expanded="false" aria-controls="recent-list">
@@ -278,7 +279,7 @@
         </div>
         <div class="setting-row">
           <div><p class="setting-title" data-i18n="set.pro">Supporter</p><p class="setting-sub" id="pro-sub" data-i18n="set.profree">Free · last 5 conversations kept</p></div>
-          <button class="field-select small" id="pro-btn" data-i18n="set.support">Support</button>
+          <div class="row-actions"><button class="field-select small" id="pro-restore-btn" data-i18n="prosheet.restorebtn">Restore</button><button class="field-select small" id="pro-btn" data-i18n="set.support">Support</button></div>
         </div>
         <div class="setting-row">
           <div><p class="setting-title" data-i18n="set.clear">Clear all conversations</p><p class="setting-sub" data-i18n="set.clearsub">Removes transcripts and audio from this device.</p></div>

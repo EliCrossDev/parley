@@ -634,7 +634,7 @@
     savePrefs(); n.hidden = !due;
   }
   $('nudge-no').addEventListener('click', () => { $('nudge').hidden = true; });
-  $('nudge-yes').addEventListener('click', () => { $('nudge').hidden = true; openPro(); });
+  $('nudge-yes').addEventListener('click', () => { $('nudge').hidden = true; startCheckout(); });
   function renderSetup() {
     renderAvatarsUI(); renderRecent();
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
@@ -705,8 +705,17 @@
     if (ok) { buy.hidden = false; }
     else $('pro-status').textContent = 'Checkout isn\'t connected yet.';
   }
-  $('go-pro').addEventListener('click', openPro);
-  $('pro-btn').addEventListener('click', () => { if (prefs.pro) confirmSheet('Turn off Pro on this device?', 'You can restore it any time with your email.', () => { setPro(false); toast('Pro turned off'); }); else openPro(); });
+  // Straight to Stripe: one tap, no sheet in between. The sheet is only for restoring a past purchase.
+  let checkoutBusy = false;
+  async function startCheckout() {
+    if (checkoutBusy) return; checkoutBusy = true; toast(T('pro.opening'));
+    try { const j = await proApi('/api/checkout', {}); location.href = j.url; }
+    catch (e) { checkoutBusy = false; toast(e.message || 'Checkout is unavailable right now'); }
+  }
+  $('go-pro').addEventListener('click', startCheckout);
+  $('pro-btn').addEventListener('click', () => { if (prefs.pro) confirmSheet('Turn off Pro on this device?', 'You can restore it any time with your email.', () => { setPro(false); toast('Pro turned off'); }); else startCheckout(); });
+  $('pro-restore-btn').addEventListener('click', openPro);
+  $('nudge-restore').addEventListener('click', () => { $('nudge').hidden = true; openPro(); });
   $('pro-cancel').addEventListener('click', sheetClose);
   $('pro-buy').addEventListener('click', async () => {
     $('pro-status').textContent = 'Opening checkout…'; $('pro-buy').disabled = true;
@@ -819,6 +828,7 @@
     $('profile-avatar').innerHTML = avatarSVG(prefs.avatar);
     $('profile-name-display').textContent = prefs.name || 'Traveler';
     $('profile-plan').textContent = prefs.pro ? T('prof.supporter') : T('prof.free');
+    const prb = $('pro-restore-btn'); if (prb) prb.hidden = !!prefs.pro;
     const ps = $('pro-sub'), pbt = $('pro-btn'); if (ps) ps.textContent = prefs.pro ? T('set.proon') : T('set.profree'); if (pbt) pbt.textContent = prefs.pro ? T('set.deactivate') : T('set.support');
     $('profile-lang-btn').textContent = byCode(prefs.langA).name;
     const sub = { auto: 'Auto (Google · MyMemory fallback)', mymemory: 'MyMemory', libre: 'LibreTranslate · ' + (prefs.libreUrl || 'not set') };
