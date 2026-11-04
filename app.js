@@ -615,7 +615,7 @@
     Off.on = true; Off.ctx = new (window.AudioContext || window.webkitAudioContext)(); Off.rate = Off.ctx.sampleRate;
     Off.src = Off.ctx.createMediaStreamSource(live.stream); Off.proc = Off.ctx.createScriptProcessor(2048, 1, 1);
     Off.chunks = []; Off.have = 0; Off.speaking = false; Off.silence = 0;
-    const SIL_FRAMES = Math.round(0.8 * Off.rate / 2048), MAX = 8 * Off.rate, MIN = 0.5 * Off.rate;
+    const SIL_FRAMES = Math.round(1.1 * Off.rate / 2048), MAX = 8 * Off.rate, MIN = 0.5 * Off.rate;
     Off.proc.onaudioprocess = (e) => {
       if (!Off.on) return;
       const d = e.inputBuffer.getChannelData(0); let rms = 0; for (let i = 0; i < d.length; i++) rms += d[i] * d[i]; rms = Math.sqrt(rms / d.length);
