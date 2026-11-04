@@ -885,10 +885,26 @@
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
   $('install-btn').addEventListener('click', async () => {
     if (installEvt) { installEvt.prompt(); const r = await installEvt.userChoice; if (r && r.outcome === 'accepted') toast('Installed'); installEvt = null; return; }
-    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) { toast('Parley is already installed'); return; }
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    toast(ios ? 'Safari: tap Share, then "Add to Home Screen"' : 'Use your browser menu: "Install app" or "Add to Home Screen"');
+    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) { toast(T('hero.installed')); return; }
+    openInstallSheet();
   });
+  const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+  const MENU_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
+  function openInstallSheet() {
+    const ua = navigator.userAgent;
+    const ios = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const android = /android/i.test(ua);
+    const safariDesktop = !ios && /safari/i.test(ua) && !/chrome|chromium|edg/i.test(ua);
+    const firefox = /firefox/i.test(ua);
+    const steps = ios ? [T('inst.ios1').replace('{icon}', SHARE_ICON), T('inst.ios2'), T('inst.ios3')]
+      : android ? [T('inst.and1').replace('{icon}', MENU_ICON), T('inst.and2'), T('inst.and3')]
+      : safariDesktop ? [T('inst.saf1').replace('{icon}', SHARE_ICON), T('inst.saf2'), T('inst.saf3')]
+      : firefox ? [T('inst.ff1'), T('inst.ff2')]
+      : [T('inst.desk1'), T('inst.desk2'), T('inst.desk3')];
+    const ol = $('inst-steps'); ol.innerHTML = ''; steps.forEach((h) => { const li = document.createElement('li'); li.innerHTML = '<span>' + h + '</span>'; ol.appendChild(li); });
+    sheetOpen('install-sheet');
+  }
+  $('install-done').addEventListener('click', sheetClose);
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').then((reg) => { try { reg.update(); } catch (e) {} }).catch(() => {});
     let reloaded = false;

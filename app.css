@@ -433,3 +433,8 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .recent-list .recent-more { text-align: center; font-size: 13px; color: var(--fg-2); padding: 8px; }
 .recent-list[hidden] { display: none; }
 .recent-head { min-height: 56px; font-size: 14px; }
+
+.inst-steps { list-style: none; padding: 0; margin: 6px 0 14px; display: grid; gap: 10px; counter-reset: st; }
+.inst-steps li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid var(--line); font-size: 15px; line-height: 1.4; }
+.inst-steps li::before { counter-increment: st; content: counter(st); flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+.inst-steps li svg { display: inline-block; width: 18px; height: 18px; vertical-align: -4px; margin: 0 2px; }
