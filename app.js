@@ -320,7 +320,7 @@
   }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
   function showError(msg) { const s = $('stage-status'); s.textContent = msg; s.className = 'stage-status err'; toast(msg); }
-  function leaveNeutral() { if (!live.neutral) return; live.neutral = false; $('live-stage').classList.remove('neutral'); const h = $('convo-hint'); if (h) h.textContent = T('live.hint'); }
+  function leaveNeutral(picked) { if (!live.neutral) return; live.neutral = false; $('live-stage').classList.remove('neutral'); const h = $('convo-hint'); if (h) h.textContent = picked ? T('live.hintpicked').replace('{lang}', byCode(langOf(picked)).native) : T('live.hint'); }
   function setExpected(who, forced) {
     live.expected = who; if (forced !== undefined) live.forced = forced;
     $('who-a').classList.toggle('is-live', !live.neutral && who === 'a'); $('who-b').classList.toggle('is-live', !live.neutral && who === 'b');
@@ -682,8 +682,8 @@
   $('opt-record').addEventListener('change', (e) => { prefs.record = e.target.checked; savePrefs(); });
   $('start-live').addEventListener('click', startLive);
   $('stop-live').addEventListener('click', stopLive);
-  $('who-a').addEventListener('click', () => { if (!live.on) return; leaveNeutral(); live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
-  $('who-b').addEventListener('click', () => { if (!live.on) return; leaveNeutral(); live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
+  $('who-a').addEventListener('click', () => { if (!live.on) return; leaveNeutral('a'); live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
+  $('who-b').addEventListener('click', () => { if (!live.on) return; leaveNeutral('b'); live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
   window.addEventListener('beforeunload', () => { if (live.on) stopLive(); });
 
   /* ---------------- History ---------------- */
