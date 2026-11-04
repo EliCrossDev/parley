@@ -345,15 +345,18 @@
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
   function showError(msg) { const s = $('stage-status'); s.textContent = msg; s.className = 'stage-status err'; toast(msg); }
   /* Turn chime: a soft two-note blip, a touch higher for the left language, lower for the right. Off in setup. */
-  let cueCtx = null;
-  function chime(who) {
-    if (!prefs.cues) return;
+  let cueCtx = null, chimeTid = null;
+  function playChime(who) {
     try {
       cueCtx = cueCtx || new (window.AudioContext || window.webkitAudioContext)(); if (cueCtx.state === 'suspended') cueCtx.resume();
-      const t = cueCtx.currentTime; const notes = who === 'a' ? [880, 1174.7] : [659.3, 880];
-      notes.forEach((f, i) => { const o = cueCtx.createOscillator(), g = cueCtx.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, t + i * 0.09); g.gain.linearRampToValueAtTime(0.12, t + i * 0.09 + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.09 + 0.16); o.connect(g); g.connect(cueCtx.destination); o.start(t + i * 0.09); o.stop(t + i * 0.09 + 0.18); });
+      const t = cueCtx.currentTime;
+      // Left language rises (E5 -> B5), right language falls (B5 -> E5): opposite shapes, easy to tell apart by ear.
+      const notes = who === 'a' ? [659.3, 987.8] : [987.8, 659.3];
+      notes.forEach((f, i) => { const o = cueCtx.createOscillator(), g = cueCtx.createGain(); o.type = who === 'a' ? 'sine' : 'triangle'; o.frequency.value = f; const at = t + i * 0.11; g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(who === 'a' ? 0.13 : 0.09, at + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.2); o.connect(g); g.connect(cueCtx.destination); o.start(at); o.stop(at + 0.22); });
     } catch (e) {}
   }
+  // Only sound once the new side has held for a beat: a flip that flips straight back stays silent.
+  function chime(who) { if (!prefs.cues) return; clearTimeout(chimeTid); chimeTid = setTimeout(() => { if (live.on && live.litWho === who) playChime(who); }, 350); }
   const GO = { en: 'Ready, go ahead', es: 'Listo, habla', pt: 'Pronto, pode falar', fr: 'Prêt, parlez', de: 'Bereit, sprich', it: 'Pronto, parla', zh: '准备好了，请说', ja: '準備完了、どうぞ', ko: '준비됐어요, 말씀하세요', hi: 'तैयार, बोलिए', th: 'พร้อมแล้ว พูดได้เลย', ar: 'جاهز، تفضل', ru: 'Готово, говорите', id: 'Siap, silakan bicara', vi: 'Sẵn sàng, mời nói', tr: 'Hazır, konuşun', nl: 'Klaar, zeg het maar', pl: 'Gotowe, mów' };
   function goCue(who) { return GO[base(langOf(who))] || GO.en; }
   let cueTid = null;
@@ -644,7 +647,7 @@
     if (!prefs.improve) return;
     try { const all = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); all.push(Object.assign({ t: Date.now(), convo: live.convoId, langA: prefs.langA, langB: prefs.langB }, ev)); while (all.length > 2000) all.shift(); localStorage.setItem(NOTES_KEY, JSON.stringify(all)); } catch (e) {}
   }
-  $('opt-cues').addEventListener('change', (e) => { prefs.cues = e.target.checked; savePrefs(); if (prefs.cues) chime('a'); });
+  $('opt-cues').addEventListener('change', (e) => { prefs.cues = e.target.checked; savePrefs(); if (prefs.cues) { playChime('a'); setTimeout(() => playChime('b'), 700); } });
   $('opt-offline').addEventListener('change', async (e) => {
     prefs.offline = e.target.checked; savePrefs(); if (!prefs.offline) return;
     toast(T('setup.offlineprep'));
