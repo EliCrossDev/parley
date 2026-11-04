@@ -430,7 +430,7 @@
       }
       return;
     }
-    live.detected = who; leaveNeutral();
+    live.detected = who; live.detectedBy = 'words'; leaveNeutral();
     if (live.interimEl) { live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who); }
     if (who !== live.expected) {
       // Wrong speaker guessed: switch recognizer to the right language now, keeping what we already heard.
@@ -458,6 +458,7 @@
           $('convo').scrollTop = $('convo').scrollHeight;
         }
         if (!live.detected) earlyDetect(interim);
+        else if (live.detectedBy === 'ear' && !live.forced) wordsOverrideEar(shown);
         Wave.setTalking(true); scheduleInterimTranslate(shown);
         // Snappy turns: if the interim text stops changing, force the final now instead of waiting for the engine.
         armEndpoint(r, shown);
@@ -528,7 +529,7 @@
     if (cont && live.interimEl) { live.interimEl.remove(); }
     const node = cont ? last.node : (live.interimEl || appendBubble(makeBubble(guess, '', text, true)));
     if (cont) { text = (last.orig + ' ' + text).trim(); live.lines.pop(); }
-    live.interimEl = null; live.carry = null; live.detected = null; live.detectPending = null; live.flipped = false;
+    live.interimEl = null; live.carry = null; live.detected = null; live.detectedBy = null; live.detectPending = null; live.flipped = false;
     node.className = 'bubble ' + guess + ' interim';
     node.querySelector('.trans').textContent = text;
     setStatus(T('live.translating'), guess);
@@ -573,13 +574,22 @@
   async function onEar(r) {
     if (!live.on || live.forced || live.detected || r.margin < EAR_MIN_MARGIN) return;
     const who = r.lang === base(prefs.langA) ? 'a' : (r.lang === base(prefs.langB) ? 'b' : null); if (!who) return;
-    live.detected = who; leaveNeutral();
+    live.detected = who; live.detectedBy = 'ear'; leaveNeutral();
     if (who === live.expected) { setExpected(who); return; }                 // engine already aimed right; just light the chip
     // Engine was listening in the other language: what it heard so far is nonsense. Aim it, and keep the words Whisper heard.
     if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }
     setExpected(who); startRecognizer(langOf(who));
     const heard = await Ear.transcribe(r.audio, r.lang);
     if (heard && live.on && live.detected === who && !live.interimEl) { live.carry = heard; live.interimEl = appendBubble(makeBubble(who, '', heard, true)); live.interimEl.dataset.words = heard; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 2600); scheduleInterimTranslate(heard); }
+  }
+  // The ear judges by accent; a telltale word is stronger evidence. "Hola" said with an English accent is still Spanish.
+  function wordsOverrideEar(text) {
+    const words = text.toLowerCase().replace(/[^\p{L}\p{M}' ]/gu, ' ').split(/\s+/).filter(Boolean).slice(0, 5);
+    const otherWho = other(live.detected);
+    if (!strongHit(words, langOf(otherWho)) || strongHit(words, langOf(live.detected))) return;
+    live.detected = otherWho; live.detectedBy = 'words';
+    if (live.interimEl) { live.interimEl.className = 'bubble ' + otherWho + ' interim'; setBubbleWho(live.interimEl, otherWho); }
+    if (otherWho !== live.expected) { live.carry = text.trim(); setExpected(otherWho); startRecognizer(langOf(otherWho)); } else setExpected(otherWho);
   }
   function softCommit(text) { if (live.interimEl) handleFinal(text, { soft: true }); }
 
