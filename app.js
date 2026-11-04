@@ -320,9 +320,10 @@
   }
   function setStatus(text, who) { const s = $('stage-status'); s.textContent = text; s.className = 'stage-status' + (who ? ' ' + who : ''); }
   function showError(msg) { const s = $('stage-status'); s.textContent = msg; s.className = 'stage-status err'; toast(msg); }
+  function leaveNeutral() { if (!live.neutral) return; live.neutral = false; $('live-stage').classList.remove('neutral'); const h = $('convo-hint'); if (h) h.textContent = T('live.hint'); }
   function setExpected(who, forced) {
     live.expected = who; if (forced !== undefined) live.forced = forced;
-    $('who-a').classList.toggle('is-live', who === 'a'); $('who-b').classList.toggle('is-live', who === 'b');
+    $('who-a').classList.toggle('is-live', !live.neutral && who === 'a'); $('who-b').classList.toggle('is-live', !live.neutral && who === 'b');
     Wave.setSpeaker(who); if (BG) BG.setTint(cssVar(who === 'b' ? '--bg-c1' : '--bg-c3'), 0.5);
     const sg = $('siri'); sg.className = 'siri on ' + who;
     setStatus(T('live.listening'), who);
@@ -392,7 +393,7 @@
   // After a few words of that, flip the engine rather than wait for a guess that will never come.
   function looksLikeNonsense(text, engineLang) {
     const words = text.toLowerCase().replace(/[^\p{L}\p{M}' ]/gu, ' ').split(/\s+/).filter(Boolean);
-    if (words.length < 4) return false;
+    if (words.length < (live.lines.length ? 4 : 3)) return false;
     return lexScore(words, engineLang) === 0;
   }
   // Online: ask the translator to detect from the first two words. Cached per utterance.
@@ -429,7 +430,7 @@
       }
       return;
     }
-    live.detected = who;
+    live.detected = who; leaveNeutral();
     if (live.interimEl) { live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who); }
     if (who !== live.expected) {
       // Wrong speaker guessed: switch recognizer to the right language now, keeping what we already heard.
@@ -516,7 +517,7 @@
   }
 
   async function handleFinal(text, opts) {
-    opts = opts || {};
+    opts = opts || {}; leaveNeutral();
     clearInterval(live.epId); clearTimeout(live.interimTid); clearTimeout(live.turnId); 
     // Speaker priority: manual tap > early detection (first two words) > offline guess on full text > turn-taking
     let guess = live.forced || opts.who || live.detected || guessOffline(text) || live.expected;
@@ -572,6 +573,8 @@
     $('who-a-label').textContent = byCode(prefs.langA).short; $('who-b-label').textContent = byCode(prefs.langB).short;
     pickAvatars(); Wave.start($('ribbon')); renderSpeakBtn(); Voice.warm();
     setExpected('a'); startRecognizer(prefs.langA);
+    // Nobody has spoken yet: show both chips as choices, light one only once we know who is talking.
+    live.neutral = true; $('live-stage').classList.add('neutral'); $('who-a').classList.remove('is-live'); $('who-b').classList.remove('is-live'); $('convo-hint').textContent = T('live.hintfirst');
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
     catch (e) { live.stream = null; toast('Mic stream unavailable. Transcription still runs, no waveform or recording.'); }
@@ -587,7 +590,7 @@
 
   async function stopLive() {
     if (!live.on) return;
-    live.on = false; clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId);  clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
+    live.on = false; live.neutral = false; $('live-stage').classList.remove('neutral'); clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId);  clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
     try { if (live.rec) { live.rec.onend = null; live.rec.stop(); } } catch (e) {}
     let audioBlob = null;
     if (live.recorder && live.recorder.state !== 'inactive') {
@@ -679,8 +682,8 @@
   $('opt-record').addEventListener('change', (e) => { prefs.record = e.target.checked; savePrefs(); });
   $('start-live').addEventListener('click', startLive);
   $('stop-live').addEventListener('click', stopLive);
-  $('who-a').addEventListener('click', () => { if (!live.on) return; live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
-  $('who-b').addEventListener('click', () => { if (!live.on) return; live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
+  $('who-a').addEventListener('click', () => { if (!live.on) return; leaveNeutral(); live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
+  $('who-b').addEventListener('click', () => { if (!live.on) return; leaveNeutral(); live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
   window.addEventListener('beforeunload', () => { if (live.on) stopLive(); });
 
   /* ---------------- History ---------------- */

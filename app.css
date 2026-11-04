@@ -345,7 +345,7 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .stage-bottom { background: rgba(10,12,26,.4); border-top: 1px solid var(--glass-line); }
 .who-btn { background: var(--glass); border: 1px solid var(--glass-line); color: var(--fg-2); }
 .who-a.is-live { background: rgba(255,255,255,.9); border-color: rgba(255,255,255,.9); color: #0e0e16; }
-.who-b.is-live { background: rgba(14,14,24,.7); border-color: rgba(255,255,255,.45); color: #f7f7fb; }
+.who-b.is-live { background: rgba(255,255,255,.9); border-color: rgba(255,255,255,.9); color: #0e0e16; }
 .who-a .who-dot { background: #fff; } .who-b .who-dot { background: #16162a; border: 1px solid rgba(255,255,255,.6); }
 .stop-btn { background: #f7f7fb; }
 .history-item, .profile-card, .player, .edit-panel, .sheet { background: rgba(14,14,24,.55); border-color: var(--glass-line); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
@@ -450,3 +450,10 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .row-actions { display: flex; gap: 8px; }
 .nudge-restore { flex: 1 0 100%; text-align: left; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); padding: 0; margin-top: -4px; }
 .nudge-restore:hover { color: var(--fg-2); }
+
+/* Chips read as buttons: visible outline at rest, press feedback, same lit look on both sides */
+#who-a, #who-b { border: 1.5px solid rgba(255,255,255,.45); background: rgba(255,255,255,.08); color: #f7f7fb; transition: background .2s, color .2s, border-color .2s, transform .15s; }
+#who-a:active, #who-b:active { transform: scale(.96); }
+#who-a.is-live, #who-b.is-live { background: rgba(255,255,255,.92); border-color: #fff; color: #0e0e16; }
+.live-stage.neutral #who-a, .live-stage.neutral #who-b { animation: chip-hint 1.6s ease-in-out infinite; }
+@keyframes chip-hint { 0%, 100% { border-color: rgba(255,255,255,.45); } 50% { border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.12); } }
