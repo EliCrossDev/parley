@@ -562,6 +562,25 @@
     // the ~0.4 s restart happens while nobody is talking. If the same person carries on, early detection flips back.
     const next = other(who); setExpected(next); startRecognizer(langOf(next));
   }
+  /* ---- The ear: Whisper on the device identifies the language from the sound itself, so the engine can be
+     aimed without a tap. Only confident calls are acted on; when unsure, the word lists and the chips decide. */
+  const EAR_MIN_MARGIN = 5;
+  async function startEar() {
+    if (!window.Ear || !Ear.supported || !live.stream) return;
+    const ok = await Ear.load(); if (!ok || !live.on || !live.stream) return;
+    Ear.start(live.stream, base(prefs.langA), base(prefs.langB), onEar);
+  }
+  async function onEar(r) {
+    if (!live.on || live.forced || live.detected || r.margin < EAR_MIN_MARGIN) return;
+    const who = r.lang === base(prefs.langA) ? 'a' : (r.lang === base(prefs.langB) ? 'b' : null); if (!who) return;
+    live.detected = who; leaveNeutral();
+    if (who === live.expected) { setExpected(who); return; }                 // engine already aimed right; just light the chip
+    // Engine was listening in the other language: what it heard so far is nonsense. Aim it, and keep the words Whisper heard.
+    if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }
+    setExpected(who); startRecognizer(langOf(who));
+    const heard = await Ear.transcribe(r.audio, r.lang);
+    if (heard && live.on && live.detected === who && !live.interimEl) { live.carry = heard; live.interimEl = appendBubble(makeBubble(who, '', heard, true)); live.interimEl.dataset.words = heard; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 2600); scheduleInterimTranslate(heard); }
+  }
   function softCommit(text) { if (live.interimEl) handleFinal(text, { soft: true }); }
 
   async function startLive() {
@@ -578,6 +597,7 @@
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     try { live.stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Wave.attach(live.stream); }
     catch (e) { live.stream = null; toast('Mic stream unavailable. Transcription still runs, no waveform or recording.'); }
+    startEar();
     live.levelId = setInterval(() => { const lv = Math.min(1, Wave.level() * 2.2); if (BG) BG.setEnergy(lv); document.documentElement.style.setProperty('--lv', lv.toFixed(3)); }, 80);
     // Recording
     if (live.stream && prefs.record && 'MediaRecorder' in window) {
@@ -590,6 +610,7 @@
 
   async function stopLive() {
     if (!live.on) return;
+    if (window.Ear) Ear.stop();
     live.on = false; live.neutral = false; $('live-stage').classList.remove('neutral'); clearInterval(live.timerId); clearInterval(live.levelId); clearInterval(live.epId); clearTimeout(live.turnId);  clearTimeout(live.interimTid); interimCache.clear(); Voice.stop(); $('siri').className = 'siri'; if (BG) { BG.setEnergy(0); BG.setTint(null, 0); }
     try { if (live.rec) { live.rec.onend = null; live.rec.stop(); } } catch (e) {}
     let audioBlob = null;
