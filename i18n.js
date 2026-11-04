@@ -61,6 +61,7 @@ window.I18N = (function () {
       'set.improve': "Help improve Parley", 'set.improvesub': "Keeps a private note on this device of how each line was detected. Nothing is sent anywhere.", 'set.improveexport': "Export notes",
       'setup.offline': "Offline mode", 'setup.offlinesub': "No signal needed. Words arrive in short bursts instead of live.", 'live.offline': "Offline", 'live.transcribing': "Transcribing…", 'live.notrans': "no translation offline",
       'setup.offlineprep': "Preparing offline mode: downloading the models once…",
+      'setup.cues': "Sound when the turn switches",
       'confirm.cancel': 'Cancel', 'confirm.ok': 'Confirm',
     },
     es: {
@@ -120,6 +121,7 @@ window.I18N = (function () {
       'set.improve': "Ayuda a mejorar Parley", 'set.improvesub': "Guarda en este dispositivo una nota privada de cómo se detectó cada línea. No se envía nada.", 'set.improveexport': "Exportar notas",
       'setup.offline': "Modo sin conexión", 'setup.offlinesub': "No necesita señal. Las palabras llegan en ráfagas cortas en vez de en vivo.", 'live.offline': "Sin conexión", 'live.transcribing': "Transcribiendo…", 'live.notrans': "sin traducción sin conexión",
       'setup.offlineprep': "Preparando el modo sin conexión: descargando los modelos una vez…",
+      'setup.cues': "Sonido al cambiar de turno",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     pt: {
@@ -179,6 +181,7 @@ window.I18N = (function () {
       'set.improve': "Ajude a melhorar o Parley", 'set.improvesub': "Guarda neste aparelho uma nota privada de como cada linha foi detectada. Nada é enviado.", 'set.improveexport': "Exportar notas",
       'setup.offline': "Modo offline", 'setup.offlinesub': "Não precisa de sinal. As palavras chegam em blocos curtos em vez de ao vivo.", 'live.offline': "Offline", 'live.transcribing': "Transcrevendo…", 'live.notrans': "sem tradução offline",
       'setup.offlineprep': "Preparando o modo offline: baixando os modelos uma vez…",
+      'setup.cues': "Som ao trocar de turno",
       'confirm.cancel': 'Cancelar', 'confirm.ok': 'Confirmar',
     },
     fr: {
@@ -238,6 +241,7 @@ window.I18N = (function () {
       'set.improve': "Aider à améliorer Parley", 'set.improvesub': "Garde sur cet appareil une note privée sur la détection de chaque ligne. Rien n'est envoyé.", 'set.improveexport': "Exporter les notes",
       'setup.offline': "Mode hors ligne", 'setup.offlinesub': "Aucun réseau requis. Les mots arrivent par courtes salves plutôt qu'en direct.", 'live.offline': "Hors ligne", 'live.transcribing': "Transcription…", 'live.notrans': "pas de traduction hors ligne",
       'setup.offlineprep': "Préparation du mode hors ligne : téléchargement unique des modèles…",
+      'setup.cues': "Son au changement de tour",
       'confirm.cancel': 'Annuler', 'confirm.ok': 'Confirmer',
     },
     de: {
@@ -297,6 +301,7 @@ window.I18N = (function () {
       'set.improve': "Parley verbessern helfen", 'set.improvesub': "Speichert auf diesem Gerät eine private Notiz, wie jede Zeile erkannt wurde. Nichts wird gesendet.", 'set.improveexport': "Notizen exportieren",
       'setup.offline': "Offline-Modus", 'setup.offlinesub': "Kein Netz nötig. Die Wörter kommen in kurzen Schüben statt live.", 'live.offline': "Offline", 'live.transcribing': "Transkribiere…", 'live.notrans': "keine Übersetzung offline",
       'setup.offlineprep': "Offline-Modus wird vorbereitet: Modelle werden einmalig geladen…",
+      'setup.cues': "Ton beim Wechsel",
       'confirm.cancel': 'Abbrechen', 'confirm.ok': 'Bestätigen',
     },
     it: {
@@ -356,6 +361,7 @@ window.I18N = (function () {
       'set.improve': "Aiuta a migliorare Parley", 'set.improvesub': "Tiene su questo dispositivo una nota privata su come è stata rilevata ogni riga. Non viene inviato nulla.", 'set.improveexport': "Esporta note",
       'setup.offline': "Modalità offline", 'setup.offlinesub': "Nessun segnale necessario. Le parole arrivano a brevi raffiche invece che dal vivo.", 'live.offline': "Offline", 'live.transcribing': "Trascrizione…", 'live.notrans': "nessuna traduzione offline",
       'setup.offlineprep': "Preparazione della modalità offline: download dei modelli una volta sola…",
+      'setup.cues': "Suono al cambio di turno",
       'confirm.cancel': 'Annulla', 'confirm.ok': 'Conferma',
     },
     ko: {
@@ -415,6 +421,7 @@ window.I18N = (function () {
       'set.improve': "Parley 개선 돕기", 'set.improvesub': "각 줄이 어떻게 감지됐는지 이 기기에만 비공개로 기록합니다. 어디에도 전송되지 않습니다.", 'set.improveexport': "기록 내보내기",
       'setup.offline': "오프라인 모드", 'setup.offlinesub': "신호가 필요 없습니다. 실시간 대신 짧은 단위로 단어가 도착합니다.", 'live.offline': "오프라인", 'live.transcribing': "받아쓰는 중…", 'live.notrans': "오프라인에서는 번역 없음",
       'setup.offlineprep': "오프라인 모드 준비 중: 모델을 한 번만 내려받습니다…",
+      'setup.cues': "차례가 바뀔 때 소리",
       'confirm.cancel': '취소', 'confirm.ok': '확인',
     },
     ja: {
@@ -474,6 +481,7 @@ window.I18N = (function () {
       'set.improve': "Parleyの改善に協力", 'set.improvesub': "各行がどう判定されたかをこの端末内だけに記録します。どこにも送信されません。", 'set.improveexport': "記録を書き出す",
       'setup.offline': "オフラインモード", 'setup.offlinesub': "電波不要。ライブではなく短い区切りで言葉が届きます。", 'live.offline': "オフライン", 'live.transcribing': "書き起こし中…", 'live.notrans': "オフラインでは翻訳なし",
       'setup.offlineprep': "オフラインモードを準備中：モデルを一度だけダウンロードします…",
+      'setup.cues': "交代時に音を鳴らす",
       'confirm.cancel': 'キャンセル', 'confirm.ok': '確認',
     },
     zh: {
@@ -533,6 +541,7 @@ window.I18N = (function () {
       'set.improve': "帮助改进 Parley", 'set.improvesub': "在此设备上私密记录每一行是如何被识别的。不会发送到任何地方。", 'set.improveexport': "导出记录",
       'setup.offline': "离线模式", 'setup.offlinesub': "无需信号。文字以短段落而非实时方式出现。", 'live.offline': "离线", 'live.transcribing': "转写中…", 'live.notrans': "离线无翻译",
       'setup.offlineprep': "正在准备离线模式：仅下载一次模型…",
+      'setup.cues': "切换时提示音",
       'confirm.cancel': '取消', 'confirm.ok': '确认',
     },
   };
