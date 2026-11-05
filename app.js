@@ -324,6 +324,7 @@
 
   /* ---------------- Live session ---------------- */
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const IS_ANDROID = /android/i.test(navigator.userAgent);
   // Two people at different distances: let the device lift the far voice and tame the room.
   const MIC = { audio: { autoGainControl: true, noiseSuppression: true, echoCancellation: true } };
   const live = {
@@ -493,6 +494,7 @@
     const r = new SR(); live.rec = r;
     r.lang = byCode(lang).sr; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
     r.onresult = (ev) => {
+      live.heard = true; { const hb = $('mic-help-live'); if (hb) hb.hidden = true; }
       let interim = '', finals = [];
       const clean = (t) => String(t).replace(/<\/?\s*(s|unk|noise|eps)\s*>/gi, ' ').replace(/\s+/g, ' ');
       for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) finals.push(clean(res[0].transcript).trim()); else interim += clean(res[0].transcript); }
@@ -517,9 +519,9 @@
     };
     r.onerror = (ev) => {
       const e = ev.error;
-      if (e === 'not-allowed' || e === 'service-not-allowed') { showError('Microphone blocked. Allow it in your browser settings, then restart.'); stopLive(); return; }
+      if (e === 'not-allowed' || e === 'service-not-allowed') { showError(T('mic.blocked')); stopLive(); openMicHelp(); return; }
       if (e === 'network') { live.netErrors++; if (live.netErrors >= 3) { showError(location.protocol === 'file:' ? 'Speech needs a web address. Open Parley over http(s), not as a file.' : 'Speech service unreachable. Check your connection.'); live.netErrors = 0; } return; }
-      if (e === 'audio-capture') { showError('No microphone found.'); return; }
+      if (e === 'audio-capture') { showError(T('mic.nomic')); openMicHelp(); return; }
       if (e === 'language-not-supported') { showError(byCode(lang).name + ' speech is not supported in this browser.'); return; }
       /* no-speech / aborted: restart in onend */
     };
@@ -767,9 +769,15 @@
     setTabletop(prefs.tabletop);
     live.neutral = true; $('live-stage').classList.add('neutral'); $('who-a').classList.remove('is-live'); $('who-b').classList.remove('is-live'); $('convo-hint').textContent = T('live.hintfirst');
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
-    try { live.stream = await navigator.mediaDevices.getUserMedia(MIC); Wave.attach(live.stream); }
-    catch (e) { live.stream = null; toast('Mic stream unavailable. Transcription still runs, no waveform or recording.'); }
+    // Android Chrome gives the mic to one listener at a time: a second stream silences speech recognition. So on Android we skip it.
+    if (IS_ANDROID && SR && !prefs.offline) { live.stream = null; }
+    else {
+      try { live.stream = await navigator.mediaDevices.getUserMedia(MIC); Wave.attach(live.stream); }
+      catch (e) { live.stream = null; toast('Mic stream unavailable. Transcription still runs, no waveform or recording.'); }
+    }
     if (prefs.offline) startOffline(); else startEar();
+    live.heard = false; clearTimeout(live.helpTid); $('mic-help-live').hidden = true;
+    live.helpTid = setTimeout(() => { if (live.on && !live.heard && !prefs.offline) $('mic-help-live').hidden = false; }, 9000);
     live.levelId = setInterval(() => { const lv = Math.min(1, Wave.level() * 2.2); if (BG) BG.setEnergy(lv); document.documentElement.style.setProperty('--lv', lv.toFixed(3)); }, 80);
     // Recording
     if (live.stream && prefs.record && 'MediaRecorder' in window) {
@@ -825,6 +833,55 @@
   let openSheet = null;
   function sheetOpen(id) { sheetClose(); $('sheet-backdrop').hidden = false; $(id).hidden = false; openSheet = id; }
   function sheetClose() { $('sheet-backdrop').hidden = true; if (openSheet) $(openSheet).hidden = true; openSheet = null; }
+
+  /* ---------------- Mic help: figures out what is wrong on this phone and says what to do ---------------- */
+  async function micDiag() {
+    const ua = navigator.userAgent || '';
+    const inapp = /FBAN|FBAV|FB_IAB|Instagram|Messenger|Snapchat|TikTok|musical_ly|Twitter|LinkedInApp|Line\/|MicroMessenger|GSA\/|; wv\)/i.test(ua);
+    const samsung = /SamsungBrowser/i.test(ua), firefox = /Firefox|FxiOS/i.test(ua), opera = /OPR\/|Opera/i.test(ua), duck = /DuckDuckGo/i.test(ua), brave = !!(navigator.brave);
+    const ios = /iPhone|iPad|iPod/i.test(ua);
+    let perm = 'unknown';
+    try { const q = await navigator.permissions.query({ name: 'microphone' }); perm = q.state; } catch (e) {}
+    const out = [];
+    if (inapp) out.push('mic.s.inapp');
+    if (!SR) out.push('mic.s.nosr');
+    if (samsung || firefox || opera || duck || brave) out.push('mic.s.browser');
+    if (perm === 'denied') out.push(ios ? 'mic.s.blockedios' : 'mic.s.blocked');
+    else if (perm === 'prompt') out.push('mic.s.prompt');
+    if (IS_ANDROID) { out.push('mic.s.os'); out.push('mic.s.google'); }
+    if (ios) out.push('mic.s.ios');
+    out.push('mic.s.other');
+    return { steps: out, perm, inapp, android: IS_ANDROID };
+  }
+  async function openMicHelp() {
+    const d = await micDiag(); const ol = $('mic-steps'); ol.innerHTML = '';
+    $('mic-result').textContent = ''; $('mic-result').className = 'setup-note';
+    d.steps.forEach((k) => { const li = document.createElement('li'); li.innerHTML = '<span>' + T(k) + '</span>'; ol.appendChild(li); });
+    $('mic-found').textContent = d.inapp ? T('mic.found.inapp') : d.perm === 'denied' ? T('mic.found.denied') : !SR ? T('mic.found.nosr') : T('mic.found.generic');
+    if (live.on) { stopLive(); }
+    sheetOpen('mic-sheet');
+  }
+  let micTest = null;
+  function runMicTest() {
+    const res = $('mic-result'), btn = $('mic-test'); if (!SR) { res.textContent = T('mic.found.nosr'); return; }
+    if (live.on) { toast(T('toast.endfirst')); return; }
+    try { if (micTest) micTest.abort(); } catch (e) {}
+    const r = new SR(); micTest = r; r.lang = byCode(prefs.langA).sr; r.interimResults = true; r.continuous = false;
+    let got = '', err = '', timer;
+    btn.disabled = true; res.className = 'setup-note'; res.textContent = T('mic.testing');
+    const done = () => { clearTimeout(timer); btn.disabled = false; try { r.abort(); } catch (e) {}
+      if (got) { res.className = 'setup-note ok'; res.textContent = T('mic.heard') + ' "' + got + '"'; }
+      else if (err === 'not-allowed' || err === 'service-not-allowed') { res.className = 'setup-note warn'; res.textContent = T('mic.testblocked'); }
+      else { res.className = 'setup-note warn'; res.textContent = T('mic.silent') + (err ? ' (' + err + ')' : ''); } };
+    r.onresult = (ev) => { got = Array.from(ev.results).map((x) => x[0].transcript).join(' ').trim(); if (ev.results[ev.results.length - 1].isFinal) done(); };
+    r.onerror = (ev) => { err = ev.error || ''; };
+    r.onend = () => { if (btn.disabled) done(); };
+    try { r.start(); timer = setTimeout(done, 7000); } catch (e) { err = String(e.name || e); done(); }
+  }
+  $('mic-test').addEventListener('click', runMicTest);
+  $('mic-done').addEventListener('click', () => { try { if (micTest) micTest.abort(); } catch (e) {} sheetClose(); });
+  $('mic-help-link').addEventListener('click', openMicHelp);
+  $('mic-help-live').addEventListener('click', openMicHelp);
   $('sheet-backdrop').addEventListener('click', sheetClose);
   // Swipe down to dismiss
   document.querySelectorAll('.sheet').forEach((s) => { let y0 = null; s.addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true }); s.addEventListener('touchend', (e) => { if (y0 != null && e.changedTouches[0].clientY - y0 > 80 && s.scrollTop === 0) sheetClose(); y0 = null; }); });

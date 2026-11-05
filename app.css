@@ -510,3 +510,9 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 /* app icon before wordmark */
 .topbar .brand { gap: 10px; }
 .topbar .brand-mark { display: inline-block; width: 30px; height: 30px; border-radius: 8px; background: url(icon-192.png) center/cover no-repeat; }
+
+/* mic help */
+.mic-help-link { align-self: flex-start; background: none; border: 0; padding: 4px 0; color: var(--fg); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; opacity: .8; cursor: pointer; }
+.mic-help-live { color: #ffb84d; }
+.setup-note.ok { color: #7dffb0; }
+#mic-steps { max-height: 46vh; overflow-y: auto; }
