@@ -607,7 +607,7 @@
     setBubbleWho(node, who);
     $('convo').scrollTop = $('convo').scrollHeight;
     note({ ev: 'line', who, by: live.forced ? 'tap' : (opts.who ? 'cont' : (live.detectedBy || 'guess')), words: text.split(/\s+/).length, detected: result.detected || null });
-    live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node });
+    live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node }); autosaveDraft();
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     live.forced = null;
     // Don't assume the other person is next. Keep listening in the same language for a beat (they may
@@ -714,7 +714,7 @@
           node.querySelector('.orig').textContent = r.text; node.querySelector('.trans').textContent = trans || r.text; node.querySelector('.trans').classList.toggle('pending', !trans);
           if (!trans) node.querySelector('.ml').textContent += ' · ' + T('live.notrans');
           $('convo').scrollTop = $('convo').scrollHeight;
-          live.lines.push({ who, orig: r.text, trans: trans || r.text, from: langOf(who), to: langOf(other(who)), t: Math.max(0, startMs), dur: Math.round(1000 * samples.length / Off.rate), node });
+          live.lines.push({ who, orig: r.text, trans: trans || r.text, from: langOf(who), to: langOf(other(who)), t: Math.max(0, startMs), dur: Math.round(1000 * samples.length / Off.rate), node }); autosaveDraft();
           note({ ev: 'line', who, by: 'offline', words: r.text.split(/\s+/).length, margin: +r.margin.toFixed(2) });
           setExpected(other(who)); if (trans) speak(trans, langOf(other(who)));
         }
@@ -783,6 +783,11 @@
   let wake = null;
   async function requestWake() { try { if (navigator.wakeLock && live.on) wake = await navigator.wakeLock.request('screen'); } catch (e) {} }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && live.on) requestWake(); });
+  // Safety net: save the text after every line, so if the phone's browser ever drops the page mid-conversation, the words are still in History.
+  function autosaveDraft() {
+    if (!live.on || !live.lines.length) return; const first = live.lines[0];
+    dbPut({ id: live.convoId, startedAt: live.startedAt, duration: (Date.now() - live.startedAt) / 1000, langA: prefs.langA, langB: prefs.langB, title: first.orig.length > 42 ? first.orig.slice(0, 42).trim() + '…' : first.orig, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t, dur: l.dur, s: 1 })), audio: null, mime: null, draft: true });
+  }
   async function stopLive() {
     if (!live.on) return;
     try { if (wake) { wake.release(); wake = null; } } catch (e) {}
