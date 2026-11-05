@@ -1227,8 +1227,7 @@
   $('install-done').addEventListener('click', sheetClose);
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').then((reg) => { try { reg.update(); } catch (e) {} }).catch(() => {});
-    let reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (reloaded || live.on) return; reloaded = true; location.reload(); });
+    // No automatic reload on updates: it used to wipe a conversation or a video in progress. New versions load next time the app opens.
   }
 
   /* ---------------- Boot ---------------- */
