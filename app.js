@@ -647,7 +647,6 @@
     if (!prefs.improve) return;
     try { const all = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); all.push(Object.assign({ t: Date.now(), convo: live.convoId, langA: prefs.langA, langB: prefs.langB }, ev)); while (all.length > 2000) all.shift(); localStorage.setItem(NOTES_KEY, JSON.stringify(all)); } catch (e) {}
   }
-  $('opt-nobrand').addEventListener('change', (e) => { prefs.nobrand = e.target.checked; savePrefs(); });
   $('opt-cues').addEventListener('change', (e) => { prefs.cues = e.target.checked; savePrefs(); if (prefs.cues) { playChime('a'); setTimeout(() => playChime('b'), 700); } });
   $('opt-offline').addEventListener('change', async (e) => {
     prefs.offline = e.target.checked; savePrefs(); if (!prefs.offline) return;
@@ -866,7 +865,7 @@
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
     $('label-b').textContent = b.native; $('native-b').textContent = b.name;
-    $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; const oc = $('opt-cues'); if (oc) oc.checked = prefs.cues !== false; $('nobrand-row').hidden = !prefs.pro; $('opt-nobrand').checked = !!prefs.nobrand;
+    $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; const oc = $('opt-cues'); if (oc) oc.checked = prefs.cues !== false;
     const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
     const orow = $('offline-row'); if (orow) { orow.hidden = !(window.Ear && Ear.supported); $('opt-offline').checked = !!prefs.offline; }
     const note = $('support-note');
@@ -991,7 +990,7 @@
     try { if (j.mode === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Parley' }); j.delivered = true; reelChip(); return; } } catch (e) { if (e && e.name === 'AbortError') { reelChip(); return; } }
     const url = URL.createObjectURL(j.blob); const a = document.createElement('a'); a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); j.delivered = true; reelChip(); toast(T('reel.saved'));
   }
-  const jobKey = (c) => c.id + (prefs.pro ? (prefs.nobrand ? ':n' : ':p') : ':f');
+  const jobKey = (c) => c.id + (prefs.pro ? ':p' : ':f');
   async function makeReel(mode) {
     const c = pb.c; if (!c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
     const key = jobKey(c); let j = reelJobs[key];
@@ -1003,7 +1002,7 @@
     try {
       j.blob = await Reel.make(c, { lineStart, lineSpan, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => {
         j.p = p; if (reelShown === key && openSheet === 'reel-sheet') { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; } reelChip();
-      }, prefs.pro ? { brand: !prefs.nobrand } : { cap: 40000, endTitle: T('reel.endtitle'), endSub: T('reel.endsub') });
+      }, prefs.pro ? {} : { cap: 40000, endTitle: T('reel.endtitle'), endSub: T('reel.endsub') });
       if (j.state === 'gone') return; j.state = 'ready'; if (openSheet === 'reel-sheet') sheetClose(); reelChip(); toast(T('reel.ready'));
     } catch (e) { j.state = 'error'; reelChip(); setTimeout(() => { delete reelJobs[key]; reelChip(); }, 4000); }
   }
