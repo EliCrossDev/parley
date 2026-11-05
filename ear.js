@@ -13,13 +13,17 @@ window.Ear = (function () {
   let T = null, processor = null, tokenizer = null, model = null, langIds = null, loading = null, failed = false;
   let ctx = null, src = null, proc = null, stream = null, active = false, onResult = null, pair = null, busy = false;
 
-  const supported = !!navigator.gpu;
+  // Phones: the on-device Whisper model is too heavy and gets the page killed by the browser (seen on iPhone mid-conversation), so it is desktop only.
+  const supported = !!navigator.gpu && !MOBILE;
+  const FLAG = 'parley.ear.loading';
+  try { if (localStorage.getItem(FLAG) === '1') { failed = true; } } catch (e) {} // the page died while loading it last time: leave it off on this device
 
   // full: the base model everywhere (better words), needed for offline transcription
   async function load(opts) {
     if (opts && opts.full && MODEL !== 'onnx-community/whisper-base') { if (model) { try { await model.dispose(); } catch (e) {} } model = null; loading = null; failed = false; MODEL = 'onnx-community/whisper-base'; }
     if (model) return true; if (failed) return false; if (loading) return loading;
     loading = (async () => {
+      try { localStorage.setItem(FLAG, '1'); } catch (e) {}
       try {
         T = await import(CDN); T.env.allowLocalModels = false;
         processor = await T.AutoProcessor.from_pretrained(MODEL);
@@ -28,8 +32,9 @@ window.Ear = (function () {
         langIds = model.generation_config.lang_to_id;
         // Warm the GPU so the first real decision is fast.
         await identify(new Float32Array(16000), 'en', 'es');
+        try { localStorage.removeItem(FLAG); } catch (e) {}
         return true;
-      } catch (e) { failed = true; console.warn('Ear unavailable:', e.message); return false; }
+      } catch (e) { failed = true; try { localStorage.removeItem(FLAG); } catch (e2) {} console.warn('Ear unavailable:', e.message); return false; }
     })();
     return loading;
   }
