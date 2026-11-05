@@ -856,7 +856,7 @@
   const MIC_ALL = ['mic.s.inapp', 'mic.s.nosr', 'mic.s.browser', 'mic.s.blocked', 'mic.s.blockedios', 'mic.s.prompt', 'mic.s.os', 'mic.s.google', 'mic.s.ios', 'mic.s.other'];
   function micShowAll() { const ol = $('mic-steps'); ol.innerHTML = ''; MIC_ALL.forEach((k) => { const li = document.createElement('li'); li.innerHTML = '<span>' + T(k) + '</span>'; ol.appendChild(li); }); $('mic-all').hidden = true; }
   async function openMicHelp() {
-    $('mic-all').hidden = false;
+    $('mic-all').hidden = true;
     const d = await micDiag(); const ol = $('mic-steps'); ol.innerHTML = '';
     $('mic-result').textContent = ''; $('mic-result').className = 'setup-note';
     d.steps.forEach((k) => { const li = document.createElement('li'); li.innerHTML = '<span>' + T(k) + '</span>'; ol.appendChild(li); });
@@ -872,7 +872,7 @@
     const r = new SR(); micTest = r; r.lang = byCode(prefs.langA).sr; r.interimResults = true; r.continuous = false;
     let got = '', err = '', timer;
     btn.disabled = true; res.className = 'setup-note'; res.textContent = T('mic.testing');
-    const done = () => { clearTimeout(timer); btn.disabled = false; try { r.abort(); } catch (e) {}
+    const done = () => { clearTimeout(timer); btn.disabled = false; $('mic-all').hidden = false; try { r.abort(); } catch (e) {}
       if (got) { res.className = 'setup-note ok'; res.textContent = T('mic.heard') + ' "' + got + '"'; }
       else if (err === 'not-allowed' || err === 'service-not-allowed') { res.className = 'setup-note warn'; res.textContent = T('mic.testblocked'); }
       else { res.className = 'setup-note warn'; res.textContent = T('mic.silent') + (err ? ' (' + err + ')' : ''); } };
