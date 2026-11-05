@@ -506,3 +506,7 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .ro-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
 .ro-chips button { padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: transparent; color: inherit; font: 600 13px inherit; cursor: pointer; }
 .ro-chips button.on { background: #fff; color: #0e0e16; border-color: #fff; }
+
+/* app icon before wordmark */
+.topbar .brand { gap: 10px; }
+.topbar .brand-mark { display: inline-block; width: 30px; height: 30px; border-radius: 8px; background: url(icon-192.png) center/cover no-repeat; }
