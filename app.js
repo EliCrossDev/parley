@@ -853,7 +853,10 @@
     out.push('mic.s.other');
     return { steps: out, perm, inapp, android: IS_ANDROID };
   }
+  const MIC_ALL = ['mic.s.inapp', 'mic.s.nosr', 'mic.s.browser', 'mic.s.blocked', 'mic.s.blockedios', 'mic.s.prompt', 'mic.s.os', 'mic.s.google', 'mic.s.ios', 'mic.s.other'];
+  function micShowAll() { const ol = $('mic-steps'); ol.innerHTML = ''; MIC_ALL.forEach((k) => { const li = document.createElement('li'); li.innerHTML = '<span>' + T(k) + '</span>'; ol.appendChild(li); }); $('mic-all').hidden = true; }
   async function openMicHelp() {
+    $('mic-all').hidden = false;
     const d = await micDiag(); const ol = $('mic-steps'); ol.innerHTML = '';
     $('mic-result').textContent = ''; $('mic-result').className = 'setup-note';
     d.steps.forEach((k) => { const li = document.createElement('li'); li.innerHTML = '<span>' + T(k) + '</span>'; ol.appendChild(li); });
@@ -879,6 +882,7 @@
     try { r.start(); timer = setTimeout(done, 7000); } catch (e) { err = String(e.name || e); done(); }
   }
   $('mic-test').addEventListener('click', runMicTest);
+  $('mic-all').addEventListener('click', micShowAll);
   $('mic-done').addEventListener('click', () => { try { if (micTest) micTest.abort(); } catch (e) {} sheetClose(); });
   $('mic-help-link').addEventListener('click', openMicHelp);
   $('mic-help-live').addEventListener('click', openMicHelp);
