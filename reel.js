@@ -17,10 +17,12 @@ window.Reel = (function () {
   function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   const ease = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
 
-  async function make(c, helpers, onProgress) {
+  async function make(c, helpers, onProgress, opts) {
+    opts = opts || {}; const brand = opts.brand !== false;
     const { lineStart, lineSpan, short, native, avatarImg } = helpers;
     const starts = c.lines.map((_, i) => lineStart(c, i));
-    const total = Math.max(c.duration * 1000, (starts[starts.length - 1] || 0) + 2500) + 1200;
+    const fullTotal = Math.max(c.duration * 1000, (starts[starts.length - 1] || 0) + 2500) + 1200;
+    const total = opts.cap && fullTotal > opts.cap ? opts.cap : fullTotal; const truncated = total < fullTotal;
 
     // Audio: decode the recording (if any) and route it to the recorder, silently.
     const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
@@ -48,8 +50,8 @@ window.Reel = (function () {
       const v = ctx.createRadialGradient(W * 0.3, H * 0.25, 100, W * 0.3, H * 0.25, H * 0.9); v.addColorStop(0, 'rgba(255,255,255,0.10)'); v.addColorStop(1, 'rgba(0,0,0,0.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
 
       // Header: wordmark, timer, live dot
-      if (logo) { ctx.save(); rr(ctx, 72, 104, 92, 92, 22); ctx.clip(); ctx.drawImage(logo, 72, 104, 92, 92); ctx.restore(); }
-      const tx = logo ? 186 : 72; ctx.fillStyle = '#f7f7fb'; ctx.font = '700 56px ' + FONT_D; ctx.textBaseline = 'middle'; ctx.fillText('Parley', tx, 150);
+      if (brand && logo) { ctx.save(); rr(ctx, 72, 104, 92, 92, 22); ctx.clip(); ctx.drawImage(logo, 72, 104, 92, 92); ctx.restore(); }
+      const tx = logo ? 186 : 72; ctx.fillStyle = '#f7f7fb'; ctx.font = '700 56px ' + FONT_D; ctx.textBaseline = 'middle'; if (brand) ctx.fillText('Parley', tx, 150);
       ctx.fillStyle = '#ff5a7a'; ctx.beginPath(); ctx.arc(W - 300, 150, 10, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(247,247,251,.8)'; ctx.font = '500 34px ' + FONT_M; const s = Math.floor(t / 1000); ctx.fillText(String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), W - 270, 150);
 
@@ -91,7 +93,15 @@ window.Reel = (function () {
       const chip = (label, x, lit, av) => { ctx.save(); ctx.font = '600 36px ' + FONT_B; const w = 100 + ctx.measureText(label).width + 56; rr(ctx, x < 0 ? W + x - w : x, H - 250, w, 96, 48); ctx.fillStyle = lit ? 'rgba(255,255,255,.94)' : 'rgba(255,255,255,.1)'; ctx.fill(); ctx.strokeStyle = lit ? '#fff' : 'rgba(255,255,255,.45)'; ctx.lineWidth = 3; ctx.stroke(); const bx = (x < 0 ? W + x - w : x); if (av) { ctx.save(); ctx.beginPath(); ctx.arc(bx + 50, H - 202, 22, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(av, bx + 28, H - 224, 44, 44); ctx.restore(); } ctx.fillStyle = lit ? '#0e0e16' : '#f7f7fb'; ctx.textBaseline = 'middle'; ctx.fillText(label, bx + 92, H - 202); ctx.restore(); };
       chip(native(c.langA), 60, who === 'a', avA); chip(native(c.langB), -60, who === 'b', avB);
       // Footer
-      ctx.fillStyle = 'rgba(247,247,251,.75)'; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('LIVE TRANSLATION · GETPARLEY.VERCEL.APP', W / 2, H - 100); ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(247,247,251,.75)'; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (brand) ctx.fillText('LIVE TRANSLATION · GETPARLEY.VERCEL.APP', W / 2, H - 100); ctx.textAlign = 'left';
+      // End card on a clipped free video
+      if (truncated && t > total - 3200) {
+        const k = Math.min(1, (t - (total - 3200)) / 500); ctx.save(); ctx.globalAlpha = k * 0.94; ctx.fillStyle = '#0b0c14'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = k;
+        if (logo) { ctx.save(); rr(ctx, W / 2 - 80, H / 2 - 330, 160, 160, 38); ctx.clip(); ctx.drawImage(logo, W / 2 - 80, H / 2 - 330, 160, 160); ctx.restore(); }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#f7f7fb'; ctx.font = '700 84px ' + FONT_D; ctx.fillText(opts.endTitle || 'Full conversation', W / 2, H / 2 - 60);
+        ctx.fillStyle = 'rgba(247,247,251,.78)'; ctx.font = '500 44px ' + FONT_B; const sub = wrap(ctx, opts.endSub || '', W - 220); sub.forEach((ln, i) => ctx.fillText(ln, W / 2, H / 2 + 50 + i * 60));
+        ctx.fillStyle = '#f7f7fb'; ctx.font = '600 48px ' + FONT_M; ctx.fillText('getparley.vercel.app', W / 2, H / 2 + 80 + sub.length * 60 + 50); ctx.restore(); ctx.textAlign = 'left';
+      }
     }
 
     // Fonts: make sure they are loaded before the first frame

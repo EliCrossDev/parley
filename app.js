@@ -647,6 +647,7 @@
     if (!prefs.improve) return;
     try { const all = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); all.push(Object.assign({ t: Date.now(), convo: live.convoId, langA: prefs.langA, langB: prefs.langB }, ev)); while (all.length > 2000) all.shift(); localStorage.setItem(NOTES_KEY, JSON.stringify(all)); } catch (e) {}
   }
+  $('opt-nobrand').addEventListener('change', (e) => { prefs.nobrand = e.target.checked; savePrefs(); });
   $('opt-cues').addEventListener('change', (e) => { prefs.cues = e.target.checked; savePrefs(); if (prefs.cues) { playChime('a'); setTimeout(() => playChime('b'), 700); } });
   $('opt-offline').addEventListener('change', async (e) => {
     prefs.offline = e.target.checked; savePrefs(); if (!prefs.offline) return;
@@ -865,7 +866,7 @@
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
     $('label-b').textContent = b.native; $('native-b').textContent = b.name;
-    $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; const oc = $('opt-cues'); if (oc) oc.checked = prefs.cues !== false;
+    $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; const oc = $('opt-cues'); if (oc) oc.checked = prefs.cues !== false; $('nobrand-row').hidden = !prefs.pro; $('opt-nobrand').checked = !!prefs.nobrand;
     const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
     const orow = $('offline-row'); if (orow) { orow.hidden = !(window.Ear && Ear.supported); $('opt-offline').checked = !!prefs.offline; }
     const note = $('support-note');
@@ -980,7 +981,7 @@
   function reelChip() {
     const j = Object.values(reelJobs).find((x) => x.state !== 'gone' && !x.delivered); const chip = $('reel-chip');
     if (!j) { chip.hidden = true; return; }
-    chip.hidden = false; chip.dataset.id = j.conv.id; chip.classList.toggle('ready', j.state === 'ready');
+    chip.hidden = false; chip.dataset.id = j.key; chip.classList.toggle('ready', j.state === 'ready');
     $('reel-chip-fill').style.width = Math.round((j.state === 'ready' ? 1 : j.p) * 100) + '%';
     $('reel-chip-text').textContent = j.state === 'ready' ? T('reel.chipready') : j.state === 'error' ? 'Could not render' : T('reel.chipmaking') + ' ' + Math.round(j.p * 100) + '%';
   }
@@ -990,25 +991,26 @@
     try { if (j.mode === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Parley' }); j.delivered = true; reelChip(); return; } } catch (e) { if (e && e.name === 'AbortError') { reelChip(); return; } }
     const url = URL.createObjectURL(j.blob); const a = document.createElement('a'); a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); j.delivered = true; reelChip(); toast(T('reel.saved'));
   }
+  const jobKey = (c) => c.id + (prefs.pro ? (prefs.nobrand ? ':n' : ':p') : ':f');
   async function makeReel(mode) {
     const c = pb.c; if (!c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
-    let j = reelJobs[c.id];
+    const key = jobKey(c); let j = reelJobs[key];
     if (j && j.state === 'ready') { j.mode = mode; j.delivered = false; deliverReel(j); return; } // already made: no re-render
-    if (j && j.state === 'working') { j.mode = mode; reelShown = c.id; sheetOpen('reel-sheet'); return; }
-    closeAudio(); j = reelJobs[c.id] = { conv: c, blob: null, p: 0, mode, state: 'working' };
-    $('reel-fill').style.width = '0%'; $('reel-status').textContent = '0%'; reelShown = c.id; sheetOpen('reel-sheet'); reelChip();
-    setTimeout(() => { if (openSheet === 'reel-sheet' && reelShown === c.id) sheetClose(); }, 1800); // pops up briefly, then keeps going in the corner
+    if (j && j.state === 'working') { j.mode = mode; reelShown = key; sheetOpen('reel-sheet'); return; }
+    closeAudio(); j = reelJobs[key] = { key, conv: c, blob: null, p: 0, mode, state: 'working' };
+    $('reel-fill').style.width = '0%'; $('reel-status').textContent = '0%'; reelShown = key; sheetOpen('reel-sheet'); reelChip();
+    setTimeout(() => { if (openSheet === 'reel-sheet' && reelShown === key) sheetClose(); }, 1800); // pops up briefly, then keeps going in the corner
     try {
       j.blob = await Reel.make(c, { lineStart, lineSpan, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => {
-        j.p = p; if (reelShown === c.id && openSheet === 'reel-sheet') { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; } reelChip();
-      });
+        j.p = p; if (reelShown === key && openSheet === 'reel-sheet') { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; } reelChip();
+      }, prefs.pro ? { brand: !prefs.nobrand } : { cap: 40000, endTitle: T('reel.endtitle'), endSub: T('reel.endsub') });
       if (j.state === 'gone') return; j.state = 'ready'; if (openSheet === 'reel-sheet') sheetClose(); reelChip(); toast(T('reel.ready'));
-    } catch (e) { j.state = 'error'; reelChip(); setTimeout(() => { delete reelJobs[c.id]; reelChip(); }, 4000); }
+    } catch (e) { j.state = 'error'; reelChip(); setTimeout(() => { delete reelJobs[key]; reelChip(); }, 4000); }
   }
   $('reel-cancel').addEventListener('click', () => { const j = reelJobs[reelShown]; if (j) { j.state = 'gone'; delete reelJobs[reelShown]; } sheetClose(); reelChip(); });
   $('reel-chip').addEventListener('click', () => {
     const j = reelJobs[$('reel-chip').dataset.id]; if (!j) return;
-    if (j.state === 'ready') deliverReel(j); else if (j.state === 'working') { reelShown = j.conv.id; sheetOpen('reel-sheet'); }
+    if (j.state === 'ready') deliverReel(j); else if (j.state === 'working') { reelShown = j.key; sheetOpen('reel-sheet'); }
   });
   // Transcript export is a supporter perk (the video is free for everyone)
   $('pb-text').addEventListener('click', () => {
