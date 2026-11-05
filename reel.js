@@ -51,7 +51,7 @@ window.Reel = (function () {
 
       // Header: wordmark, timer, live dot
       if (brand && logo) { ctx.save(); rr(ctx, 72, 104, 92, 92, 22); ctx.clip(); ctx.drawImage(logo, 72, 104, 92, 92); ctx.restore(); }
-      const tx = logo ? 186 : 72; ctx.fillStyle = '#f7f7fb'; ctx.font = '700 56px ' + FONT_D; ctx.textBaseline = 'middle'; if (brand) ctx.fillText('Parley', tx, 150);
+      const tx = logo ? 186 : 72; ctx.fillStyle = '#f7f7fb'; ctx.font = '700 56px ' + FONT_D; ctx.textBaseline = 'middle'; if (brand) ctx.fillText('Parley', tx, 150); else { ctx.font = '700 52px ' + FONT_D; ctx.fillText(native(c.langA) + '  ↔  ' + native(c.langB), 72, 150); }
       ctx.fillStyle = '#ff5a7a'; ctx.beginPath(); ctx.arc(W - 300, 150, 10, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(247,247,251,.8)'; ctx.font = '500 34px ' + FONT_M; const s = Math.floor(t / 1000); ctx.fillText(String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), W - 270, 150);
 
@@ -93,7 +93,7 @@ window.Reel = (function () {
       const chip = (label, x, lit, av) => { ctx.save(); ctx.font = '600 36px ' + FONT_B; const w = 100 + ctx.measureText(label).width + 56; rr(ctx, x < 0 ? W + x - w : x, H - 250, w, 96, 48); ctx.fillStyle = lit ? 'rgba(255,255,255,.94)' : 'rgba(255,255,255,.1)'; ctx.fill(); ctx.strokeStyle = lit ? '#fff' : 'rgba(255,255,255,.45)'; ctx.lineWidth = 3; ctx.stroke(); const bx = (x < 0 ? W + x - w : x); if (av) { ctx.save(); ctx.beginPath(); ctx.arc(bx + 50, H - 202, 22, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(av, bx + 28, H - 224, 44, 44); ctx.restore(); } ctx.fillStyle = lit ? '#0e0e16' : '#f7f7fb'; ctx.textBaseline = 'middle'; ctx.fillText(label, bx + 92, H - 202); ctx.restore(); };
       chip(native(c.langA), 60, who === 'a', avA); chip(native(c.langB), -60, who === 'b', avB);
       // Footer
-      ctx.fillStyle = 'rgba(247,247,251,.75)'; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (brand) ctx.fillText('LIVE TRANSLATION · GETPARLEY.VERCEL.APP', W / 2, H - 100); ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(247,247,251,.75)'; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(brand ? 'LIVE TRANSLATION · GETPARLEY.VERCEL.APP' : new Date(c.startedAt).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(), W / 2, H - 100); ctx.textAlign = 'left';
       // End card on a clipped free video
       if (truncated && t > total - 3200) {
         const k = Math.min(1, (t - (total - 3200)) / 500); ctx.save(); ctx.globalAlpha = k * 0.94; ctx.fillStyle = '#0b0c14'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = k;
