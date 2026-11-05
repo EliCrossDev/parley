@@ -387,6 +387,18 @@
 </div>
 
 <button class="reel-chip" id="reel-chip" hidden><i id="reel-chip-fill"></i><span id="reel-chip-text"></span></button>
+<!-- Video options (supporters) -->
+<div class="sheet" id="reel-opts" role="dialog" aria-modal="true" hidden>
+  <div class="sheet-handle"></div>
+  <div class="sheet-head"><h2 class="sheet-title" data-i18n="ro.title">Make your video</h2></div>
+  <p class="field-label" data-i18n="ro.range">Part to include</p>
+  <div class="ro-range"><span id="ro-start-l">0:00</span><input type="range" id="ro-start" min="0" max="10" step="1" value="0"><span id="ro-end-l">0:40</span><input type="range" id="ro-end" min="0" max="10" step="1" value="10"></div>
+  <p class="field-label" data-i18n="ro.look">Look</p>
+  <div class="ro-chips" id="ro-look"><button data-look="night" class="on" data-i18n="ro.night">Night</button><button data-look="light" data-i18n="ro.light">Light</button><button data-look="ember" data-i18n="ro.ember">Ember</button></div>
+  <p class="field-label" data-i18n="ro.show">Show</p>
+  <div class="ro-chips" id="ro-show"><button data-show="both" class="on" data-i18n="ro.both">Original and translation</button><button data-show="trans" data-i18n="ro.trans">Translation only</button></div>
+  <div class="edit-actions"><button class="btn btn-ghost" id="ro-cancel" data-i18n="confirm.cancel">Cancel</button><button class="btn btn-volt" id="ro-go" data-i18n="ro.go">Make video</button></div>
+</div>
 <!-- Reel sheet -->
 <div class="sheet" id="reel-sheet" role="dialog" aria-modal="true" hidden>
   <div class="sheet-handle"></div>

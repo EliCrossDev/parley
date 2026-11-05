@@ -22,7 +22,13 @@ window.Reel = (function () {
     const { lineStart, lineSpan, short, native, avatarImg } = helpers;
     const starts = c.lines.map((_, i) => lineStart(c, i));
     const fullTotal = Math.max(c.duration * 1000, (starts[starts.length - 1] || 0) + 2500) + 1200;
-    const total = opts.cap && fullTotal > opts.cap ? opts.cap : fullTotal; const truncated = total < fullTotal;
+    const from = Math.max(0, opts.from || 0); const to = Math.min(fullTotal, opts.to || fullTotal);
+    const lim = opts.cap && (to - from) > opts.cap ? opts.cap : (to - from); const total = lim; const truncated = !!opts.cap && (to - from) > opts.cap;
+    const PALS = {
+      night: { g: ['#6a6b74', '#3a3f4f', '#1b1d2a'], ink: '#f7f7fb', soft: 'rgba(247,247,251,.8)', wave: '255,255,255', chipOff: 'rgba(255,255,255,.1)', chipLine: 'rgba(255,255,255,.45)', chipText: '#f7f7fb', aStroke: null },
+      light: { g: ['#f4f5fa', '#dfe2ee', '#c9cddf'], ink: '#14151f', soft: 'rgba(20,21,31,.7)', wave: '30,34,60', chipOff: 'rgba(20,21,31,.06)', chipLine: 'rgba(20,21,31,.4)', chipText: '#14151f', aStroke: 'rgba(20,21,31,.18)' },
+      ember: { g: ['#7a4a52', '#3e2230', '#1a0f1a'], ink: '#fff4ee', soft: 'rgba(255,244,238,.8)', wave: '255,214,190', chipOff: 'rgba(255,255,255,.1)', chipLine: 'rgba(255,230,215,.45)', chipText: '#fff4ee', aStroke: null } };
+    const pal = PALS[opts.look] || PALS.night; const transOnly = opts.show === 'trans';
 
     // Audio: decode the recording (if any) and route it to the recorder, silently.
     const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC();
@@ -43,30 +49,31 @@ window.Reel = (function () {
     const logo = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = 'icon-192.png'; });
     const spans = c.lines.map((_, i) => lineSpan(c, i));
 
-    function draw(t) {
+    function draw(tl) {
+      const t = tl + from;
       // Background: the Night sky
-      const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#6a6b74'); g.addColorStop(0.5, '#3a3f4f'); g.addColorStop(1, '#1b1d2a');
+      const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, pal.g[0]); g.addColorStop(0.5, pal.g[1]); g.addColorStop(1, pal.g[2]);
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      const v = ctx.createRadialGradient(W * 0.3, H * 0.25, 100, W * 0.3, H * 0.25, H * 0.9); v.addColorStop(0, 'rgba(255,255,255,0.10)'); v.addColorStop(1, 'rgba(0,0,0,0.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+      const v = ctx.createRadialGradient(W * 0.3, H * 0.25, 100, W * 0.3, H * 0.25, H * 0.9); v.addColorStop(0, 'rgba(255,255,255,0.10)'); v.addColorStop(1, opts.look === 'light' ? 'rgba(0,0,0,0.10)' : 'rgba(0,0,0,0.35)'); ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
 
       // Header: wordmark, timer, live dot
       if (logo) { ctx.save(); rr(ctx, 72, 104, 92, 92, 22); ctx.clip(); ctx.drawImage(logo, 72, 104, 92, 92); ctx.restore(); }
-      const tx = logo ? 186 : 72; ctx.fillStyle = '#f7f7fb'; ctx.font = '700 56px ' + FONT_D; ctx.textBaseline = 'middle'; ctx.fillText('Parley', tx, 150);
+      const tx = logo ? 186 : 72; ctx.fillStyle = pal.ink; ctx.font = '700 56px ' + FONT_D; ctx.textBaseline = 'middle'; ctx.fillText('Parley', tx, 150);
       ctx.fillStyle = '#ff5a7a'; ctx.beginPath(); ctx.arc(W - 300, 150, 10, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(247,247,251,.8)'; ctx.font = '500 34px ' + FONT_M; const s = Math.floor(t / 1000); ctx.fillText(String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), W - 270, 150);
+      ctx.fillStyle = pal.soft; ctx.font = '500 34px ' + FONT_M; const s = Math.floor(t / 1000); ctx.fillText(String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), W - 270, 150);
 
       // Waveform
       let level = 0; if (buffer) { analyser.getByteTimeDomainData(td); }
-      ctx.save(); ctx.translate(0, 290); ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 4; ctx.shadowColor = 'rgba(255,255,255,.6)'; ctx.shadowBlur = 18;
+      ctx.save(); ctx.translate(0, 290); ctx.strokeStyle = 'rgba(' + pal.wave + ',.9)'; ctx.lineWidth = 4; ctx.shadowColor = 'rgba(' + pal.wave + ',.6)'; ctx.shadowBlur = 18;
       ctx.beginPath(); const n = 160; for (let i = 0; i <= n; i++) { const x = 72 + (W - 144) * i / n; const idx = Math.floor(i / n * (td.length - 1)); const a = buffer ? (td[idx] - 128) / 128 : 0; level = Math.max(level, Math.abs(a)); const y = a * 70 * Math.sin(Math.PI * i / n); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
-      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); for (let i = 0; i <= n; i++) { const x = 72 + (W - 144) * i / n; const idx = Math.floor(((i + 40) % n) / n * (td.length - 1)); const a = buffer ? (td[idx] - 128) / 128 : 0; const y = -a * 50 * Math.sin(Math.PI * i / n); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); ctx.restore();
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(' + pal.wave + ',.45)'; ctx.beginPath(); for (let i = 0; i <= n; i++) { const x = 72 + (W - 144) * i / n; const idx = Math.floor(((i + 40) % n) / n * (td.length - 1)); const a = buffer ? (td[idx] - 128) / 128 : 0; const y = -a * 50 * Math.sin(Math.PI * i / n); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke(); ctx.restore();
 
       // Bubbles: those that have started, laid out from the bottom up, newest last
       const visible = []; c.lines.forEach((l, i) => { if (starts[i] <= t) visible.push({ l, i, age: t - starts[i] }); });
       let nowIdx = -1; visible.forEach((v2) => { nowIdx = v2.i; });
       const boxes = []; const maxW = W * 0.78;
       for (const v2 of visible.slice(-6)) {
-        const l = v2.l; ctx.font = '400 34px ' + FONT_B; const origLines = wrap(ctx, l.orig, maxW - 80);
+        const l = v2.l; ctx.font = '400 34px ' + FONT_B; const origLines = transOnly ? [] : wrap(ctx, l.orig, maxW - 80);
         ctx.font = '600 58px ' + FONT_D; const transLines = wrap(ctx, l.trans, maxW - 80);
         const h = 40 + origLines.length * 44 + 14 + transLines.length * 68 + 24 + 56 + 36; const w = Math.min(maxW, 80 + Math.max(...origLines.map((x) => { ctx.font = '400 34px ' + FONT_B; return ctx.measureText(x).width; }), ...transLines.map((x) => { ctx.font = '600 58px ' + FONT_D; return ctx.measureText(x).width; })));
         const sp = spans[v2.i]; const f = Math.max(0, Math.min(1, (t - sp[0]) / Math.max(1, sp[1] - sp[0]))); boxes.push({ l, w, h, origLines, transLines, age: v2.age, now: v2.i === nowIdx, f });
@@ -78,7 +85,7 @@ window.Reel = (function () {
         ctx.save(); ctx.globalAlpha = pop;
         ctx.shadowColor = b.l.who === 'a' ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.5)'; ctx.shadowBlur = b.now ? 60 : 30; ctx.shadowOffsetY = 16;
         ctx.fillStyle = b.l.who === 'a' ? 'rgba(233,233,242,.95)' : 'rgba(10,12,22,.82)'; rr(ctx, x, yy, b.w, b.h, 40); ctx.fill(); ctx.shadowColor = 'transparent';
-        if (b.l.who === 'b') { ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2; ctx.stroke(); }
+        if (b.l.who === 'b') { ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2; ctx.stroke(); } else if (pal.aStroke) { ctx.strokeStyle = pal.aStroke; ctx.lineWidth = 2; ctx.stroke(); }
         const ink = b.l.who === 'a' ? '#0e0e16' : '#f7f7fb'; let ty = yy + 40;
         ctx.fillStyle = b.l.who === 'a' ? 'rgba(14,14,22,.7)' : 'rgba(247,247,251,.72)'; ctx.font = '400 34px ' + FONT_B; ctx.textBaseline = 'top';
         let ow = Math.ceil(b.f * b.origLines.join(' ').split(/\s+/).length); for (const line of b.origLines) { const ws = line.split(' '); ctx.fillText(ws.slice(0, Math.max(0, ow)).join(' '), x + 40, ty); ow -= ws.length; ty += 44; } ty += 14;
@@ -90,10 +97,10 @@ window.Reel = (function () {
 
       // Bottom: the two language chips, the live one lit
       const who = nowIdx >= 0 && (t - starts[nowIdx]) < (c.lines[nowIdx].dur || 3000) + 600 ? c.lines[nowIdx].who : null;
-      const chip = (label, x, lit, av) => { ctx.save(); ctx.font = '600 36px ' + FONT_B; const w = 100 + ctx.measureText(label).width + 56; rr(ctx, x < 0 ? W + x - w : x, H - 250, w, 96, 48); ctx.fillStyle = lit ? 'rgba(255,255,255,.94)' : 'rgba(255,255,255,.1)'; ctx.fill(); ctx.strokeStyle = lit ? '#fff' : 'rgba(255,255,255,.45)'; ctx.lineWidth = 3; ctx.stroke(); const bx = (x < 0 ? W + x - w : x); if (av) { ctx.save(); ctx.beginPath(); ctx.arc(bx + 50, H - 202, 22, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(av, bx + 28, H - 224, 44, 44); ctx.restore(); } ctx.fillStyle = lit ? '#0e0e16' : '#f7f7fb'; ctx.textBaseline = 'middle'; ctx.fillText(label, bx + 92, H - 202); ctx.restore(); };
+      const chip = (label, x, lit, av) => { ctx.save(); ctx.font = '600 36px ' + FONT_B; const w = 100 + ctx.measureText(label).width + 56; rr(ctx, x < 0 ? W + x - w : x, H - 250, w, 96, 48); ctx.fillStyle = lit ? (opts.look === 'light' ? '#14151f' : 'rgba(255,255,255,.94)') : pal.chipOff; ctx.fill(); ctx.strokeStyle = lit ? (opts.look === 'light' ? '#14151f' : '#fff') : pal.chipLine; ctx.lineWidth = 3; ctx.stroke(); const bx = (x < 0 ? W + x - w : x); if (av) { ctx.save(); ctx.beginPath(); ctx.arc(bx + 50, H - 202, 22, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(av, bx + 28, H - 224, 44, 44); ctx.restore(); } ctx.fillStyle = lit ? (opts.look === 'light' ? '#f7f7fb' : '#0e0e16') : pal.chipText; ctx.textBaseline = 'middle'; ctx.fillText(label, bx + 92, H - 202); ctx.restore(); };
       chip(native(c.langA), 60, who === 'a', avA); chip(native(c.langB), -60, who === 'b', avB);
       // Footer
-      ctx.fillStyle = 'rgba(247,247,251,.75)'; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('LIVE TRANSLATION · GETPARLEY.VERCEL.APP', W / 2, H - 100); ctx.textAlign = 'left';
+      ctx.fillStyle = pal.soft; ctx.font = '500 28px ' + FONT_M; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('LIVE TRANSLATION · GETPARLEY.VERCEL.APP', W / 2, H - 100); ctx.textAlign = 'left';
       // End card on a clipped free video
       if (truncated && t > total - 3200) {
         const k = Math.min(1, (t - (total - 3200)) / 500); ctx.save(); ctx.globalAlpha = k * 0.94; ctx.fillStyle = '#0b0c14'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = k;
@@ -107,7 +114,7 @@ window.Reel = (function () {
     // Fonts: make sure they are loaded before the first frame
     try { await Promise.all(['700 54px Outfit', '600 58px Outfit', '400 34px Manrope', '600 36px Manrope', '500 28px JetBrains Mono'].map((f) => document.fonts.load(f))); } catch (e) {}
 
-    rec.start(250); const t0 = ac.currentTime; if (src) src.start();
+    rec.start(250); const t0 = ac.currentTime; if (src) src.start(0, from / 1000);
     await new Promise((resolve) => {
       const tick = () => { const t = (ac.currentTime - t0) * 1000; draw(t); if (onProgress) onProgress(Math.min(1, t / total)); if (t >= total) { resolve(); return; } requestAnimationFrame(tick); };
       requestAnimationFrame(tick);

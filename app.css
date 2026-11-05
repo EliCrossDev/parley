@@ -500,3 +500,9 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .reel-chip.ready i { display: none; }
 .bubble .w { opacity: 0; transition: opacity .18s; }
 .bubble .w.on { opacity: 1; }
+
+.ro-range { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 8px 10px; align-items: center; font: 500 12px var(--mono, ui-monospace, monospace); color: var(--muted, #aaa); margin-bottom: 14px; }
+.ro-range input { width: 100%; min-width: 0; }
+.ro-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.ro-chips button { padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); background: transparent; color: inherit; font: 600 13px inherit; cursor: pointer; }
+.ro-chips button.on { background: #fff; color: #0e0e16; border-color: #fff; }

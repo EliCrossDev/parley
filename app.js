@@ -990,10 +990,30 @@
     try { if (j.mode === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Parley' }); j.delivered = true; reelChip(); return; } } catch (e) { if (e && e.name === 'AbortError') { reelChip(); return; } }
     const url = URL.createObjectURL(j.blob); const a = document.createElement('a'); a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000); j.delivered = true; reelChip(); toast(T('reel.saved'));
   }
-  const jobKey = (c) => c.id + (prefs.pro ? ':p' : ':f');
-  async function makeReel(mode) {
+  const optsKey = (o) => [o.from || 0, o.to || 0, o.look || '', o.show || '', o.cap || ''].join('-');
+  function makeReel(mode) {
+    if (!pb.c) return;
+    if (prefs.pro) { openReelOpts(mode); return; }
+    startReel(mode, { cap: 40000, endTitle: T('reel.endtitle'), endSub: T('reel.endsub') }); // free: first 40s + Support card
+  }
+  let roMode = 'share';
+  function fmtS(s) { return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'); }
+  function openReelOpts(mode) {
+    roMode = mode; const dur = Math.max(5, Math.ceil((pb.c.duration || 0) + 2));
+    ['ro-start', 'ro-end'].forEach((id) => { $(id).max = dur; }); $('ro-start').value = 0; $('ro-end').value = dur; roLabels();
+    document.querySelectorAll('#ro-look button').forEach((b) => b.classList.toggle('on', b.dataset.look === (prefs.reelLook || 'night')));
+    document.querySelectorAll('#ro-show button').forEach((b) => b.classList.toggle('on', b.dataset.show === (prefs.reelShow || 'both')));
+    sheetOpen('reel-opts');
+  }
+  function roLabels() { let s = Number($('ro-start').value), e = Number($('ro-end').value); if (e < s + 3) { if (document.activeElement === $('ro-start')) { s = Math.max(0, e - 3); $('ro-start').value = s; } else { e = Math.min(Number($('ro-end').max), s + 3); $('ro-end').value = e; } } $('ro-start-l').textContent = fmtS(s); $('ro-end-l').textContent = fmtS(e); }
+  $('ro-start').addEventListener('input', roLabels); $('ro-end').addEventListener('input', roLabels);
+  document.querySelectorAll('#ro-look button').forEach((b) => b.addEventListener('click', () => { prefs.reelLook = b.dataset.look; savePrefs(); document.querySelectorAll('#ro-look button').forEach((x) => x.classList.toggle('on', x === b)); }));
+  document.querySelectorAll('#ro-show button').forEach((b) => b.addEventListener('click', () => { prefs.reelShow = b.dataset.show; savePrefs(); document.querySelectorAll('#ro-show button').forEach((x) => x.classList.toggle('on', x === b)); }));
+  $('ro-cancel').addEventListener('click', sheetClose);
+  $('ro-go').addEventListener('click', () => { const dur = Number($('ro-end').max); const s = Number($('ro-start').value), e = Number($('ro-end').value); sheetClose(); startReel(roMode, { from: s * 1000, to: e >= dur ? 0 : e * 1000, look: prefs.reelLook || 'night', show: prefs.reelShow || 'both' }); });
+  async function startReel(mode, opts) {
     const c = pb.c; if (!c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
-    const key = jobKey(c); let j = reelJobs[key];
+    const key = c.id + ':' + (prefs.pro ? 'p' : 'f') + ':' + optsKey(opts); let j = reelJobs[key];
     if (j && j.state === 'ready') { j.mode = mode; j.delivered = false; deliverReel(j); return; } // already made: no re-render
     if (j && j.state === 'working') { j.mode = mode; reelShown = key; sheetOpen('reel-sheet'); return; }
     closeAudio(); j = reelJobs[key] = { key, conv: c, blob: null, p: 0, mode, state: 'working' };
@@ -1002,7 +1022,7 @@
     try {
       j.blob = await Reel.make(c, { lineStart, lineSpan, short: (code) => byCode(code).short, native: (code) => byCode(code).native, avatarImg }, (p) => {
         j.p = p; if (reelShown === key && openSheet === 'reel-sheet') { $('reel-fill').style.width = Math.round(p * 100) + '%'; $('reel-status').textContent = Math.round(p * 100) + '%'; } reelChip();
-      }, prefs.pro ? {} : { cap: 40000, endTitle: T('reel.endtitle'), endSub: T('reel.endsub') });
+      }, opts);
       if (j.state === 'gone') return; j.state = 'ready'; if (openSheet === 'reel-sheet') sheetClose(); reelChip(); toast(T('reel.ready'));
     } catch (e) { j.state = 'error'; reelChip(); setTimeout(() => { delete reelJobs[key]; reelChip(); }, 4000); }
   }
