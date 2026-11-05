@@ -755,8 +755,8 @@
   function softCommit(text) { if (live.interimEl) handleFinal(text, { soft: true }); }
 
   async function startLive() {
-    if (!SR && !prefs.offline) { toast('This browser has no speech recognition. Use Chrome or Safari.'); return; }
-    if (prefs.langA === prefs.langB) { toast('Pick two different languages.'); return; }
+    if (!SR && !prefs.offline) { toast(T('toast.nospeech')); return; }
+    if (prefs.langA === prefs.langB) { toast(T('toast.twolangs')); return; }
     live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null; live.flipped = false;
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint"></p>'; $('convo-hint').textContent = T('live.hint');
@@ -806,7 +806,7 @@
       const first = live.lines[0];
       const title = (first.orig.length > 42 ? first.orig.slice(0, 42).trim() + '…' : first.orig);
       const ok = await dbPut({ id: live.convoId, startedAt: live.startedAt, duration, langA: prefs.langA, langB: prefs.langB, title, avatarA: live.avatars.a, avatarB: live.avatars.b, lines: live.lines.map((l) => ({ who: l.who, orig: l.orig, trans: l.trans, from: l.from, to: l.to, t: l.t, dur: l.dur, s: 1 })), audio: audioBlob, mime: audioBlob ? audioBlob.type : null });
-      if (ok) { await enforceLimit(); toast('Conversation saved'); } else toast('Could not save on this device');
+      if (ok) { await enforceLimit(); toast(T('toast.saved')); } else toast(T('toast.savefail'));
     }
     $('live-stage').hidden = true; $('live-setup').hidden = false; document.body.classList.remove('live'); pickGuest(); renderAvatarsUI();
     renderHistory();
@@ -819,7 +819,7 @@
     if (name === 'history') renderHistory();
     if (name === 'profile') renderProfile();
   }
-  document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => { if (live.on && b.dataset.view !== 'live') { toast('End the conversation first'); return; } showView(b.dataset.view); }));
+  document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => { if (live.on && b.dataset.view !== 'live') { toast(T('toast.endfirst')); return; } showView(b.dataset.view); }));
 
   /* ---------------- Sheets ---------------- */
   let openSheet = null;
@@ -874,8 +874,8 @@
     const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
     const orow = $('offline-row'); if (orow) { orow.hidden = !(window.Ear && Ear.supported); $('opt-offline').checked = !!prefs.offline; }
     const note = $('support-note');
-    if (!SR) { note.textContent = 'Live speech needs Chrome, Edge, or Safari. Firefox does not support speech recognition yet.'; note.classList.add('warn'); }
-    else note.textContent = 'Works best within arm\'s reach. Parley picks the language from the first two words. If it ever guesses wrong, tap the language chip.';
+    if (!SR) { note.textContent = T('setup.nospeech'); note.classList.add('warn'); }
+    else note.textContent = T('setup.note');
   }
   if (location.protocol === 'file:') { const n = $('origin-note'); n.hidden = false; n.innerHTML = 'Opened as a file, so speech and translation will not run. Serve it instead: in the folder run <code>npx serve</code> (or <code>python3 -m http.server</code>) and open the http://localhost address it prints. Deployed to Vercel this is automatic.'; }
   $('type-btn').addEventListener('click', () => { const row = $('type-row'); row.hidden = !row.hidden; $('type-btn').classList.toggle('on', !row.hidden); if (!row.hidden) $('type-input').focus(); });
@@ -957,14 +957,14 @@
   $('pro-activate').addEventListener('click', async () => {
     const email = $('pro-email').value.trim(); if (!email) { $('pro-status').textContent = 'Enter the email you paid with.'; return; }
     $('pro-status').textContent = 'Looking up your purchase…';
-    try { const j = await proApi('/api/restore', { email }); setPro(true, j.token, j.email); sheetClose(); toast('Supporter perks restored'); }
+    try { const j = await proApi('/api/restore', { email }); setPro(true, j.token, j.email); sheetClose(); toast(T('toast.restored')); }
     catch (e) { $('pro-status').textContent = e.message; }
   });
   // Back from Stripe Checkout: ?session_id=cs_…
   (async () => {
     const sid = new URLSearchParams(location.search).get('session_id'); if (!sid) return;
     history.replaceState(null, '', location.pathname + (location.hash || '#profile'));
-    try { const j = await proApi('/api/verify?session_id=' + encodeURIComponent(sid)); setPro(true, j.token, j.email); showView('profile'); toast('Thank you for supporting Parley'); }
+    try { const j = await proApi('/api/verify?session_id=' + encodeURIComponent(sid)); setPro(true, j.token, j.email); showView('profile'); toast(T('toast.thanks')); }
     catch (e) { toast('Could not confirm payment: ' + e.message); }
   })();
   // Re-check a stored token once per day; if the server rejects it, fall back to free.
@@ -1017,7 +1017,7 @@
   $('ro-cancel').addEventListener('click', sheetClose);
   $('ro-go').addEventListener('click', () => { const dur = Number($('ro-end').max); const s = Number($('ro-start').value), e = Number($('ro-end').value); sheetClose(); startReel(roMode, { from: s * 1000, to: e >= dur ? 0 : e * 1000, look: prefs.reelLook || 'night', show: prefs.reelShow || 'both' }); });
   async function startReel(mode, opts) {
-    const c = pb.c; if (!c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast('This browser cannot record video'); return; }
+    const c = pb.c; if (!c || !window.Reel) return; if (!('MediaRecorder' in window)) { toast(T('toast.novideo')); return; }
     const key = c.id + ':' + (prefs.pro ? 'p' : 'f') + ':' + optsKey(opts); let j = reelJobs[key];
     if (j && j.state === 'ready') { j.mode = mode; j.delivered = false; deliverReel(j); return; } // already made: no re-render
     if (j && j.state === 'working') { j.mode = mode; reelShown = key; sheetOpen('reel-sheet'); return; }
@@ -1043,7 +1043,7 @@
     const head = 'Parley · ' + new Date(pb.c.startedAt).toLocaleString() + '\n' + byCode(pb.c.langA).name + ' ↔ ' + byCode(pb.c.langB).name + '\n\n';
     const blob = new Blob([head + lines + '\n\n' + 'getparley.vercel.app'], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'parley-' + new Date(pb.c.startedAt).toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('Transcript exported');
+    toast(T('toast.exported'));
   });
   $('pb-share').addEventListener('click', () => makeReel('share'));
   $('pb-export').addEventListener('click', () => makeReel('download'));
@@ -1144,7 +1144,7 @@
   }
   $('edit-profile').addEventListener('click', () => { $('profile-name-input').value = prefs.name || ''; renderAvatarGrid(); $('edit-panel').hidden = false; });
   $('cancel-profile').addEventListener('click', () => { $('edit-panel').hidden = true; try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {} renderProfile(); });
-  $('save-profile').addEventListener('click', () => { prefs.name = $('profile-name-input').value.trim() || 'Traveler'; savePrefs(); $('edit-panel').hidden = true; renderProfile(); toast('Profile saved'); });
+  $('save-profile').addEventListener('click', () => { prefs.name = $('profile-name-input').value.trim() || 'Traveler'; savePrefs(); $('edit-panel').hidden = true; renderProfile(); toast(T('toast.profile')); });
   $('profile-lang-btn').addEventListener('click', () => openLangPicker('p', T('prof.default')));
   const clearAll = () => confirmSheet(T('hist.clearq'), T('hist.clearsub'), async () => { await dbClear(); toast(T('hist.cleared')); renderHistory(); });
   $('clear-all').addEventListener('click', clearAll);
@@ -1209,7 +1209,7 @@
   let installEvt = null;
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
   $('install-btn').addEventListener('click', async () => {
-    if (installEvt) { installEvt.prompt(); const r = await installEvt.userChoice; if (r && r.outcome === 'accepted') toast('Installed'); installEvt = null; return; }
+    if (installEvt) { installEvt.prompt(); const r = await installEvt.userChoice; if (r && r.outcome === 'accepted') toast(T('toast.installed')); installEvt = null; return; }
     if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) { toast(T('hero.installed')); return; }
     openInstallSheet();
   });
@@ -1243,7 +1243,7 @@
     document.querySelectorAll('select[data-ui-lang]').forEach((sel) => { if (!sel.options.length) I18N.LANGS.forEach(([c, n]) => { const o = document.createElement('option'); o.value = c; o.textContent = n; sel.appendChild(o); }); sel.addEventListener('change', () => I18N.set(sel.value)); });
     const sel = null;
     const sub = () => { const e = $('uilang-sub'); if (e) e.textContent = (I18N.LANGS.find((l) => l[0] === I18N.lang) || ['', 'English'])[1]; };
-    document.addEventListener('i18n:change', () => { sub(); renderProfile(); if (typeof renderHistory === 'function') renderHistory(); });
+    document.addEventListener('i18n:change', () => { sub(); renderSetup(); renderProfile(); if (typeof renderHistory === 'function') renderHistory(); });
     I18N.apply(); sub();
   })();
   document.querySelectorAll('.palette-seg .seg-btn').forEach((b) => b.addEventListener('click', () => { applyPalette(b.dataset.pal); savePrefs(); }));
