@@ -564,10 +564,11 @@
     let stable = 0;
     live.epId = setInterval(() => {
       if (!live.on || live.rec !== r || !live.interimEl) { clearInterval(live.epId); return; }
-      const quiet = Wave.quiet();                                // relative to the room's own noise floor
+      const hasAudio = !!live.stream;                            // Android runs without a second mic stream, so there is no level to read
+      const quiet = hasAudio && Wave.quiet();                    // relative to the room's own noise floor
       live.epQuiet = quiet ? live.epQuiet + 100 : 0; stable += 100;
       // Commit when the room goes quiet, or when the words have stopped changing for a while even if the room never does.
-      if (live.epQuiet >= needQuiet || (stable >= (open ? 2600 : 2000) && words >= 3)) { clearInterval(live.epId); softCommit(text); }
+      if (hasAudio ? (live.epQuiet >= needQuiet || (stable >= (open ? 2600 : 2000) && words >= 3)) : (stable >= (open ? 2800 : 2000))) { clearInterval(live.epId); softCommit(text); }
     }, 100);
   }
 
