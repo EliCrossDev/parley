@@ -456,6 +456,18 @@
   };
   const STRONGSET = {}; Object.keys(STRONG).forEach((k) => { STRONGSET[k] = new Set(STRONG[k].split(' ')); });
   function strongHit(words, code) { const s = STRONGSET[base(code)]; if (!s) return false; return words.some((w) => s.has(w)); }
+  // More everyday English, so short phrases like "english into" are not a coin flip.
+  LEX.en += ' into english spanish about from would could should there here right okay yeah well really going gonna wanna think know want need make take come look tell give find work call try ask talk speak slowly slow fast loud again never always maybe because though through before after while where when which who their them these those been being were was does did done doing thing things something anything nothing everything someone everyone people person time day night today tomorrow yesterday morning week year name friend man woman guy girl dude bro sorry please thanks hello hey hi bye good bad great nice cool sick crazy weird fine sure only even still much many more most some any other another each every both few little very too also then than over under between without within around down out off on up';
+  // Spelling cues for Latin-script pairs: accents and endings say a lot even about words no list has seen.
+  const CUE = {
+    en: [/'(s|m|re|ll|ve|d|t)\b/i, /(ing|ly|ish|tion|ness|ment|ful|less|ous|th)$/i, /^(wh|th|sh)/i],
+    es: [/[áéíóúñ¿¡ü]/i, /(ción|sión|ando|iendo|mente|ito|ita|ado|ido|oso|osa|dad)$/i, /^(qu|ll)/i, /[a-z]{3,}(ar|er|ir)$/i],
+    pt: [/[ãõçê]/i, /(ção|ções|ando|endo|mente|inho|inha)$/i, /(nh|lh)/i],
+    fr: [/[àâçèêëîïôùûœ]/i, /(eau|tion|ment|eux|euse)$/i, /^(qu|ch)/i],
+    de: [/[äöüß]/i, /(ung|keit|heit|lich|isch)$/i, /^(sch|ge)/],
+    it: [/[àèéìòù]/i, /(zione|mente|ino|ina|etto|etta)$/i, /(gli|cch|gg)/i],
+  };
+  function cueScore(words, code) { const cues = CUE[base(code)]; if (!cues) return 0; let n = 0; for (const w of words) for (const re of cues) if (re.test(w)) n++; return n; }
   const LEXSET = {}; Object.keys(LEX).forEach((k) => { LEXSET[k] = new Set(LEX[k].split(' ')); });
   function lexScore(words, code) { const s = LEXSET[base(code)]; if (!s) return 0; let n = 0; for (const w of words) if (s.has(w)) n++; return n; }
   // Returns 'a' | 'b' | null - null means "can't tell offline".
@@ -467,7 +479,9 @@
     const sa = strongHit(words, prefs.langA), sb = strongHit(words, prefs.langB);
     if (sa && !sb) return 'a'; if (sb && !sa) return 'b';
     const a = lexScore(words, prefs.langA), b = lexScore(words, prefs.langB);
-    if (a > b) return 'a'; if (b > a) return 'b'; return null;
+    if (a > b) return 'a'; if (b > a) return 'b';
+    const ca = cueScore(words, prefs.langA), cb = cueScore(words, prefs.langB);
+    if (ca > cb) return 'a'; if (cb > ca) return 'b'; return null;
   }
   // The engine is listening in the wrong language: its output is nonsense that matches neither word list.
   // After a few words of that, flip the engine rather than wait for a guess that will never come.
