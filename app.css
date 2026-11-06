@@ -518,3 +518,12 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 #mic-steps { max-height: 46vh; overflow-y: auto; }
 
 html[lang="th"] h1, html[lang="th"] h2, html[lang="th"] .sheet-title { line-height: 1.35; letter-spacing: 0; }
+
+/* first-visit guide */
+.welcome { display: grid; gap: 10px; padding: 16px 18px; border-radius: var(--radius, 20px); background: var(--glass, rgba(255,255,255,.08)); border: 1px solid var(--glass-line, rgba(255,255,255,.16)); }
+.welcome-title { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+.welcome-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: w; font-size: 15px; line-height: 1.4; }
+.welcome-steps li { display: flex; gap: 10px; align-items: flex-start; }
+.welcome-steps li::before { counter-increment: w; content: counter(w); flex: 0 0 22px; height: 22px; border-radius: 50%; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.welcome-note { margin: 0; font-size: 13px; line-height: 1.45; opacity: .8; }
+.welcome-ok { justify-self: start; height: 40px; padding: 0 18px; }

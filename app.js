@@ -960,6 +960,17 @@
   }
   $('nudge-no').addEventListener('click', () => { $('nudge').hidden = true; });
   $('nudge-yes').addEventListener('click', () => { $('nudge').hidden = true; startCheckout(); });
+  const WELCOME_KEY = 'parley.welcome.v1';
+  function welcomeSeen() { try { return localStorage.getItem(WELCOME_KEY) === '1'; } catch (e) { return false; } }
+  function welcomeDone() { try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {} const w = $('welcome'); if (w) w.hidden = true; }
+  function renderWelcome() {
+    const w = $('welcome'); if (!w) return;
+    if (welcomeSeen()) { w.hidden = true; return; }
+    const ua = navigator.userAgent || '', standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    const ios = /iPhone|iPad|iPod/i.test(ua), android = /Android/i.test(ua);
+    $('welcome-note').textContent = standalone ? '' : T(ios ? 'welcome.note.ios' : android ? 'welcome.note.android' : 'welcome.note.desktop');
+    w.hidden = false;
+  }
   function renderSetup() {
     renderAvatarsUI(); renderRecent();
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
@@ -968,6 +979,7 @@
     $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; const oc = $('opt-cues'); if (oc) oc.checked = prefs.cues !== false;
     const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
     const orow = $('offline-row'); if (orow) { orow.hidden = !(window.Ear && Ear.supported); $('opt-offline').checked = !!prefs.offline; }
+    renderWelcome();
     const note = $('support-note');
     if (!SR) { note.textContent = T('setup.nospeech'); note.classList.add('warn'); }
     else note.textContent = T('setup.note');
@@ -979,7 +991,8 @@
   $('speak-btn').addEventListener('click', () => { prefs.speak = !prefs.speak; savePrefs(); renderSpeakBtn(); $('opt-speak').checked = prefs.speak; if (!prefs.speak) Voice.stop(); else Voice.warm(); toast(prefs.speak ? 'Talk-back on' : 'Talk-back off'); });
   $('opt-speak').addEventListener('change', (e) => { prefs.speak = e.target.checked; savePrefs(); if (prefs.speak) Voice.warm(); });
   $('opt-record').addEventListener('change', (e) => { prefs.record = e.target.checked; savePrefs(); });
-  $('start-live').addEventListener('click', startLive);
+  $('start-live').addEventListener('click', () => { welcomeDone(); startLive(); });
+  $('welcome-ok').addEventListener('click', welcomeDone);
   $('stop-live').addEventListener('click', stopLive);
   $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('a'); if (prefs.offline) { live.forced = 'a'; setExpected('a', 'a'); showCue('a'); return; } $('who-a').classList.add('arming'); live.cueOnStart = true; live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
   $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('b'); if (prefs.offline) { live.forced = 'b'; setExpected('b', 'b'); showCue('b'); return; } $('who-b').classList.add('arming'); $('far-talk').classList.add('arming'); live.cueOnStart = true; live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
