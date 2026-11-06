@@ -170,7 +170,7 @@
   // Argentine speech to neutral Spanish, so the translator reads it right.
   const AR_IN = mkMap([
     ['con vos', 'contigo'], ['a vos', 'a ti'], ['para vos', 'para ti'], ['vos', 'tú'], ['sos', 'eres'], ['tenés', 'tienes'], ['querés', 'quieres'], ['podés', 'puedes'], ['sabés', 'sabes'], ['decís', 'dices'], ['hacés', 'haces'], ['venís', 'vienes'], ['andás', 'andas'], ['necesitás', 'necesitas'], ['pensás', 'piensas'], ['mirá', 'mira'], ['escuchá', 'escucha'], ['vení', 'ven'], ['andá', 've'], ['dejá', 'deja'], ['fijate', 'fíjate'], ['sentate', 'siéntate'], ['contame', 'cuéntame'], ['decime', 'dime'], ['mandame', 'mándame'], ['avisame', 'avísame'], ['ayudame', 'ayúdame'], ['llamame', 'llámame'], ['bancá', 'espera'],
-    ['che', 'oye'], ['laburo', 'trabajo'], ['laburar', 'trabajar'], ['laburando', 'trabajando'], ['guita', 'dinero'], ['pibe', 'chico'], ['pibes', 'chicos'], ['piba', 'chica'], ['quilombo', 'lío'], ['bondi', 'autobús'], ['birra', 'cerveza'], ['morfar', 'comer'], ['morfi', 'comida'], ['fiaca', 'pereza'], ['boliche', 'discoteca'], ['embole', 'aburrimiento'], ['tranqui', 'tranquilo'], ['copado', 'genial'], ['groso', 'genial'], ['de posta', 'en serio'], ['posta', 'en serio'], ['luca', 'mil pesos'], ['lucas', 'mil pesos'], ['re', 'muy'],
+    ['che', 'oye'], ['laburo', 'trabajo'], ['laburar', 'trabajar'], ['laburando', 'trabajando'], ['guita', 'dinero'], ['pibe', 'chico'], ['pibes', 'chicos'], ['piba', 'chica'], ['quilombo', 'lío'], ['bondi', 'autobús'], ['birra', 'cerveza'], ['morfar', 'comer'], ['morfi', 'comida'], ['fiaca', 'pereza'], ['boliche', 'discoteca'], ['embole', 'aburrimiento'], ['tranqui', 'tranquilo'], ['copado', 'genial'], ['groso', 'genial'], ['de posta', 'en serio'], ['posta', 'en serio'], ['re', 'muy'],
   ]);
   const AR_OUT = mkMap([
     ['contigo', 'con vos'], ['tú', 'vos'], ['eres', 'sos'], ['tienes', 'tenés'], ['quieres', 'querés'], ['puedes', 'podés'], ['sabes', 'sabés'], ['haces', 'hacés'], ['dices', 'decís'], ['vienes', 'venís'], ['necesitas', 'necesitás'], ['piensas', 'pensás'], ['vosotros', 'ustedes'], ['vosotras', 'ustedes'],
@@ -570,9 +570,10 @@
     live.interimTid = setTimeout(async () => {
       if (!live.on || !live.interimEl) return;
       const who = live.detected || live.expected; const to = langOf(other(who));
-      const key = text + '|' + to; if (interimCache.has(key)) return;
+      const key = text + '|' + to + '|' + (live.forced || live.detected ? '1' : '0'); if (interimCache.has(key)) return;
       try {
-        const r = await translate(text, langOf(who), to);
+        const confirmed = !!(live.forced || live.detected);
+        const r = await translate(text, confirmed ? langOf(who) : 'auto', to);
         interimCache.set(key, r);
         const n = live.interimEl;
         if (n && (n.dataset.words || '').startsWith(text.slice(0, 12))) {
@@ -609,6 +610,7 @@
     opts = opts || {}; leaveNeutral();
     clearInterval(live.epId); clearTimeout(live.interimTid); clearTimeout(live.turnId); 
     // Speaker priority: manual tap > early detection (first two words) > offline guess on full text > turn-taking
+    const confident = !!(live.forced || opts.who || live.detected);
     let guess = live.forced || opts.who || live.detected || guessOffline(text) || live.expected;
     // Same person kept talking after a short pause → extend their last bubble instead of starting a new one.
     const last = live.lines[live.lines.length - 1];
@@ -625,7 +627,7 @@
     const start = node.dataset.start ? Number(node.dataset.start) : t0; // when the person started talking, not when the line was finalized
 
     let who = guess, result = null;
-    const cached = interimCache.get(text + '|' + langOf(other(who)));
+    const cached = confident ? interimCache.get(text + '|' + langOf(other(who)) + '|1') : null;
     try {
       result = cached || await translate(text, 'auto', langOf(other(who)));
       // Safety net: if the translator is sure it was the other language, flip once.
