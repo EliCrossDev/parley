@@ -516,3 +516,5 @@ body.live .bubble.a, body.live .bubble.b { box-shadow: 0 12px 36px -14px rgba(0,
 .mic-help-live { color: #ffb84d; }
 .setup-note.ok { color: #7dffb0; }
 #mic-steps { max-height: 46vh; overflow-y: auto; }
+
+html[lang="th"] h1, html[lang="th"] h2, html[lang="th"] .sheet-title { line-height: 1.35; letter-spacing: 0; }

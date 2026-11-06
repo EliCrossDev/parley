@@ -24,8 +24,8 @@
   --glass-2: rgba(10, 12, 26, 0.62);
   --glass-line: rgba(255, 255, 255, 0.22);
   --danger: #ff4d5a;
-  --font-display: "Outfit", "Helvetica Neue", Arial, sans-serif;
-  --font-body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Outfit", "Noto Sans Thai", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Manrope", "Noto Sans Thai", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --radius: 22px;
   --radius-sm: 12px;

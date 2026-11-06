@@ -9,6 +9,7 @@
   const LANGS = [
     { code: 'en', sr: 'en-US', name: 'English', native: 'English', short: 'EN' },
     { code: 'es', sr: 'es-MX', name: 'Spanish', native: 'Español', short: 'ES' },
+    { code: 'es-AR', sr: 'es-AR', name: 'Spanish (Argentina)', native: 'Español (Argentina)', short: 'ES-AR' },
     { code: 'pt', sr: 'pt-BR', name: 'Portuguese', native: 'Português', short: 'PT' },
     { code: 'zh-CN', sr: 'zh-CN', name: 'Chinese (Mandarin)', native: '中文', short: 'ZH' },
     { code: 'hi', sr: 'hi-IN', name: 'Hindi', native: 'हिन्दी', short: 'HI' },
@@ -161,7 +162,37 @@
     const tr = await builtin.cache.get(key);
     return { text: await tr.translate(text), detected: src };
   }
+  /* ---------------- Regional speech: Argentine Spanish (voseo + lunfardo), Indonesian chat slang, Thai laughter ---------------- */
+  const L = '(?<![\\p{L}\\p{M}])', R = '(?![\\p{L}\\p{M}])';
+  const mkMap = (pairs) => pairs.map(([a, b]) => [new RegExp(L + a + R, 'giu'), b]);
+  const keepCase = (m, rep) => (m[0] !== m[0].toLowerCase() && m[0] === m[0].toUpperCase()) ? rep.charAt(0).toUpperCase() + rep.slice(1) : rep;
+  const applyMap = (t, map) => { for (const [re, rep] of map) t = t.replace(re, (m) => keepCase(m, rep)); return t; };
+  // Argentine speech to neutral Spanish, so the translator reads it right.
+  const AR_IN = mkMap([
+    ['con vos', 'contigo'], ['a vos', 'a ti'], ['para vos', 'para ti'], ['vos', 'tú'], ['sos', 'eres'], ['tenés', 'tienes'], ['querés', 'quieres'], ['podés', 'puedes'], ['sabés', 'sabes'], ['decís', 'dices'], ['hacés', 'haces'], ['venís', 'vienes'], ['andás', 'andas'], ['necesitás', 'necesitas'], ['pensás', 'piensas'], ['mirá', 'mira'], ['escuchá', 'escucha'], ['vení', 'ven'], ['andá', 've'], ['dejá', 'deja'], ['fijate', 'fíjate'], ['sentate', 'siéntate'], ['contame', 'cuéntame'], ['decime', 'dime'], ['mandame', 'mándame'], ['avisame', 'avísame'], ['ayudame', 'ayúdame'], ['llamame', 'llámame'], ['bancá', 'espera'],
+    ['che', 'oye'], ['laburo', 'trabajo'], ['laburar', 'trabajar'], ['laburando', 'trabajando'], ['guita', 'dinero'], ['pibe', 'chico'], ['pibes', 'chicos'], ['piba', 'chica'], ['quilombo', 'lío'], ['bondi', 'autobús'], ['birra', 'cerveza'], ['morfar', 'comer'], ['morfi', 'comida'], ['fiaca', 'pereza'], ['boliche', 'discoteca'], ['embole', 'aburrimiento'], ['tranqui', 'tranquilo'], ['copado', 'genial'], ['groso', 'genial'], ['de posta', 'en serio'], ['posta', 'en serio'], ['luca', 'mil pesos'], ['lucas', 'mil pesos'], ['re', 'muy'],
+  ]);
+  const AR_OUT = mkMap([
+    ['contigo', 'con vos'], ['tú', 'vos'], ['eres', 'sos'], ['tienes', 'tenés'], ['quieres', 'querés'], ['puedes', 'podés'], ['sabes', 'sabés'], ['haces', 'hacés'], ['dices', 'decís'], ['vienes', 'venís'], ['necesitas', 'necesitás'], ['piensas', 'pensás'], ['vosotros', 'ustedes'], ['vosotras', 'ustedes'],
+    ['dime', 'decime'], ['cuéntame', 'contame'], ['llámame', 'llamame'], ['mándame', 'mandame'], ['avísame', 'avisame'], ['ayúdame', 'ayudame'],
+    ['dinero', 'plata'], ['autobús', 'colectivo'], ['carro', 'auto'], ['coche', 'auto'], ['móvil', 'celular'], ['ordenador', 'computadora'], ['guay', 'copado'],
+  ]);
+  const ID_IN = mkMap([['gue', 'saya'], ['gua', 'saya'], ['gw', 'saya'], ['lu', 'kamu'], ['lo', 'kamu'], ['elu', 'kamu'], ['gak', 'tidak'], ['nggak', 'tidak'], ['ngga', 'tidak'], ['enggak', 'tidak'], ['gapapa', 'tidak apa-apa'], ['gpp', 'tidak apa-apa'], ['udah', 'sudah'], ['udh', 'sudah'], ['banget', 'sekali'], ['bgt', 'sekali'], ['doang', 'saja'], ['aja', 'saja'], ['emang', 'memang'], ['kayak', 'seperti'], ['gimana', 'bagaimana'], ['ngapain', 'sedang apa'], ['makasih', 'terima kasih'], ['yuk', 'ayo'], ['bokap', 'ayah'], ['nyokap', 'ibu'], ['cuma', 'hanya'], ['mager', 'malas bergerak'], ['baper', 'terbawa perasaan'], ['gabut', 'tidak ada kegiatan'], ['nih', 'ini'], ['tuh', 'itu']]);
+  const regionalIn = (t, from) => {
+    if (from === 'es-AR') return applyMap(t, AR_IN);
+    if (base(from) === 'id') return applyMap(t, ID_IN);
+    if (base(from) === 'th') return t.replace(/5{3,}/g, 'ฮ่าฮ่าฮ่า');
+    return t;
+  };
+  const regionalOut = (t, to) => to === 'es-AR' ? applyMap(t, AR_OUT) : t;
+  const tcode = (c) => c === 'es-AR' ? 'es' : c;
   async function translate(text, from, to) {
+    const key = 'rg|' + from + '|' + to + '|' + text; if (tCache.has(key)) return tCache.get(key);
+    const r = await translateCore(regionalIn(text, from), tcode(from), tcode(to));
+    const out = (to === 'es-AR' || from === 'es-AR' || base(from) === 'id' || base(from) === 'th') ? Object.assign({}, r, { text: regionalOut(r.text, to) }) : r;
+    if (tCache.size > 300) tCache.clear(); tCache.set(key, out); return out;
+  }
+  async function translateCore(text, from, to) {
     const key = from + '|' + to + '|' + text; if (tCache.has(key)) return tCache.get(key);
     if (prefs.offline || !navigator.onLine) {
       try { const r = await viaBuiltin(text, from, to); tCache.set(key, r); return r; } catch (e) { if (!navigator.onLine) throw new Error('offline'); }
@@ -247,7 +278,7 @@
           const u = new SpeechSynthesisUtterance(text); u.lang = byCode(lang).sr; u.rate = 1.03;
           const want = voiceName || (prefs.browserVoices || {})[base(lang)];
           const vs = speechSynthesis.getVoices();
-          const v = vs.find((x) => x.name === want) || vs.find((x) => x.lang && base(x.lang) === base(lang) && /premium|enhanced|neural|natural/i.test(x.name)) || vs.find((x) => x.lang && base(x.lang) === base(lang));
+          const v = vs.find((x) => x.name === want) || vs.find((x) => x.lang && x.lang.replace('_', '-') === byCode(lang).sr) || vs.find((x) => x.lang && base(x.lang) === base(lang) && /premium|enhanced|neural|natural/i.test(x.name)) || vs.find((x) => x.lang && base(x.lang) === base(lang));
           if (v) u.voice = v; u.onend = res; u.onerror = res; speechSynthesis.speak(u);
         } catch (e) { res(); }
       });
@@ -455,7 +486,9 @@
     } catch (e) {}
     return null;
   }
-  function wordCount(t) { return t.trim().split(/\s+/).filter(Boolean).length; }
+  const NOSPACE = /[\u0E00-\u0E7F\u3040-\u30FF\u4E00-\u9FFF]/;
+  let segr = null; const segWords = (t) => { if (!segr && 'Segmenter' in Intl) { try { segr = new Intl.Segmenter(undefined, { granularity: 'word' }); } catch (e) {} } return segr ? Array.from(segr.segment(t)) : null; };
+  function wordCount(t) { t = String(t).trim(); if (!t) return 0; if (NOSPACE.test(t)) { const sg = segWords(t); if (sg) return sg.filter((x) => x.isWordLike).length || 1; } return t.split(/\s+/).filter(Boolean).length; }
 
   // Called as soon as two words are in. Decides speaker, recolors the bubble, swaps recognizer if needed.
   async function earlyDetect(interim) {
@@ -1126,9 +1159,9 @@
   function closeAudio() { if (pb.audio) { try { pb.audio.pause(); } catch (e) {} } if (pb.url) URL.revokeObjectURL(pb.url); pb.audio = null; pb.url = null; pb.playing = false; cancelAnimationFrame(pb.raf); pb.elapsed = 0; $('pb-play').classList.remove('playing'); $('pb-scrub').value = 0; $('pb-cur').textContent = '0:00'; }
   // Lines saved before v31 carry the time the line was finalized, not when speech began; estimate the start from length.
   // [start, end] in ms of when a line is being spoken; words are revealed across it
-  function lineSpan(c, i) { const l = c.lines[i]; const st = lineStart(c, i); const nxt = c.lines[i + 1] ? lineStart(c, i + 1) : (c.duration || 0) * 1000; const len = (l.s && l.dur) ? l.dur : 300 + l.orig.split(/\s+/).length * 330; const end = Math.max(st + 400, Math.min(nxt, st + len)); return [st, st + (end - st) * 0.78]; } // reveal runs a bit ahead of the voice so words never trail it
-  function wordSpans(parent, text) { const out = []; text.split(' ').forEach((w, k, arr) => { const s = el('span', 'w', w); out.push(s); parent.appendChild(s); if (k < arr.length - 1) parent.appendChild(document.createTextNode(' ')); }); return out; }
-  function lineStart(c, i) { const l = c.lines[i]; if (l.s) return l.t; const est = l.t - Math.min(12000, 300 + l.orig.split(/\s+/).length * 330); const prev = i ? lineStart(c, i - 1) + 800 : 0; return Math.max(prev, est, 0); }
+  function lineSpan(c, i) { const l = c.lines[i]; const st = lineStart(c, i); const nxt = c.lines[i + 1] ? lineStart(c, i + 1) : (c.duration || 0) * 1000; const len = (l.s && l.dur) ? l.dur : 300 + wordCount(l.orig) * 330; const end = Math.max(st + 400, Math.min(nxt, st + len)); return [st, st + (end - st) * 0.78]; } // reveal runs a bit ahead of the voice so words never trail it
+  function wordSpans(parent, text) { const out = []; if (NOSPACE.test(text)) { const sg = segWords(text); if (sg) { sg.forEach((x) => { if (x.isWordLike) { const sp = el('span', 'w', x.segment); out.push(sp); parent.appendChild(sp); } else parent.appendChild(document.createTextNode(x.segment)); }); return out; } } text.split(' ').forEach((w, k, arr) => { const s = el('span', 'w', w); out.push(s); parent.appendChild(s); if (k < arr.length - 1) parent.appendChild(document.createTextNode(' ')); }); return out; }
+  function lineStart(c, i) { const l = c.lines[i]; if (l.s) return l.t; const est = l.t - Math.min(12000, 300 + wordCount(l.orig) * 330); const prev = i ? lineStart(c, i - 1) + 800 : 0; return Math.max(prev, est, 0); }
   function renderPlaybackLines(timeMs) {
     const box = $('pb-convo'); const liveMode = $('pb-livemode').checked;
     if (!box.childElementCount) {
@@ -1157,7 +1190,7 @@
   }
   function renderPlaybackTrack(c) {
     const tr = $('pb-track'); tr.innerHTML = ''; const total = Math.max(1, c.duration * 1000);
-    c.lines.forEach((l, i) => { const st = lineStart(c, i); const end = Math.min(c.lines[i + 1] ? lineStart(c, i + 1) : total, st + (l.s && l.dur ? l.dur : 300 + l.orig.split(/\s+/).length * 330)); const seg = el('i', l.who); seg.style.left = (100 * st / total) + '%'; seg.style.width = Math.max(0.8, 100 * (end - st) / total) + '%'; tr.appendChild(seg); });
+    c.lines.forEach((l, i) => { const st = lineStart(c, i); const end = Math.min(c.lines[i + 1] ? lineStart(c, i + 1) : total, st + (l.s && l.dur ? l.dur : 300 + wordCount(l.orig) * 330)); const seg = el('i', l.who); seg.style.left = (100 * st / total) + '%'; seg.style.width = Math.max(0.8, 100 * (end - st) / total) + '%'; tr.appendChild(seg); });
     const da = $('pbw-a').querySelector('.who-dot'), db = $('pbw-b').querySelector('.who-dot');
     da.innerHTML = avatarSVG(c.avatarA ?? prefs.avatar); db.innerHTML = avatarSVG(c.avatarB ?? 5);
     $('pbw-a-label').textContent = byCode(c.langA).short; $('pbw-b-label').textContent = byCode(c.langB).short;
