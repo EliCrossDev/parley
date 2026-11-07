@@ -468,6 +468,9 @@
     it: [/[àèéìòù]/i, /(zione|mente|ino|ina|etto|etta)$/i, /(gli|cch|gg)/i],
   };
   function cueScore(words, code) { const cues = CUE[base(code)]; if (!cues) return 0; let n = 0; for (const w of words) for (const re of cues) if (re.test(w)) n++; return n; }
+  // Everyday Spanish the first list missed (and accentless spellings, since speech engines often drop accents),
+  // plus Rioplatense voseo, so "bueno pero no sé" is never scored as English.
+  LEX.es += ' bueno buena pero que se si sé más mas como estas esta qué cuál cual cuáles quien donde cuando porque porqué gusta gustó gusto encanta hacer hago hace hacés haces hiciste hizo dijiste dije dice digo decir ver vemos veo voy vas va vamos vos tenés tenes querés queres sabés sabes podés podes sos hablás contame decime mirá dale che boludo boluda re mina pibe laburo onda posta tipo nos les lo del al las sus mis tus ese esa esos esas aquel otro otra otros todos todas cada algo alguien nadie nunca siempre ya todavía aún solo sólo también tampoco antes después luego ahí acá allá así entonces osea o sea creo pienso parece sabe saber quería quiero quieres querer tener tengo tenía estaba estuve fui fue era eran había hay hubo ser sido estado puedes podría debería tiempo día noche semana casa trabajo cosa cosas gente persona amigo amiga verdad mejor peor mismo misma grande pequeño nuevo nueva viejo primero último entiendo entendés ayudar ayuda ayudarte música canción hola chau adiós gracias perdón señor señora mucha muchos muchas nada';
   const LEXSET = {}; Object.keys(LEX).forEach((k) => { LEXSET[k] = new Set(LEX[k].split(' ')); });
   function lexScore(words, code) { const s = LEXSET[base(code)]; if (!s) return 0; let n = 0; for (const w of words) if (s.has(w)) n++; return n; }
   // Returns 'a' | 'b' | null - null means "can't tell offline".
@@ -564,7 +567,7 @@
       live.heard = true; { const hb = $('mic-help-live'); if (hb) hb.hidden = true; }
       let interim = '', finals = [];
       const clean = (t) => String(t).replace(/<\/?\s*(s|unk|noise|eps)\s*>/gi, ' ').replace(/\s+/g, ' ');
-      for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) finals.push(clean(res[0].transcript).trim()); else interim += clean(res[0].transcript); }
+      for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) { finals.push(clean(res[0].transcript).trim()); live.lastConf = res[0].confidence; } else interim += clean(res[0].transcript); }
       interim = interim.trim();
       if (interim) {
         const shown = live.carry ? joinCarry(live.carry, interim) : interim;
@@ -618,7 +621,9 @@
         let r = await translate(text, tapped ? langOf(who) : 'auto', to);
         if (!tapped && wordCount(text) >= 3 && r.detected && live.on && live.interimEl) {
           const d = base(r.detected);
-          if (d === base(langOf(other(who))) && d !== base(langOf(who))) {
+          // Trust the flip only if the engine was listening in the language the translator heard. Words that don't
+          // match the engine's own language are a mixed (Spanglish) sentence or a mishearing: not proof of a new speaker.
+          if (d === base(langOf(other(who))) && d !== base(langOf(who)) && d === base(live.recLang || '')) {
             const nw = other(who);
             live.detected = nw; live.detectedBy = 'words'; leaveNeutral(); note({ ev: 'interim-flip', from: who, to: nw, text: text.slice(0, 60) });
             who = nw; to = langOf(other(who));
@@ -675,7 +680,7 @@
     if (cont && live.interimEl) { live.interimEl.remove(); }
     const node = cont ? last.node : (live.interimEl || appendBubble(makeBubble(guess, '', text, true)));
     if (cont) { text = (last.orig + ' ' + text).trim(); live.lines.pop(); }
-    const by = live.forced ? 'tap' : (opts.who ? 'cont' : (live.detectedBy || 'guess')); const forcedAtStart = live.forced; const tapSeq = live.tapSeq;
+    const by = live.forced ? 'tap' : (opts.who ? 'cont' : (live.detectedBy || 'guess')); const forcedAtStart = live.forced; const tapSeq = live.tapSeq; const recLangAtStart = live.recLang || '';
     live.interimEl = null; live.carry = null; live.detected = null; live.detectedBy = null; live.detectPending = null; live.flipped = false;
     node.className = 'bubble ' + guess + ' interim';
     node.querySelector('.trans').textContent = text;
@@ -690,7 +695,7 @@
       // Safety net: if the translator is sure it was the other language, flip once. Never in tap mode: a tap is final.
       if (!forcedAtStart && result.detected) {
         const d = base(result.detected);
-        if (d === base(langOf(other(who))) && d !== base(langOf(who))) { who = other(who); result = await translate(text, langOf(who), langOf(other(who))); }
+        if (d === base(langOf(other(who))) && d !== base(langOf(who)) && (by === 'guess' || d === base(recLangAtStart)) && wordCount(text) >= 3) { who = other(who); result = await translate(text, langOf(who), langOf(other(who))); note({ ev: 'final-flip', who, by, rec: recLangAtStart, text: text.slice(0, 40) }); }
       }
     } catch (e) {
       node.className = 'bubble ' + who; node.querySelector('.orig').textContent = text; node.querySelector('.trans').textContent = '(translation unavailable, check your connection)';
@@ -701,7 +706,7 @@
     node.querySelector('.trans').textContent = result.text; node.querySelector('.trans').classList.remove('pending');
     setBubbleWho(node, who);
     $('convo').scrollTop = $('convo').scrollHeight;
-    note({ ev: 'line', who, by, words: text.split(/\s+/).length, detected: result.detected || null });
+    note({ ev: 'line', who, by, rec: recLangAtStart, conf: live.lastConf != null ? +(+live.lastConf).toFixed(2) : null, words: text.split(/\s+/).length, detected: result.detected || null });
     live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node }); autosaveDraft();
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     if (live.tapSeq !== tapSeq) return;                       // someone tapped while we were translating: their tap wins
