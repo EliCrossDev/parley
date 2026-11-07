@@ -61,7 +61,7 @@
 .setup-sub { color: rgba(245,245,242,.9); max-width: 42ch; text-shadow: 0 1px 10px rgba(0,0,0,.2); }
 .speaker-cards { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
 .speaker-card {
-  flex: 0 0 auto; text-align: left; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto auto; gap: 2px 12px;
+  flex: 0 0 auto; text-align: left; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto; gap: 2px 12px;
   padding: 18px 20px; border-radius: var(--radius); border: 1px solid var(--line);
   background: rgba(13,13,15,.72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); position: relative; overflow: hidden; transition: border-color .2s;
 }
@@ -72,9 +72,10 @@
 .speaker-b:hover { border-color: rgba(47,107,255,.6); }
 .speaker-tag { grid-column: 1; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
 .sw { width: 18px; height: 18px; border-radius: 50%; display: inline-block; overflow: hidden; vertical-align: middle; box-shadow: 0 0 0 1px rgba(255,255,255,.35); } .sw svg { width: 100%; height: 100%; display: block; }
-.speaker-lang { grid-column: 1; font-family: var(--font-display); font-size: 28px; font-weight: 700; line-height: 1.1; }
-.speaker-native { grid-column: 1; color: var(--fg-2); font-size: 14px; }
-.speaker-change { grid-column: 2; grid-row: 1 / 4; align-self: center; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); border: 1px solid var(--line-2); border-radius: 999px; padding: 6px 12px; }
+.speaker-lang { grid-column: 1 / -1; min-width: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700; line-height: 1.1; text-wrap: balance; }
+.speaker-lang.long { font-size: 24px; }
+.speaker-native { grid-column: 1 / -1; color: var(--fg-2); font-size: 14px; }
+.speaker-change { grid-column: 2; grid-row: 1; align-self: start; margin: -4px -6px 4px 0; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); border: 1px solid var(--line-2); border-radius: 999px; padding: 6px 12px; white-space: nowrap; justify-self: end; }
 .setup-options { display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
 .toggle { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
 .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -527,3 +528,13 @@ html[lang="th"] h1, html[lang="th"] h2, html[lang="th"] .sheet-title { line-heig
 .welcome-steps li::before { counter-increment: w; content: counter(w); flex: 0 0 22px; height: 22px; border-radius: 50%; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
 .welcome-note { margin: 0; font-size: 13px; line-height: 1.45; opacity: .8; }
 .welcome-ok { justify-self: start; height: 40px; padding: 0 18px; }
+
+/* Speaker detection: a line sits in the middle, unclaimed, until we know who said it */
+.bubble.unsure, body.live .bubble.unsure, :root[data-palette] .bubble.unsure { align-self: center; background: rgba(18,20,34,.62); color: #f4f4f8; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px dashed rgba(255,255,255,.35); border-radius: 22px; }
+.bubble.unsure .meta { visibility: hidden; }
+body.live .bubble.unsure { box-shadow: none; }
+/* Auto / Tap turn mode */
+.turns-mode { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--glass, rgba(255,255,255,.1)); border: 1px solid var(--glass-line, rgba(255,255,255,.2)); gap: 2px; }
+.turns-mode button { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 6px 11px; border-radius: 999px; color: var(--fg-2); background: transparent; border: 0; cursor: pointer; }
+.turns-mode button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.live-stage.tapmode .who-btn:not(.is-live) { opacity: .6; }

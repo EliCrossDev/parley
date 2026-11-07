@@ -45,7 +45,7 @@
   const defaults = {
     langA: 'en', langB: 'es', speak: false, record: true,
     name: 'Traveler', avatar: 3, engine: 'auto', libreUrl: '', libreKey: '', pro: false, license: '', proEmail: '', proChecked: 0,
-    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0, improve: false, offline: false, tabletop: false, cues: true,
+    voiceEngine: 'kokoro', voices: {}, browserVoices: {}, palette: 'night', keep: 0, paletteV2: false, visits: 0, nudgeAt: 0, improve: false, offline: false, tabletop: false, cues: true, turns: 'auto',
   };
   let prefs = Object.assign({}, defaults);
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch (e) {}
@@ -526,19 +526,39 @@
       }
       return;
     }
+    // Agreeing with the engine is free. Flipping it costs a restart and a few words, so one stray word ("i", "okay",
+    // "the") is never enough: wait for two, unless it is an unmistakable greeting-size word like "hola" or "gracias".
+    if (who !== live.expected && words.filter(Boolean).length < 2 && !(strongHit([words[0].toLowerCase()], langOf(who)) && words[0].length >= 4)) return;
     live.detected = who; live.detectedBy = 'words'; leaveNeutral(); note({ ev: 'words', who, expected: live.expected, head });
-    if (live.interimEl) { live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who); }
+    confirmBubble(who);
     if (who !== live.expected) {
-      // Wrong speaker guessed: switch recognizer to the right language now, keeping what we already heard.
-      live.carry = interim.trim();
+      // Wrong speaker guessed: switch recognizer to the right language now. Keep what we heard only if it was real
+      // words; one- or two-word scraps from the wrong engine get heard again by the new one and showed up doubled.
+      live.carry = words.filter(Boolean).length >= 3 ? interim.trim() : null;
       setExpected(who); startRecognizer(langOf(who));
     } else setStatus(T('live.listening'), who);
   }
 
+  // Glue what the old engine heard to what the new one hears, without repeating the words both caught.
+  function joinCarry(carry, text) {
+    const nw = (x) => x.toLowerCase().replace(/[^\p{L}\p{N}']/gu, '');
+    const c = carry.trim().split(/\s+/), t = text.trim().split(/\s+/);
+    for (let k = Math.min(c.length, t.length, 6); k > 0; k--) {
+      let ok = true; for (let i = 0; i < k; i++) if (nw(c[c.length - k + i]) !== nw(t[i])) { ok = false; break; }
+      if (ok) return c.slice(0, c.length - k).concat(t).join(' ');
+    }
+    if (nw(t[0]) && c.map(nw).includes(nw(t[0])) && c.length <= 3) return t.join(' ');   // the new engine re-heard the start
+    return c.concat(t).join(' ');
+  }
+  // The bubble sits in the middle, unclaimed, until we actually know who is talking. Then it moves to their side.
+  function confirmBubble(who) {
+    const n = live.interimEl; if (!n) return;
+    n.className = 'bubble ' + who + ' interim'; setBubbleWho(n, who);
+  }
   function startRecognizer(lang) {
     if (!SR || !live.on) return;
     try { if (live.rec) { live.rec.onend = null; live.rec.abort(); } } catch (e) {}
-    const r = new SR(); live.rec = r;
+    const r = new SR(); live.rec = r; live.recLang = lang;
     r.lang = byCode(lang).sr; r.continuous = true; r.interimResults = true; r.maxAlternatives = 1;
     r.onresult = (ev) => {
       live.heard = true; { const hb = $('mic-help-live'); if (hb) hb.hidden = true; }
@@ -547,8 +567,8 @@
       for (let i = ev.resultIndex; i < ev.results.length; i++) { const res = ev.results[i]; if (res.isFinal) finals.push(clean(res[0].transcript).trim()); else interim += clean(res[0].transcript); }
       interim = interim.trim();
       if (interim) {
-        const shown = live.carry ? (live.carry + ' ' + interim) : interim;
-        if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true)); live.interimEl.dataset.words = shown; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 600); }
+        const shown = live.carry ? joinCarry(live.carry, interim) : interim;
+        if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true)); if (!live.detected && !live.forced) live.interimEl.classList.add('unsure'); live.interimEl.dataset.words = shown; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 600); }
         else if (live.interimEl.dataset.words !== shown) {
           const n = live.interimEl; n.dataset.words = shown;
           // Big text holds the latest translation once one exists; the raw words live in the small line above it.
@@ -567,7 +587,7 @@
         // The engine's own final for words we already committed on silence: drop the echo instead of doubling the line.
         const ls = live.lastSoft, nf = (x) => String(x).toLowerCase().replace(/[^\p{L}\p{N} ]/gu, '').replace(/\s+/g, ' ').trim();
         if (ls && Date.now() - ls.at < 6000 && nf(ls.text).includes(nf(f)) && nf(f).length) { live.lastSoft = null; continue; }
-        handleFinal(live.carry ? (live.carry + ' ' + f) : f);
+        handleFinal(live.carry ? joinCarry(live.carry, f) : f);
       }
     };
     r.onerror = (ev) => {
@@ -602,12 +622,15 @@
             const nw = other(who);
             live.detected = nw; live.detectedBy = 'words'; leaveNeutral(); note({ ev: 'interim-flip', from: who, to: nw, text: text.slice(0, 60) });
             who = nw; to = langOf(other(who));
-            live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who);
+            confirmBubble(who);
             if (who !== live.expected) { live.carry = text.trim(); setExpected(who); startRecognizer(langOf(who)); } else setExpected(who);
             r = await translate(text, langOf(who), to);
           }
         }
         interimCache.set(text + '|' + to + '|1', r); interimCache.set(key, r);
+        if (!tapped && live.interimEl && live.interimEl.classList.contains('unsure') && r.detected && base(r.detected) === base(langOf(who)) && wordCount(text) >= 2) {
+          live.detected = who; live.detectedBy = live.detectedBy || 'words'; leaveNeutral(); confirmBubble(who);
+        }
         const n = live.interimEl;
         if (n && (n.dataset.words || '').startsWith(text.slice(0, 12))) {
           n.dataset.tr = '1'; n.querySelector('.orig').textContent = n.dataset.words;
@@ -652,6 +675,7 @@
     if (cont && live.interimEl) { live.interimEl.remove(); }
     const node = cont ? last.node : (live.interimEl || appendBubble(makeBubble(guess, '', text, true)));
     if (cont) { text = (last.orig + ' ' + text).trim(); live.lines.pop(); }
+    const by = live.forced ? 'tap' : (opts.who ? 'cont' : (live.detectedBy || 'guess')); const forcedAtStart = live.forced; const tapSeq = live.tapSeq;
     live.interimEl = null; live.carry = null; live.detected = null; live.detectedBy = null; live.detectPending = null; live.flipped = false;
     node.className = 'bubble ' + guess + ' interim';
     node.querySelector('.trans').textContent = text;
@@ -663,8 +687,8 @@
     const cached = confident ? interimCache.get(text + '|' + langOf(other(who)) + '|1') : null;
     try {
       result = cached || await translate(text, 'auto', langOf(other(who)));
-      // Safety net: if the translator is sure it was the other language, flip once.
-      if (!live.forced && result.detected) {
+      // Safety net: if the translator is sure it was the other language, flip once. Never in tap mode: a tap is final.
+      if (!forcedAtStart && result.detected) {
         const d = base(result.detected);
         if (d === base(langOf(other(who))) && d !== base(langOf(who))) { who = other(who); result = await translate(text, langOf(who), langOf(other(who))); }
       }
@@ -677,16 +701,24 @@
     node.querySelector('.trans').textContent = result.text; node.querySelector('.trans').classList.remove('pending');
     setBubbleWho(node, who);
     $('convo').scrollTop = $('convo').scrollHeight;
-    note({ ev: 'line', who, by: live.forced ? 'tap' : (opts.who ? 'cont' : (live.detectedBy || 'guess')), words: text.split(/\s+/).length, detected: result.detected || null });
+    note({ ev: 'line', who, by, words: text.split(/\s+/).length, detected: result.detected || null });
     live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node }); autosaveDraft();
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
-    live.forced = null;
-    // Don't assume the other person is next. Keep listening in the same language for a beat (they may
-    // continue); if nobody starts within ~2 s, expect the other person. Early detection corrects either way.
-    // The line ended in silence, so this is the cheapest moment to switch the engine to the other language:
-    // the ~0.4 s restart happens while nobody is talking. If the same person carries on, early detection flips back.
-    const next = other(who); setExpected(next); startRecognizer(langOf(next));
+    if (live.tapSeq !== tapSeq) return;                       // someone tapped while we were translating: their tap wins
+    if (prefs.turns === 'tap') { live.forced = live.lock || who; setExpected(live.forced, live.forced); if (langOf(live.forced) !== live.recLang) startRecognizer(langOf(live.forced)); return; }
+    if (live.forced === forcedAtStart) live.forced = null;
+    // Sticky turns. In real conversations the same person keeps going after a short pause most of the time
+    // (9 of 10 restarts within a second were the same speaker), so stay on them. Only once the room has been quiet
+    // for a while do we quietly aim the engine at the other person, without lighting their chip or chiming:
+    // nothing on screen claims a speaker until someone actually talks.
+    setExpected(who); if (langOf(who) !== live.recLang) startRecognizer(langOf(who));
+    clearTimeout(live.turnId);
+    live.turnId = setTimeout(() => {
+      if (!live.on || live.interimEl || live.forced || live.expected !== who || prefs.turns === 'tap') return;
+      live.expected = other(who); startRecognizer(langOf(other(who)));
+    }, TURN_HOLD_MS);
   }
+  const TURN_HOLD_MS = 2000;
   /* ---- Face-to-face mode: the top half is turned around for the person across the table. They see their side of
      every line (your words translated into their language, their own words as heard), live, right side up. ---- */
   function renderFar() {
@@ -797,7 +829,7 @@
 
   /* ---- The ear: Whisper on the device identifies the language from the sound itself, so the engine can be
      aimed without a tap. Only confident calls are acted on; when unsure, the word lists and the chips decide. */
-  const EAR_MARGIN_AGREE = 4, EAR_MARGIN_FLIP = 6;   // flipping the engine costs a restart, so it needs stronger proof
+  const EAR_MARGIN_AGREE = 5, EAR_MARGIN_FLIP = 8;   // flipping the engine costs a restart, so it needs stronger proof
   async function startEar() {
     if (!window.Ear || !Ear.supported || !live.stream) return;
     const ok = await Ear.load(); if (!ok || !live.on || !live.stream) return;
@@ -809,7 +841,7 @@
     note({ ev: 'ear', lang: r.lang, margin: +r.margin.toFixed(2), ms: r.ms, expected: live.expected, acted: r.margin >= (who === live.expected ? EAR_MARGIN_AGREE : EAR_MARGIN_FLIP) });
     if (r.margin < (who === live.expected ? EAR_MARGIN_AGREE : EAR_MARGIN_FLIP)) return;
     live.detected = who; live.detectedBy = 'ear'; leaveNeutral();
-    if (who === live.expected) { setExpected(who); return; }                 // engine already aimed right; just light the chip
+    if (who === live.expected) { confirmBubble(who); setExpected(who); return; }                 // engine already aimed right; just light the chip
     // Engine was listening in the other language: what it heard so far is nonsense. Aim it, and keep the words Whisper heard.
     if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }
     live.carry = null; setExpected(who); startRecognizer(langOf(who));
@@ -820,7 +852,7 @@
     const otherWho = other(live.detected);
     if (!strongHit(words, langOf(otherWho)) || strongHit(words, langOf(live.detected))) return;
     live.detected = otherWho; live.detectedBy = 'words'; note({ ev: 'words-override-ear', who: otherWho, text: text.slice(0, 60) });
-    if (live.interimEl) { live.interimEl.className = 'bubble ' + otherWho + ' interim'; setBubbleWho(live.interimEl, otherWho); }
+    confirmBubble(otherWho);
     if (otherWho !== live.expected) { live.carry = text.trim(); setExpected(otherWho); startRecognizer(langOf(otherWho)); } else setExpected(otherWho);
   }
   function softCommit(text) { if (live.interimEl) { live.lastSoft = { text: text, at: Date.now() }; handleFinal(text, { soft: true }); } }
@@ -837,6 +869,8 @@
     // Nobody has spoken yet: show both chips as choices, light one only once we know who is talking.
     setTabletop(prefs.tabletop);
     live.neutral = true; $('live-stage').classList.add('neutral'); $('who-a').classList.remove('is-live'); $('who-b').classList.remove('is-live'); $('convo-hint').textContent = T('live.hintfirst');
+    live.lock = null; live.tapSeq = 0; renderTurns();
+    if (prefs.turns === 'tap') { live.lock = 'a'; live.forced = 'a'; leaveNeutral('a'); setExpected('a', 'a'); $('convo-hint').textContent = T('live.hinttap'); }
     // Open the audio stream after speech has started (Safari dislikes the reverse order).
     // Android Chrome gives the mic to one listener at a time: a second stream silences speech recognition. So on Android we skip it.
     if (IS_ANDROID && SR && !prefs.offline) { live.stream = null; }
@@ -1010,7 +1044,7 @@
     renderAvatarsUI(); renderRecent();
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
-    $('label-b').textContent = b.native; $('native-b').textContent = b.name;
+    $('label-b').textContent = b.native; $('native-b').textContent = b.name; $('label-a').classList.toggle('long', a.native.length > 12); $('label-b').classList.toggle('long', b.native.length > 12);
     $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; const oc = $('opt-cues'); if (oc) oc.checked = prefs.cues !== false;
     const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
     const orow = $('offline-row'); if (orow) { orow.hidden = !(window.Ear && Ear.supported); $('opt-offline').checked = !!prefs.offline; }
@@ -1029,8 +1063,34 @@
   $('start-live').addEventListener('click', () => { welcomeDone(); startLive(); });
   $('welcome-ok').addEventListener('click', welcomeDone);
   $('stop-live').addEventListener('click', stopLive);
-  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); live.detectedBy = 'tap'; leaveNeutral('a'); if (prefs.offline) { live.forced = 'a'; setExpected('a', 'a'); showCue('a'); return; } $('who-a').classList.add('arming'); live.cueOnStart = true; live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
-  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); live.detectedBy = 'tap'; leaveNeutral('b'); if (prefs.offline) { live.forced = 'b'; setExpected('b', 'b'); showCue('b'); return; } $('who-b').classList.add('arming'); $('far-talk').classList.add('arming'); live.cueOnStart = true; live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
+  function tapWho(who) {
+    if (!live.on) return;
+    note({ ev: 'tap', who, wasDetected: live.detected, by: live.detectedBy, mode: prefs.turns });
+    live.tapSeq = (live.tapSeq || 0) + 1; clearTimeout(live.turnId); leaveNeutral(who);
+    if (prefs.turns === 'tap') live.lock = who;
+    // Words already on screen belong to whoever was talking before the tap: finish that line, don't throw it away.
+    const pend = live.interimEl && live.interimEl.dataset.words;
+    if (pend && (live.detected || live.forced) && (live.detected || live.forced) !== who) { live.forced = live.detected || live.forced; handleFinal(pend); }
+    else if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }
+    if (prefs.offline) { live.forced = who; setExpected(who, who); showCue(who); return; }
+    $('who-' + who).classList.add('arming'); if (who === 'b') $('far-talk').classList.add('arming');
+    live.cueOnStart = true; live.detected = who; live.detectedBy = 'tap'; live.carry = null; setExpected(who, who); startRecognizer(langOf(who));
+  }
+  $('who-a').addEventListener('click', () => tapWho('a'));
+  $('who-b').addEventListener('click', () => tapWho('b'));
+  // Turn mode: Auto figures out who is talking; Tap means whoever's chip is lit is talking, until the other chip is tapped.
+  function renderTurns() {
+    const tap = prefs.turns === 'tap';
+    document.querySelectorAll('#turns-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === prefs.turns)));
+    $('live-stage').classList.toggle('tapmode', tap);
+  }
+  document.querySelectorAll('#turns-mode button').forEach((b) => b.addEventListener('click', () => {
+    if (prefs.turns === b.dataset.mode) return;
+    prefs.turns = b.dataset.mode; savePrefs(); renderTurns(); clearTimeout(live.turnId);
+    if (!live.on) return;
+    if (prefs.turns === 'tap') { const w = live.detected || live.expected; live.lock = w; live.forced = w; leaveNeutral(w); setExpected(w, w); if (langOf(w) !== live.recLang) startRecognizer(langOf(w)); toast(T('live.tapon')); }
+    else { live.lock = null; live.forced = null; toast(T('live.autoon')); }
+  }));
   window.addEventListener('beforeunload', () => { if (live.on) stopLive(); });
 
   /* ---------------- History ---------------- */
