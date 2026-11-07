@@ -562,7 +562,13 @@
         armEndpoint(r, shown);
       }
       if (finals.length) Wave.setTalking(false);
-      for (const f of finals) if (f) handleFinal(live.carry ? (live.carry + ' ' + f) : f);
+      for (const f of finals) {
+        if (!f) continue;
+        // The engine's own final for words we already committed on silence: drop the echo instead of doubling the line.
+        const ls = live.lastSoft, nf = (x) => String(x).toLowerCase().replace(/[^\p{L}\p{N} ]/gu, '').replace(/\s+/g, ' ').trim();
+        if (ls && Date.now() - ls.at < 6000 && nf(ls.text).includes(nf(f)) && nf(f).length) { live.lastSoft = null; continue; }
+        handleFinal(live.carry ? (live.carry + ' ' + f) : f);
+      }
     };
     r.onerror = (ev) => {
       const e = ev.error;
@@ -583,12 +589,25 @@
     clearTimeout(live.interimTid);
     live.interimTid = setTimeout(async () => {
       if (!live.on || !live.interimEl) return;
-      const who = live.detected || live.expected; const to = langOf(other(who));
+      let who = live.detected || live.expected; let to = langOf(other(who));
+      const tapped = !!live.forced || live.detectedBy === 'tap';
       const key = text + '|' + to + '|' + (live.forced || live.detected ? '1' : '0'); if (interimCache.has(key)) return;
       try {
-        const confirmed = !!(live.forced || live.detected);
-        const r = await translate(text, confirmed ? langOf(who) : 'auto', to);
-        interimCache.set(key, r);
+        // Only a tap is trusted blindly. Everything else is checked against the words themselves, so a wrong
+        // guess never shows English "translated" into English: the translator names the language it heard.
+        let r = await translate(text, tapped ? langOf(who) : 'auto', to);
+        if (!tapped && wordCount(text) >= 3 && r.detected && live.on && live.interimEl) {
+          const d = base(r.detected);
+          if (d === base(langOf(other(who))) && d !== base(langOf(who))) {
+            const nw = other(who);
+            live.detected = nw; live.detectedBy = 'words'; leaveNeutral(); note({ ev: 'interim-flip', from: who, to: nw, text: text.slice(0, 60) });
+            who = nw; to = langOf(other(who));
+            live.interimEl.className = 'bubble ' + who + ' interim'; setBubbleWho(live.interimEl, who);
+            if (who !== live.expected) { live.carry = text.trim(); setExpected(who); startRecognizer(langOf(who)); } else setExpected(who);
+            r = await translate(text, langOf(who), to);
+          }
+        }
+        interimCache.set(text + '|' + to + '|1', r); interimCache.set(key, r);
         const n = live.interimEl;
         if (n && (n.dataset.words || '').startsWith(text.slice(0, 12))) {
           n.dataset.tr = '1'; n.querySelector('.orig').textContent = n.dataset.words;
@@ -804,7 +823,7 @@
     if (live.interimEl) { live.interimEl.className = 'bubble ' + otherWho + ' interim'; setBubbleWho(live.interimEl, otherWho); }
     if (otherWho !== live.expected) { live.carry = text.trim(); setExpected(otherWho); startRecognizer(langOf(otherWho)); } else setExpected(otherWho);
   }
-  function softCommit(text) { if (live.interimEl) handleFinal(text, { soft: true }); }
+  function softCommit(text) { if (live.interimEl) { live.lastSoft = { text: text, at: Date.now() }; handleFinal(text, { soft: true }); } }
 
   async function startLive() {
     if (!SR && !prefs.offline) { toast(T('toast.nospeech')); return; }
@@ -1010,8 +1029,8 @@
   $('start-live').addEventListener('click', () => { welcomeDone(); startLive(); });
   $('welcome-ok').addEventListener('click', welcomeDone);
   $('stop-live').addEventListener('click', stopLive);
-  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('a'); if (prefs.offline) { live.forced = 'a'; setExpected('a', 'a'); showCue('a'); return; } $('who-a').classList.add('arming'); live.cueOnStart = true; live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
-  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); leaveNeutral('b'); if (prefs.offline) { live.forced = 'b'; setExpected('b', 'b'); showCue('b'); return; } $('who-b').classList.add('arming'); $('far-talk').classList.add('arming'); live.cueOnStart = true; live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
+  $('who-a').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'a', wasDetected: live.detected, by: live.detectedBy }); live.detectedBy = 'tap'; leaveNeutral('a'); if (prefs.offline) { live.forced = 'a'; setExpected('a', 'a'); showCue('a'); return; } $('who-a').classList.add('arming'); live.cueOnStart = true; live.detected = 'a'; live.carry = null; setExpected('a', 'a'); startRecognizer(prefs.langA); });
+  $('who-b').addEventListener('click', () => { if (!live.on) return; note({ ev: 'tap', who: 'b', wasDetected: live.detected, by: live.detectedBy }); live.detectedBy = 'tap'; leaveNeutral('b'); if (prefs.offline) { live.forced = 'b'; setExpected('b', 'b'); showCue('b'); return; } $('who-b').classList.add('arming'); $('far-talk').classList.add('arming'); live.cueOnStart = true; live.detected = 'b'; live.carry = null; setExpected('b', 'b'); startRecognizer(prefs.langB); });
   window.addEventListener('beforeunload', () => { if (live.on) stopLive(); });
 
   /* ---------------- History ---------------- */
