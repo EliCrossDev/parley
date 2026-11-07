@@ -12,6 +12,9 @@ window.Ear = (function () {
   const ONSET = 0.03, QUIET = 0.012;
   let T = null, processor = null, tokenizer = null, model = null, langIds = null, loading = null, failed = false;
   let ctx = null, src = null, proc = null, stream = null, active = false, onResult = null, pair = null, busy = false;
+  // The last few seconds of mic audio, always. When the speech engine was listening in the wrong language, Parley
+  // asks Whisper to re-hear those seconds in the right one, so the start of the sentence isn't lost.
+  const RING_S = 14; let ring = [], ringLen = 0, ringRate = 48000;
 
   // Phones: the on-device Whisper model is too heavy and gets the page killed by the browser (seen on iPhone mid-conversation), so it is desktop only.
   const supported = !!navigator.gpu && !MOBILE;
@@ -75,11 +78,13 @@ window.Ear = (function () {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     src = ctx.createMediaStreamSource(stream);
     proc = ctx.createScriptProcessor(2048, 1, 1);
-    const rate = ctx.sampleRate; const need = Math.ceil(CLIP_S * rate);
+    const rate = ctx.sampleRate; ringRate = rate; ring = []; ringLen = 0; const need = Math.ceil(CLIP_S * rate);
     let chunks = [], have = 0, started = false, loud = 0, quiet = 0;
     proc.onaudioprocess = async (e) => {
       if (!active) return;
-      const d = e.inputBuffer.getChannelData(0); let rms = 0; for (let i = 0; i < d.length; i++) rms += d[i] * d[i]; rms = Math.sqrt(rms / d.length);
+      const d = e.inputBuffer.getChannelData(0);
+      ring.push(new Float32Array(d)); ringLen += d.length; while (ringLen - ring[0].length > RING_S * ringRate) { ringLen -= ring[0].length; ring.shift(); }
+      let rms = 0; for (let i = 0; i < d.length; i++) rms += d[i] * d[i]; rms = Math.sqrt(rms / d.length);
       if (busy) { if (rms < QUIET) quiet++; else quiet = 0; if (quiet > 12) { busy = false; started = false; chunks = []; have = 0; loud = 0; } return; }
       if (!started) { if (rms > ONSET) loud++; else loud = 0; if (loud >= 2) started = true; else return; }
       chunks.push(new Float32Array(d)); have += d.length;
@@ -101,5 +106,17 @@ window.Ear = (function () {
     const text = await transcribe(audio16, id.lang, 96);
     return { lang: id.lang, margin: id.margin, text };
   }
-  return { supported, load, start, stop, transcribe, hear, identify, get ready() { return !!model; }, get mobile() { return MOBILE; } };
+  // Re-hear the last `seconds` of audio in a given language. Resolves to text ('' if nothing usable).
+  let rehearing = false;
+  async function rehear(seconds, lang) {
+    if (!model || !ring.length || rehearing) return '';
+    rehearing = true;
+    try {
+      const want = Math.min(ringLen, Math.round(Math.max(0.5, seconds) * ringRate));
+      const all = new Float32Array(want); let o = want;
+      for (let i = ring.length - 1; i >= 0 && o > 0; i--) { const c = ring[i]; const take = Math.min(c.length, o); all.set(c.subarray(c.length - take), o - take); o -= take; }
+      return await transcribe(await to16k(all, ringRate), lang, 64);
+    } catch (e) { return ''; } finally { rehearing = false; }
+  }
+  return { supported, load, start, stop, transcribe, hear, identify, rehear, get ready() { return !!model; }, get mobile() { return MOBILE; } };
 })();

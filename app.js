@@ -524,8 +524,7 @@
       // Nothing recognizable after several words: the engine is probably in the wrong language. Flip once.
       if (!live.flipped && looksLikeNonsense(interim, langOf(live.expected))) {
         live.flipped = true; live.detectPending = null; const next = other(live.expected); note({ ev: 'nonsense-flip', from: live.expected, text: interim.slice(0, 60) });
-        if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }   // that text was never real words
-        live.carry = null; setExpected(next); startRecognizer(langOf(next));
+        live.carry = null; confirmBubble(next); recoverStart(next); setExpected(next); startRecognizer(langOf(next));   // that text was never real words: re-hear it
       }
       return;
     }
@@ -538,7 +537,7 @@
       // Wrong speaker guessed: switch recognizer to the right language now. Keep what we heard only if it was real
       // words; one- or two-word scraps from the wrong engine get heard again by the new one and showed up doubled.
       live.carry = words.filter(Boolean).length >= 3 ? interim.trim() : null;
-      setExpected(who); startRecognizer(langOf(who));
+      recoverStart(who); setExpected(who); startRecognizer(langOf(who));
     } else setStatus(T('live.listening'), who);
   }
 
@@ -558,6 +557,22 @@
     const n = live.interimEl; if (!n) return;
     n.className = 'bubble ' + who + ' interim'; setBubbleWho(n, who);
   }
+  // The engine was listening in the wrong language for the start of this sentence. Its words are garbage, and the
+  // restart loses them. If the on-device ear is running, re-hear those seconds in the right language and put them back.
+  function recoverStart(who) {
+    const n = live.interimEl; if (!window.Ear || !Ear.ready || !Ear.rehear || !n) return;
+    const startMs = Number(n.dataset.start || 0) + live.startedAt; const secs = (Date.now() - startMs) / 1000 + 0.4;
+    if (secs < 0.6 || secs > 14) return;
+    const seq = (live.recoverSeq = (live.recoverSeq || 0) + 1);
+    Ear.rehear(secs, base(langOf(who))).then((text) => {
+      text = (text || '').trim();
+      if (!text || live.recoverSeq !== seq || live.interimEl !== n || !live.on || (live.detected && live.detected !== who)) return;
+      note({ ev: 'recovered', who, secs: +secs.toFixed(1), text: text.slice(0, 40) });
+      live.carry = text;
+      const shown = joinCarry(text, n.dataset.heard || ''); n.dataset.words = shown;
+      if (n.dataset.tr) n.querySelector('.orig').textContent = shown; else n.querySelector('.trans').textContent = shown;
+    });
+  }
   function startRecognizer(lang) {
     if (!SR || !live.on) return;
     try { if (live.rec) { live.rec.onend = null; live.rec.abort(); } } catch (e) {}
@@ -571,6 +586,7 @@
       interim = interim.trim();
       if (interim) {
         const shown = live.carry ? joinCarry(live.carry, interim) : interim;
+        if (live.interimEl) live.interimEl.dataset.heard = interim;
         if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true)); if (!live.detected && !live.forced) live.interimEl.classList.add('unsure'); live.interimEl.dataset.words = shown; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 600); }
         else if (live.interimEl.dataset.words !== shown) {
           const n = live.interimEl; n.dataset.words = shown;
@@ -628,7 +644,7 @@
             live.detected = nw; live.detectedBy = 'words'; leaveNeutral(); note({ ev: 'interim-flip', from: who, to: nw, text: text.slice(0, 60) });
             who = nw; to = langOf(other(who));
             confirmBubble(who);
-            if (who !== live.expected) { live.carry = text.trim(); setExpected(who); startRecognizer(langOf(who)); } else setExpected(who);
+            if (who !== live.expected) { live.carry = text.trim(); recoverStart(who); setExpected(who); startRecognizer(langOf(who)); } else setExpected(who);
             r = await translate(text, langOf(who), to);
           }
         }
@@ -848,8 +864,7 @@
     live.detected = who; live.detectedBy = 'ear'; leaveNeutral();
     if (who === live.expected) { confirmBubble(who); setExpected(who); return; }                 // engine already aimed right; just light the chip
     // Engine was listening in the other language: what it heard so far is nonsense. Aim it, and keep the words Whisper heard.
-    if (live.interimEl) { live.interimEl.remove(); live.interimEl = null; }
-    live.carry = null; setExpected(who); startRecognizer(langOf(who));
+    live.carry = null; confirmBubble(who); recoverStart(who); setExpected(who); startRecognizer(langOf(who));
   }
   // The ear judges by accent; a telltale word is stronger evidence. "Hola" said with an English accent is still Spanish.
   function wordsOverrideEar(text) {
@@ -858,7 +873,7 @@
     if (!strongHit(words, langOf(otherWho)) || strongHit(words, langOf(live.detected))) return;
     live.detected = otherWho; live.detectedBy = 'words'; note({ ev: 'words-override-ear', who: otherWho, text: text.slice(0, 60) });
     confirmBubble(otherWho);
-    if (otherWho !== live.expected) { live.carry = text.trim(); setExpected(otherWho); startRecognizer(langOf(otherWho)); } else setExpected(otherWho);
+    if (otherWho !== live.expected) { live.carry = text.trim(); recoverStart(otherWho); setExpected(otherWho); startRecognizer(langOf(otherWho)); } else setExpected(otherWho);
   }
   function softCommit(text) { if (live.interimEl) { live.lastSoft = { text: text, at: Date.now() }; handleFinal(text, { soft: true }); } }
 
