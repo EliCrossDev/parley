@@ -49,6 +49,7 @@ window.Reel = (function () {
     const logo = await new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = 'icon-192.png'; });
     const spans = c.lines.map((_, i) => lineSpan(c, i));
 
+    const curY = {}; let lastT = null;
     function draw(tl) {
       const t = tl + from;
       // Background: the Night sky
@@ -72,13 +73,15 @@ window.Reel = (function () {
       const visible = []; c.lines.forEach((l, i) => { if (starts[i] <= t) visible.push({ l, i, age: t - starts[i] }); });
       let nowIdx = -1; visible.forEach((v2) => { nowIdx = v2.i; });
       const boxes = []; const maxW = W * 0.78;
-      for (const v2 of visible.slice(-6)) {
+      for (const v2 of visible.slice(-8)) {
         const l = v2.l; ctx.font = '400 34px ' + FONT_B; const origLines = transOnly ? [] : wrap(ctx, l.orig, maxW - 80);
         ctx.font = '600 58px ' + FONT_D; const transLines = wrap(ctx, l.trans, maxW - 80);
         const h = 40 + origLines.length * 44 + 14 + transLines.length * 68 + 24 + 56 + 36; const w = Math.min(maxW, 80 + Math.max(...origLines.map((x) => { ctx.font = '400 34px ' + FONT_B; return ctx.measureText(x).width; }), ...transLines.map((x) => { ctx.font = '600 58px ' + FONT_D; return ctx.measureText(x).width; })));
-        const sp = spans[v2.i]; const f = Math.max(0, Math.min(1, (t - sp[0]) / Math.max(1, sp[1] - sp[0]))); boxes.push({ l, w, h, origLines, transLines, age: v2.age, now: v2.i === nowIdx, f });
+        const sp = spans[v2.i]; const f = Math.max(0, Math.min(1, (t - sp[0]) / Math.max(1, sp[1] - sp[0]))); boxes.push({ i: v2.i, l, w, h, origLines, transLines, age: v2.age, now: v2.i === nowIdx, f });
       }
-      let y = H - 330; for (let k = boxes.length - 1; k >= 0; k--) { const b = boxes[k]; y -= b.h + 22; b.y = y; }
+      // Glide, don't jump: each bubble eases toward its new spot when a new one pushes the stack up.
+      const dt = lastT == null ? 0 : Math.max(0, Math.min(200, t - lastT)); lastT = t; const k = 1 - Math.exp(-dt / 140);
+      let y = H - 330; for (let j = boxes.length - 1; j >= 0; j--) { const b = boxes[j]; y -= b.h + 22; if (curY[b.i] == null) curY[b.i] = y; else curY[b.i] += (y - curY[b.i]) * k; b.y = curY[b.i]; }
       for (const b of boxes) {
         if (b.y + b.h < 380) continue;
         const pop = ease(b.age / 260); const x = b.l.who === 'a' ? 60 : W - 60 - b.w; const yy = b.y + (1 - pop) * 24;
@@ -87,9 +90,10 @@ window.Reel = (function () {
         ctx.fillStyle = b.l.who === 'a' ? 'rgba(233,233,242,.95)' : 'rgba(10,12,22,.82)'; rr(ctx, x, yy, b.w, b.h, 40); ctx.fill(); ctx.shadowColor = 'transparent';
         if (b.l.who === 'b') { ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2; ctx.stroke(); } else if (pal.aStroke) { ctx.strokeStyle = pal.aStroke; ctx.lineWidth = 2; ctx.stroke(); }
         const ink = b.l.who === 'a' ? '#0e0e16' : '#f7f7fb'; let ty = yy + 40;
-        ctx.fillStyle = b.l.who === 'a' ? 'rgba(14,14,22,.7)' : 'rgba(247,247,251,.72)'; ctx.font = '400 34px ' + FONT_B; ctx.textBaseline = 'top';
-        let ow = Math.ceil(b.f * b.origLines.join(' ').split(/\s+/).length); for (const line of b.origLines) { const ws = line.split(' '); ctx.fillText(ws.slice(0, Math.max(0, ow)).join(' '), x + 40, ty); ow -= ws.length; ty += 44; } ty += 14;
-        ctx.fillStyle = ink; ctx.font = '600 58px ' + FONT_D; let tw = Math.ceil(b.f * b.transLines.join(' ').split(/\s+/).length); for (const line of b.transLines) { const ws = line.split(' '); ctx.fillText(ws.slice(0, Math.max(0, tw)).join(' '), x + 40, ty); tw -= ws.length; ty += 68; } ty += 24;
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = ink; ctx.font = '600 58px ' + FONT_D; let tw = Math.ceil(b.f * b.transLines.join(' ').split(/\s+/).length); for (const line of b.transLines) { const ws = line.split(' '); ctx.fillText(ws.slice(0, Math.max(0, tw)).join(' '), x + 40, ty); tw -= ws.length; ty += 68; } ty += 14;
+        ctx.fillStyle = b.l.who === 'a' ? 'rgba(14,14,22,.7)' : 'rgba(247,247,251,.72)'; ctx.font = '400 34px ' + FONT_B;
+        let ow = Math.ceil(b.f * b.origLines.join(' ').split(/\s+/).length); for (const line of b.origLines) { const ws = line.split(' '); ctx.fillText(ws.slice(0, Math.max(0, ow)).join(' '), x + 40, ty); ow -= ws.length; ty += 44; } ty += 24;
         const av = b.l.who === 'a' ? avA : avB; if (av) { ctx.save(); ctx.beginPath(); ctx.arc(x + 40 + 24, ty + 24, 24, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(av, x + 40, ty, 48, 48); ctx.restore(); }
         ctx.fillStyle = b.l.who === 'a' ? 'rgba(14,14,22,.6)' : 'rgba(247,247,251,.6)'; ctx.font = '500 24px ' + FONT_M; ctx.textBaseline = 'middle'; ctx.fillText(short(b.l.from) + ' → ' + short(b.l.to), x + 40 + 64, ty + 24);
         ctx.restore();

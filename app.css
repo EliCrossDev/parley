@@ -118,7 +118,7 @@
   flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
   display: flex; flex-direction: column; gap: 10px;
   padding-left: var(--gutter-l); padding-right: var(--gutter-r); padding-block: 8px 16px;
-  scroll-behavior: smooth;
+  overflow-anchor: none;
 }
 .convo-hint { margin: auto; color: var(--fg-3); font-family: var(--font-mono); font-size: 13px; text-align: center; }
 .bubble {
@@ -284,7 +284,7 @@
 .voice-actions { margin-top: 12px; flex: 0 0 auto; }
 .dl-bar { height: 3px; background: var(--bg-3); border-radius: 2px; overflow: hidden; margin-top: 8px; }
 .dl-bar i { display: block; height: 100%; width: 0; background: var(--volt); transition: width .3s; }
-.bubble .trans.pending { opacity: .62; }
+.bubble .trans.pending { opacity: .78; }
 
 /* ===== Live mode: a different room ===== */
 .voice-row { grid-template-columns: 44px 1fr auto auto auto; }
@@ -302,8 +302,16 @@ body.live .siri::before { box-shadow: inset 0 0 calc(34px + var(--lv, 0) * 90px)
 body.live .bubble { box-shadow: 0 10px 40px -10px rgba(0,0,0,.8); }
 body.live .bubble.a { box-shadow: 0 0 0 0 transparent, 0 12px 44px -14px rgba(217,255,59,.55); }
 body.live .bubble.b { box-shadow: 0 0 0 0 transparent, 0 12px 44px -14px rgba(47,107,255,.7); }
-body.live .bubble.interim { animation: pop .28s cubic-bezier(.2,.9,.3,1.2) both, pulse 1.4s ease-in-out .3s infinite; }
-@keyframes pulse { 50% { opacity: .85; } }
+/* Calm reading: a live line is steady (no pulsing), the same width from its first word to its last so text never
+   re-wraps sideways, translation on top so the line you're reading is never pushed down, new words fade in. */
+body.live .bubble { width: min(88%, 620px); animation: settle .32s ease-out both; }
+body.live .bubble.interim { opacity: .9; animation: settle .32s ease-out both; }
+body.live .bubble .trans { min-height: 1.18em; transition: opacity .3s; }
+body.live .bubble .orig { margin-top: 2px; }
+@keyframes settle { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.bubble .w-in { animation: wordin .26s ease-out both; }
+@keyframes wordin { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .bubble .w-in, body.live .bubble { animation: none; } }
 body.live .app-bg::after { background: linear-gradient(180deg, rgba(5,5,5,.1) 0%, rgba(5,5,5,0) 45%, rgba(5,5,5,.4) 100%); }
 
 .palette-seg .seg-btn { width: 40px; flex: 0 0 auto; padding: 0; display: inline-flex; align-items: center; justify-content: center; }

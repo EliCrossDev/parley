@@ -411,7 +411,7 @@
 
   function makeBubble(who, orig, trans, interim) {
     const b = el('div', 'bubble ' + who + (interim ? ' interim' : ''));
-    const o = el('div', 'orig', orig || ''); const t = el('div', 'trans', trans || ''); b.appendChild(o); b.appendChild(t);
+    const o = el('div', 'orig'); const t = el('div', 'trans'); b.appendChild(t); b.appendChild(o); setWords(o, orig || ''); setWords(t, trans || '');
     const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(live.avatars[who]); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(langOf(who)).short + ' → ' + byCode(langOf(other(who))).short)); b.appendChild(m);
     return b;
   }
@@ -428,7 +428,39 @@
     const sa = document.querySelector('.sw.a'), sb = document.querySelector('.sw.b'); if (sa) sa.innerHTML = avatarSVG(live.avatars.a); if (sb) sb.innerHTML = avatarSVG(live.avatars.b);
   }
   function pickAvatars() { renderAvatarsUI(); }
-  function appendBubble(node) { const c = $('convo'); const hint = $('convo-hint'); if (hint) hint.remove(); c.appendChild(node); c.scrollTop = c.scrollHeight; return node; }
+  function appendBubble(node) { const c = $('convo'); const hint = $('convo-hint'); if (hint) hint.remove(); c.appendChild(node); follow(); return node; }
+  // Calm text: update a line word by word. Words that didn't change keep their exact place on screen; only new or
+  // changed words fade in. Nothing gets rewritten under the reader's eyes.
+  function setWords(elm, text) {
+    text = String(text || '');
+    const toks = NOSPACE.test(text) && segWords(text) ? segWords(text).map((x) => x.segment) : text.split(/(\s+)/).filter((x) => x !== '');
+    const kids = Array.from(elm.childNodes); let i = 0;
+    while (i < kids.length && i < toks.length && kids[i].textContent === toks[i]) i++;
+    for (let k = kids.length - 1; k >= i; k--) elm.removeChild(kids[k]);
+    for (let k = i; k < toks.length; k++) {
+      if (/^\s+$/.test(toks[k])) elm.appendChild(document.createTextNode(toks[k]));
+      else { const sp = el('span', 'w-in', toks[k]); elm.appendChild(sp); }
+    }
+  }
+  // Follow the conversation smoothly: glide to the newest words, never jump, and stop following the moment the
+  // reader scrolls up to re-read something.
+  let followRaf = 0, followOff = false;
+  function follow() {
+    const c = $('convo'); if (!c || followOff) return;
+    if (followRaf) return;
+    const step = () => {
+      const target = c.scrollHeight - c.clientHeight; const d = target - c.scrollTop;
+      if (followOff || Math.abs(d) < 1) { followRaf = 0; return; }
+      c.scrollTop += d > 0 ? Math.max(1, d * 0.14) : d; followRaf = requestAnimationFrame(step);
+    };
+    followRaf = requestAnimationFrame(step);
+  }
+  (function () {
+    const c = $('convo'); if (!c) return;
+    const userMoved = () => { const gap = c.scrollHeight - c.clientHeight - c.scrollTop; followOff = gap > 140; };
+    ['wheel', 'touchmove'].forEach((ev) => c.addEventListener(ev, () => setTimeout(userMoved, 60), { passive: true }));
+    c.addEventListener('scroll', () => { if (!followRaf) { const gap = c.scrollHeight - c.clientHeight - c.scrollTop; if (gap < 40) followOff = false; } }, { passive: true });
+  })();
 
   /* ---- Early language detection: decide the speaker from the first two words ---- */
   // Tiny offline lexicon of very common function words. Instant, no network. Covers the
@@ -562,7 +594,7 @@
     try {
       const r = await translate(orig, langOf(who), langOf(other(who)));
       Object.assign(line, { who, orig, trans: r.text, from: langOf(who), to: langOf(other(who)) });
-      const n = line.node; if (n) { n.className = 'bubble ' + who; n.querySelector('.orig').textContent = orig; n.querySelector('.trans').textContent = r.text; setBubbleWho(n, who); }
+      const n = line.node; if (n) { n.className = 'bubble ' + who; setWords(n.querySelector('.orig'), orig); setWords(n.querySelector('.trans'), r.text); setBubbleWho(n, who); }
       autosaveDraft(); if (typeof renderFar === 'function') renderFar();
     } catch (e) {}
   }
@@ -597,7 +629,7 @@
       note({ ev: 'recovered', who, secs: +secs.toFixed(1), text: text.slice(0, 40) });
       live.carry = text;
       const shown = joinCarry(text, n.dataset.heard || ''); n.dataset.words = shown;
-      if (n.dataset.tr) n.querySelector('.orig').textContent = shown; else n.querySelector('.trans').textContent = shown;
+      setWords(n.querySelector('.orig'), shown);
     });
   }
   function startRecognizer(lang) {
@@ -614,12 +646,11 @@
       if (interim) {
         const shown = live.carry ? joinCarry(live.carry, interim) : interim;
         if (live.interimEl) live.interimEl.dataset.heard = interim;
-        if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, '', shown, true)); if (!live.detected && !live.forced) live.interimEl.classList.add('unsure'); live.interimEl.dataset.words = shown; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 600); }
+        if (!live.interimEl) { live.interimEl = appendBubble(makeBubble(live.detected || live.expected, shown, '', true)); if (!live.detected && !live.forced) live.interimEl.classList.add('unsure'); live.interimEl.dataset.words = shown; live.interimEl.dataset.start = Math.max(0, Date.now() - live.startedAt - 600); }
         else if (live.interimEl.dataset.words !== shown) {
           const n = live.interimEl; n.dataset.words = shown;
-          // Big text holds the latest translation once one exists; the raw words live in the small line above it.
-          if (n.dataset.tr) n.querySelector('.orig').textContent = shown; else n.querySelector('.trans').textContent = shown;
-          $('convo').scrollTop = $('convo').scrollHeight;
+          // The big line only ever shows the translation. What was heard goes in the small line underneath.
+          setWords(n.querySelector('.orig'), shown); follow();
         }
         if (!live.detected) earlyDetect(interim);
         else if (live.detectedBy === 'ear' && !live.forced) wordsOverrideEar(shown);
@@ -681,9 +712,15 @@
         }
         const n = live.interimEl;
         if (n && (n.dataset.words || '').startsWith(text.slice(0, 12))) {
-          n.dataset.tr = '1'; n.querySelector('.orig').textContent = n.dataset.words;
-          const t = n.querySelector('.trans'); t.textContent = r.text; t.classList.add('pending');
-          $('convo').scrollTop = $('convo').scrollHeight;
+          n.dataset.tr = '1';
+          const t = n.querySelector('.trans');
+          // Don't reshuffle words the reader already passed: if this update would rewrite more than the last few
+          // words, hold it (the next one, or the final line, will catch up) unless the line has been still for a while.
+          const oldW = t.textContent.split(/\s+/).filter(Boolean), newW = r.text.split(/\s+/).filter(Boolean);
+          let same = 0; while (same < oldW.length && same < newW.length && oldW[same] === newW[same]) same++;
+          const now = Date.now();
+          if (oldW.length - same > 4 && now - (Number(n.dataset.trAt) || 0) < 1600) { /* hold */ }
+          else { setWords(t, r.text); n.dataset.trAt = String(now); t.classList.add('pending'); follow(); }
         }
       } catch (e) {}
     }, 180);
@@ -726,7 +763,7 @@
     const by = live.forced ? 'tap' : (opts.who ? 'cont' : (live.detectedBy || 'guess')); const forcedAtStart = live.forced; const tapSeq = live.tapSeq; const recLangAtStart = live.recLang || '';
     live.interimEl = null; live.carry = null; live.detected = null; live.detectedBy = null; live.detectPending = null; live.flipped = false;
     node.className = 'bubble ' + guess + ' interim';
-    node.querySelector('.trans').textContent = text;
+    setWords(node.querySelector('.orig'), text);   // big line keeps its translation in place until the final one lands
     setStatus(T('live.translating'), guess);
     const t0 = Date.now() - live.startedAt;
     const start = node.dataset.start ? Number(node.dataset.start) : t0; // when the person started talking, not when the line was finalized
@@ -745,10 +782,9 @@
       setExpected(other(who)); return;
     }
     node.className = 'bubble ' + who;
-    node.querySelector('.orig').textContent = text;
-    node.querySelector('.trans').textContent = result.text; node.querySelector('.trans').classList.remove('pending');
-    setBubbleWho(node, who);
-    $('convo').scrollTop = $('convo').scrollHeight;
+    setWords(node.querySelector('.orig'), text);
+    setWords(node.querySelector('.trans'), result.text); node.querySelector('.trans').classList.remove('pending');
+    setBubbleWho(node, who); follow();
     note({ ev: 'line', who, by, rec: recLangAtStart, conf: live.lastConf != null ? +(+live.lastConf).toFixed(2) : null, words: text.split(/\s+/).length, detected: result.detected || null });
     live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node }); autosaveDraft();
     if (!forcedAtStart && prefs.turns !== 'tap') { const ln = live.lines[live.lines.length - 1]; afterCheck(ln, (Date.now() - live.startedAt - ln.t) / 1000 + 0.3); }
@@ -865,7 +901,7 @@
           let trans = ''; try { trans = (await translate(r.text, langOf(who), langOf(other(who)))).text; } catch (e) { trans = ''; }
           node.querySelector('.orig').textContent = r.text; node.querySelector('.trans').textContent = trans || r.text; node.querySelector('.trans').classList.toggle('pending', !trans);
           if (!trans) node.querySelector('.ml').textContent += ' · ' + T('live.notrans');
-          $('convo').scrollTop = $('convo').scrollHeight;
+          follow();
           live.lines.push({ who, orig: r.text, trans: trans || r.text, from: langOf(who), to: langOf(other(who)), t: Math.max(0, startMs), dur: Math.round(1000 * samples.length / Off.rate), node }); autosaveDraft();
           note({ ev: 'line', who, by: 'offline', words: r.text.split(/\s+/).length, margin: +r.margin.toFixed(2) });
           setExpected(other(who)); if (trans) speak(trans, langOf(other(who)));
@@ -908,7 +944,7 @@
   async function startLive() {
     if (!SR && !prefs.offline) { toast(T('toast.nospeech')); return; }
     if (prefs.langA === prefs.langB) { toast(T('toast.twolangs')); return; }
-    live.on = true; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null; live.flipped = false;
+    live.on = true; followOff = false; live.netErrors = 0; live.lines = []; live.chunks = []; live.startedAt = Date.now(); live.convoId = 'c_' + live.startedAt; live.forced = null; live.detected = null; live.carry = null; live.detectPending = null; live.flipped = false;
     $('live-setup').hidden = true; $('live-stage').hidden = false; document.body.classList.add('live');
     $('convo').innerHTML = '<p class="convo-hint" id="convo-hint"></p>'; $('convo-hint').textContent = T('live.hint');
     $('who-a-label').textContent = byCode(prefs.langA).native; $('who-b-label').textContent = byCode(prefs.langB).native; $('far-talk-label').textContent = byCode(prefs.langB).native;
@@ -1322,7 +1358,7 @@
     const box = $('pb-convo'); const liveMode = $('pb-livemode').checked;
     if (!box.childElementCount) {
       pb.c.lines.forEach((l) => {
-        const b = el('div', 'bubble ' + l.who); const od = el('div', 'orig'), td = el('div', 'trans'); b._o = wordSpans(od, l.orig); b._t = wordSpans(td, l.trans); b.appendChild(od); b.appendChild(td); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = lineStart(pb.c, pb.c.lines.indexOf(l)); box.appendChild(b);
+        const b = el('div', 'bubble ' + l.who); const od = el('div', 'orig'), td = el('div', 'trans'); b._o = wordSpans(od, l.orig); b._t = wordSpans(td, l.trans); b.appendChild(td); b.appendChild(od); const m = el('div', 'meta'); const av = el('span', 'bav'); av.innerHTML = avatarSVG(l.who === 'a' ? (pb.c.avatarA ?? prefs.avatar) : (pb.c.avatarB ?? 5)); m.appendChild(av); m.appendChild(el('span', 'ml', byCode(l.from).short + ' → ' + byCode(l.to).short + ' · ' + fmtTime(l.t / 1000))); b.appendChild(m); b.dataset.t = lineStart(pb.c, pb.c.lines.indexOf(l)); box.appendChild(b);
       });
     }
     // Which line is being said right now? (saved lines carry t and dur; older ones get dur from the next line)
