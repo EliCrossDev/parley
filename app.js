@@ -691,7 +691,7 @@
     let who = guess, result = null;
     const cached = confident ? interimCache.get(text + '|' + langOf(other(who)) + '|1') : null;
     try {
-      result = cached || await translate(text, 'auto', langOf(other(who)));
+      result = cached || await translate(text, forcedAtStart ? langOf(who) : 'auto', langOf(other(who)));
       // Safety net: if the translator is sure it was the other language, flip once. Never in tap mode: a tap is final.
       if (!forcedAtStart && result.detected) {
         const d = base(result.detected);
