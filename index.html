@@ -36,7 +36,6 @@
     <a href="#how" data-i18n="nav.how" data-i18n="how.eyebrow">How it works</a>
     <a href="#languages" data-i18n="nav.languages">Languages</a>
     <a href="#pricing" data-i18n="nav.pricing" data-i18n="price.eyebrow">Pricing</a>
-    <a href="#open" data-i18n="nav.open">Open source</a>
   </nav>
   <a class="btn btn-volt head-cta" href="app.html" data-i18n="nav.cta">Open Parley</a>
 </header>
@@ -47,14 +46,13 @@
   <section class="hero">
     <p class="eyebrow reveal" data-i18n="hero.eyebrow">Live · two-way · free</p>
     <h1 class="hero-title reveal"><span class="flip" id="flip-word" aria-label="Translation">Translation</span><br><span data-i18n="hero.rest">made easy.</span></h1>
-    <p class="hero-sub reveal" data-i18n="hero.sub">Live, in your pocket, anytime, free. Two people talk. Parley shows each of you what the other said, in your own language, as they say it.</p>
+    <p class="hero-sub reveal" data-i18n="hero.sub2">Two people talk. Each reads the other, live, in their own language.</p>
     <div class="hero-ctas reveal">
       <a class="btn btn-volt" href="app.html" data-i18n="hero.start">Start a conversation</a>
       <a class="btn btn-ghost" href="app.html#profile" id="install-cta" data-i18n="hero.install">Install on your phone</a>
     </div>
     <p class="hero-tip" id="install-tip" hidden></p>
-    <div class="hero-langs reveal" id="hero-langs" role="group" aria-label="Website language"></div>
-    <p class="hero-note reveal" data-i18n="hero.note">No account. No download required. Works in Chrome and Safari.</p>
+    <p class="hero-note reveal"><span data-i18n="hero.note2">Free. No account. No download.</span><label class="lang-pick" aria-label="Website language"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><select id="hero-lang"></select></label></p>
   </section>
 
   <!-- LIVE DEMO MOCK -->
@@ -70,9 +68,7 @@
       </div>
     </div>
     <div class="demo-copy">
-      <p class="eyebrow reveal" data-i18n="demo.eyebrow">The whole app is the conversation</p>
       <h2 class="reveal" data-i18n-html="demo.title">One screen.<br>Two voices.<br>Nothing else.</h2>
-      <p class="reveal" data-i18n="demo.sub">Light is you. Dark is them. Every line shows what was said and what it means, big enough to read across a table. Parley hears which language is being spoken and flips the direction on its own.</p>
     </div>
   </section>
 
@@ -84,34 +80,15 @@
       <div class="step reveal">
         <span class="step-n">1</span>
         <h3 data-i18n="how.1t">Pick two languages</h3>
-        <p data-i18n="how.1p">Yours and theirs. Swipe up the picker, choose from the world's most spoken languages, done.</p>
       </div>
       <div class="step reveal">
         <span class="step-n">2</span>
         <h3 data-i18n="how.2t">Put the phone between you</h3>
-        <p data-i18n="how.2p">Hit start. Either person talks. Parley hears which language it is and translates toward the other.</p>
       </div>
       <div class="step reveal">
         <span class="step-n">3</span>
         <h3 data-i18n="how.3t">Read, reply, repeat</h3>
-        <p data-i18n="how.3p">Translations pop up in bubbles as the words land. Turn on voice and Parley reads them out loud too.</p>
       </div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="features">
-    <div class="feature reveal">
-      <h3 data-i18n="feat.1t">Saves every conversation</h3>
-      <p data-i18n="feat.1p">Transcript and audio, organized by day. Play it back live, bubble by bubble, exactly as it happened.</p>
-    </div>
-    <div class="feature reveal">
-      <h3 data-i18n="feat.2t">Nothing to sign up for</h3>
-      <p data-i18n="feat.2p">Open it and talk. Your conversations stay on your device. Free keeps your last 5; supporters keep them all.</p>
-    </div>
-    <div class="feature reveal">
-      <h3 data-i18n="feat.3t">Runs in your pocket</h3>
-      <p data-i18n="feat.3p">Install it from the browser and it lives on your home screen like any app. Full screen, no address bar.</p>
     </div>
   </section>
 
@@ -149,9 +126,7 @@
         <ul>
           <li data-i18n="price.s1">Everything in Free</li>
           <li data-i18n="price.s2">Unlimited conversation history</li>
-          <li data-i18n="price.s3">Audio recordings kept until you delete them</li>
           <li data-i18n="price.s4">Export transcripts</li>
-          <li data-i18n="price.s5">Full-length shared videos: pick any part, looks and layouts</li>
         </ul>
         <a class="btn btn-blue" href="app.html#profile" data-i18n="price.support">Support Parley</a>
       </div>
@@ -162,12 +137,11 @@
   <section class="open" id="open">
     <p class="eyebrow reveal" data-i18n="open.eyebrow">Open source, credited</p>
     <h2 class="reveal" data-i18n="open.title">Built on work we admire.</h2>
-    <p class="open-sub reveal" data-i18n="open.sub">Parley's front end is ours. The hard parts underneath come from open-source projects. Use the public engines, or point Parley at your own server for private, unlimited translation.</p>
     <div class="credits-grid">
-      <a class="credit reveal" href="https://github.com/cjpais/Handy" target="_blank" rel="noopener"><span class="credit-name">Handy</span><span class="credit-desc">Open-source, offline speech to text. The inspiration for a self-hosted Parley engine.</span></a>
-      <a class="credit reveal" href="https://github.com/ggerganov/whisper.cpp" target="_blank" rel="noopener"><span class="credit-name">whisper.cpp</span><span class="credit-desc">Fast Whisper inference in C/C++. Powers transcription when you run your own engine.</span></a>
-      <a class="credit reveal" href="https://github.com/LibreTranslate/LibreTranslate" target="_blank" rel="noopener"><span class="credit-name">LibreTranslate</span><span class="credit-desc">Self-hostable translation API. Plug your URL into Parley's settings.</span></a>
-      <a class="credit reveal" href="https://github.com/argosopentech/argos-translate" target="_blank" rel="noopener"><span class="credit-name">Argos Translate</span><span class="credit-desc">The open neural translation models LibreTranslate runs on.</span></a>
+      <a class="credit reveal" href="https://github.com/cjpais/Handy" target="_blank" rel="noopener"><span class="credit-name">Handy</span></a>
+      <a class="credit reveal" href="https://github.com/ggerganov/whisper.cpp" target="_blank" rel="noopener"><span class="credit-name">whisper.cpp</span></a>
+      <a class="credit reveal" href="https://github.com/LibreTranslate/LibreTranslate" target="_blank" rel="noopener"><span class="credit-name">LibreTranslate</span></a>
+      <a class="credit reveal" href="https://github.com/argosopentech/argos-translate" target="_blank" rel="noopener"><span class="credit-name">Argos Translate</span></a>
     </div>
   </section>
 

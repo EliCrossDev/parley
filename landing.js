@@ -10,11 +10,11 @@
   /* ---------- UI language (chips in the hero) ---------- */
   (function uiLang() {
     if (!window.I18N) return;
-    const box = document.getElementById('hero-langs');
-    if (box) {
-      I18N.LANGS.forEach(([c, n]) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.lang = c; b.textContent = n; b.addEventListener('click', () => I18N.set(c)); box.appendChild(b); });
-      const mark = () => box.querySelectorAll('button').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === I18N.lang));
-      document.addEventListener('i18n:change', mark); mark();
+    const sel = document.getElementById('hero-lang');
+    if (sel) {
+      I18N.LANGS.forEach(([c, n]) => { const o = document.createElement('option'); o.value = c; o.textContent = n; sel.appendChild(o); });
+      sel.value = I18N.lang; sel.addEventListener('change', () => I18N.set(sel.value));
+      document.addEventListener('i18n:change', () => { sel.value = I18N.lang; });
     }
     I18N.apply();
   })();

@@ -626,6 +626,30 @@ Object.assign(D["ja"], {"live.mode.auto": "自動", "live.mode.tap": "タップ"
 Object.assign(D["zh"], {"live.mode.auto": "自动", "live.mode.tap": "点按", "live.hinttap": "点按模式：点你的语言，然后说话。直到点了另一边才切换。", "live.tapon": "点按模式已开启。亮着的一方在说话。", "live.autoon": "自动模式已开启。Parley 会判断谁在说话。"});
 Object.assign(D["th"], {"live.mode.auto": "อัตโนมัติ", "live.mode.tap": "แตะ", "live.hinttap": "โหมดแตะ: แตะภาษาของคุณแล้วพูด จะอยู่ที่คุณจนกว่าจะแตะอีกฝั่ง", "live.tapon": "เปิดโหมดแตะแล้ว คนที่ไฟติดคือคนที่พูด", "live.autoon": "เปิดโหมดอัตโนมัติแล้ว Parley จะรู้เองว่าใครพูด"});
 Object.assign(D["id"], {"live.mode.auto": "Otomatis", "live.mode.tap": "Ketuk", "live.hinttap": "Mode ketuk: ketuk bahasamu, lalu bicara. Tetap di kamu sampai sisi lain diketuk.", "live.tapon": "Mode ketuk aktif. Yang menyala sedang bicara.", "live.autoon": "Mode otomatis aktif. Parley tahu siapa yang bicara."});
+Object.assign(D["en"], {"hero.sub2": "Two people talk. Each reads the other, live, in their own language.", "hero.note2": "Free. No account. No download."});
+Object.assign(D["es"], {"hero.sub2": "Dos personas hablan. Cada una lee a la otra, en vivo, en su idioma.", "hero.note2": "Gratis. Sin cuenta. Sin descargas."});
+Object.assign(D["es-AR"], {"hero.sub2": "Dos personas hablan. Cada una lee a la otra, en vivo, en su idioma.", "hero.note2": "Gratis. Sin cuenta. Sin descargas."});
+Object.assign(D["pt"], {"hero.sub2": "Duas pessoas conversam. Cada uma lê a outra, ao vivo, no seu idioma.", "hero.note2": "Grátis. Sem conta. Sem download."});
+Object.assign(D["fr"], {"hero.sub2": "Deux personnes parlent. Chacune lit l'autre, en direct, dans sa langue.", "hero.note2": "Gratuit. Sans compte. Sans téléchargement."});
+Object.assign(D["de"], {"hero.sub2": "Zwei Menschen sprechen. Jeder liest den anderen, live, in seiner Sprache.", "hero.note2": "Kostenlos. Kein Konto. Kein Download."});
+Object.assign(D["it"], {"hero.sub2": "Due persone parlano. Ognuna legge l'altra, dal vivo, nella sua lingua.", "hero.note2": "Gratis. Nessun account. Nessun download."});
+Object.assign(D["ko"], {"hero.sub2": "두 사람이 말하면, 서로의 말을 실시간으로 자기 언어로 읽습니다.", "hero.note2": "무료. 계정 없음. 다운로드 없음."});
+Object.assign(D["ja"], {"hero.sub2": "二人が話すと、相手の言葉がリアルタイムで自分の言語で読めます。", "hero.note2": "無料。アカウント不要。ダウンロード不要。"});
+Object.assign(D["zh"], {"hero.sub2": "两个人对话，各自实时用自己的语言读懂对方。", "hero.note2": "免费。无需账号。无需下载。"});
+Object.assign(D["th"], {"hero.sub2": "สองคนคุยกัน แต่ละคนอ่านสิ่งที่อีกฝ่ายพูดได้สด ๆ เป็นภาษาของตัวเอง", "hero.note2": "ฟรี ไม่ต้องมีบัญชี ไม่ต้องดาวน์โหลด"});
+Object.assign(D["id"], {"hero.sub2": "Dua orang bicara. Masing-masing membaca yang lain, langsung, dalam bahasanya sendiri.", "hero.note2": "Gratis. Tanpa akun. Tanpa unduhan."});
+Object.assign(D["en"], {"setup.more": "Options"});
+Object.assign(D["es"], {"setup.more": "Opciones"});
+Object.assign(D["es-AR"], {"setup.more": "Opciones"});
+Object.assign(D["pt"], {"setup.more": "Opções"});
+Object.assign(D["fr"], {"setup.more": "Options"});
+Object.assign(D["de"], {"setup.more": "Optionen"});
+Object.assign(D["it"], {"setup.more": "Opzioni"});
+Object.assign(D["ko"], {"setup.more": "옵션"});
+Object.assign(D["ja"], {"setup.more": "オプション"});
+Object.assign(D["zh"], {"setup.more": "选项"});
+Object.assign(D["th"], {"setup.more": "ตัวเลือก"});
+Object.assign(D["id"], {"setup.more": "Opsi"});
   const KEY = 'parley.prefs.v1';
   function saved() { try { return JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { return {}; } }
   function detect() { const s = saved().ui; if (s && D[s]) return s; for (const l of (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'])) { const f = String(l); if (/^es-(AR|UY)$/i.test(f)) return 'es-AR'; const c = f.slice(0, 2).toLowerCase(); if (D[c]) return c; } return 'en'; }

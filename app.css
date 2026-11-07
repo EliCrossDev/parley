@@ -551,3 +551,18 @@ body.live .bubble.unsure { box-shadow: none; }
 .stage-bottom > .who-b { margin-left: auto; }
 .stage-bottom > .who-btn .who-lang { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 420px) { .stage-bottom { gap: 8px; } .stage-bottom > .who-btn { padding: 0 8px; gap: 6px; font-size: 12px; letter-spacing: 0; } .stage-bottom > .who-btn .who-lang { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.15; text-align: center; } }
+/* First-visit guide, quieter: the three steps on one card, "Got it" as a small corner pill */
+.welcome { position: relative; padding: 14px 16px; gap: 9px; }
+.welcome-title { font-size: 15px; padding-right: 88px; }
+.welcome-steps { font-size: 14px; gap: 6px; }
+.welcome-note { font-size: 12px; opacity: .65; }
+.welcome-note:empty { display: none; }
+.welcome-ok { position: absolute; top: 10px; right: 10px; height: 30px; padding: 0 12px; font-size: 12px; }
+/* Options tucked away: the setup screen is two languages and a Start button */
+.more-opts { border-radius: 16px; }
+.more-opts > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-2); padding: 6px 2px; }
+.more-opts > summary::-webkit-details-marker { display: none; }
+.more-opts > summary::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform .2s; }
+.more-opts[open] > summary::after { transform: rotate(225deg) translate(-1px, -1px); }
+.more-opts[open] .setup-options { margin-top: 8px; animation: settle .25s ease-out both; }
+.speaker-native.same { display: none; }

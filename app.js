@@ -1128,7 +1128,7 @@
     renderAvatarsUI(); renderRecent();
     const a = byCode(prefs.langA), b = byCode(prefs.langB);
     $('label-a').textContent = a.native; $('native-a').textContent = a.name;
-    $('label-b').textContent = b.native; $('native-b').textContent = b.name; $('label-a').classList.toggle('long', a.native.length > 12); $('label-b').classList.toggle('long', b.native.length > 12);
+    $('label-b').textContent = b.native; $('native-b').textContent = b.name; $('label-a').classList.toggle('long', a.native.length > 12); $('label-b').classList.toggle('long', b.native.length > 12); $('native-a').classList.toggle('same', a.name === a.native); $('native-b').classList.toggle('same', b.name === b.native);
     $('opt-speak').checked = !!prefs.speak; $('opt-record').checked = !!prefs.record; const oc = $('opt-cues'); if (oc) oc.checked = prefs.cues !== false;
     const oi = $('opt-improve'); if (oi) { oi.checked = !!prefs.improve; $('improve-export').hidden = !prefs.improve; }
     const orow = $('offline-row'); if (orow) { orow.hidden = !(window.Ear && Ear.supported); $('opt-offline').checked = !!prefs.offline; }
