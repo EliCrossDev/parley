@@ -557,16 +557,43 @@
     const n = live.interimEl; if (!n) return;
     n.className = 'bubble ' + who + ' interim'; setBubbleWho(n, who);
   }
+  // Put a finished line right: new words and/or the other speaker, translated again, saved again.
+  async function rewriteLine(line, who, orig) {
+    try {
+      const r = await translate(orig, langOf(who), langOf(other(who)));
+      Object.assign(line, { who, orig, trans: r.text, from: langOf(who), to: langOf(other(who)) });
+      const n = line.node; if (n) { n.className = 'bubble ' + who; n.querySelector('.orig').textContent = orig; n.querySelector('.trans').textContent = r.text; setBubbleWho(n, who); }
+      autosaveDraft(); if (typeof renderFar === 'function') renderFar();
+    } catch (e) {}
+  }
+  // After the fact: once a line is done, let the on-device ear judge the whole stretch of audio. If it is sure the
+  // line was the other language, the engine was listening wrong the entire time: re-hear all of it and move it.
+  async function afterCheck(line, secs) {
+    if (!window.Ear || !Ear.ready || !Ear.judge || secs < 2.5 || secs > 75) return;
+    const r = await Ear.judge(secs, base(prefs.langA), base(prefs.langB)); if (!r || !live.on) return;
+    const otherLang = base(langOf(other(line.who)));
+    note({ ev: 'after-judge', who: line.who, lang: r.lang, margin: +r.margin.toFixed(2), secs: +secs.toFixed(1) });
+    if (r.lang !== otherLang || r.margin < EAR_MARGIN_FLIP) return;
+    const text = (await Ear.rehear(secs, otherLang)).trim(); if (!text || !live.lines.includes(line)) return;
+    note({ ev: 'after-fix', from: line.who, text: text.slice(0, 40) });
+    await rewriteLine(line, other(line.who), text);
+  }
   // The engine was listening in the wrong language for the start of this sentence. Its words are garbage, and the
   // restart loses them. If the on-device ear is running, re-hear those seconds in the right language and put them back.
   function recoverStart(who) {
     const n = live.interimEl; if (!window.Ear || !Ear.ready || !Ear.rehear || !n) return;
     const startMs = Number(n.dataset.start || 0) + live.startedAt; const secs = (Date.now() - startMs) / 1000 + 0.4;
-    if (secs < 0.6 || secs > 14) return;
+    if (secs < 0.6 || secs > 75) return;
     const seq = (live.recoverSeq = (live.recoverSeq || 0) + 1);
     Ear.rehear(secs, base(langOf(who))).then((text) => {
       text = (text || '').trim();
-      if (!text || live.recoverSeq !== seq || live.interimEl !== n || !live.on || (live.detected && live.detected !== who)) return;
+      if (!text || live.recoverSeq !== seq || !live.on) return;
+      if (live.interimEl !== n) {                                   // the line already finished: fix it in place
+        const line = live.lines.find((l) => l.node === n); if (!line || line.who !== who) return;
+        note({ ev: 'recovered-late', who, text: text.slice(0, 40) });
+        rewriteLine(line, who, joinCarry(text, line.orig)); return;
+      }
+      if (live.detected && live.detected !== who) return;
       note({ ev: 'recovered', who, secs: +secs.toFixed(1), text: text.slice(0, 40) });
       live.carry = text;
       const shown = joinCarry(text, n.dataset.heard || ''); n.dataset.words = shown;
@@ -724,6 +751,7 @@
     $('convo').scrollTop = $('convo').scrollHeight;
     note({ ev: 'line', who, by, rec: recLangAtStart, conf: live.lastConf != null ? +(+live.lastConf).toFixed(2) : null, words: text.split(/\s+/).length, detected: result.detected || null });
     live.lines.push({ who, orig: text, trans: result.text, from: langOf(who), to: langOf(other(who)), t: cont ? last.t : start, dur: (Date.now() - live.startedAt) - (cont ? last.t : start), node }); autosaveDraft();
+    if (!forcedAtStart && prefs.turns !== 'tap') { const ln = live.lines[live.lines.length - 1]; afterCheck(ln, (Date.now() - live.startedAt - ln.t) / 1000 + 0.3); }
     if (!cont) speak(result.text, langOf(other(who))); else { Voice.stop(); speak(result.text, langOf(other(who))); }
     if (live.tapSeq !== tapSeq) return;                       // someone tapped while we were translating: their tap wins
     if (prefs.turns === 'tap') { live.forced = live.lock || who; setExpected(live.forced, live.forced); if (langOf(live.forced) !== live.recLang) startRecognizer(langOf(live.forced)); return; }

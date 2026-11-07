@@ -14,7 +14,7 @@ window.Ear = (function () {
   let ctx = null, src = null, proc = null, stream = null, active = false, onResult = null, pair = null, busy = false;
   // The last few seconds of mic audio, always. When the speech engine was listening in the wrong language, Parley
   // asks Whisper to re-hear those seconds in the right one, so the start of the sentence isn't lost.
-  const RING_S = 14; let ring = [], ringLen = 0, ringRate = 48000;
+  const RING_S = 75; let ring = [], ringLen = 0, ringRate = 48000;
 
   // Phones: the on-device Whisper model is too heavy and gets the page killed by the browser (seen on iPhone mid-conversation), so it is desktop only.
   const supported = !!navigator.gpu && !MOBILE;
@@ -108,15 +108,31 @@ window.Ear = (function () {
   }
   // Re-hear the last `seconds` of audio in a given language. Resolves to text ('' if nothing usable).
   let rehearing = false;
+  // The last `seconds` of mic audio at 16 kHz.
+  async function recent(seconds) {
+    if (!ring.length) return null;
+    const want = Math.min(ringLen, Math.round(Math.max(0.5, seconds) * ringRate));
+    const all = new Float32Array(want); let o = want;
+    for (let i = ring.length - 1; i >= 0 && o > 0; i--) { const c = ring[i]; const take = Math.min(c.length, o); all.set(c.subarray(c.length - take), o - take); o -= take; }
+    return to16k(all, ringRate);
+  }
+  // Whisper hears at most 30 s at a time, so long monologues go in 25 s pieces.
+  async function transcribeLong(a16, lang) {
+    const step = 25 * 16000; const parts = [];
+    for (let i = 0; i < a16.length; i += step) { const t = await transcribe(a16.subarray(i, Math.min(a16.length, i + step)), lang, 160); if (t) parts.push(t); }
+    return parts.join(' ');
+  }
+  // Re-hear the last `seconds` of audio in a given language. Resolves to text ('' if nothing usable).
   async function rehear(seconds, lang) {
     if (!model || !ring.length || rehearing) return '';
     rehearing = true;
-    try {
-      const want = Math.min(ringLen, Math.round(Math.max(0.5, seconds) * ringRate));
-      const all = new Float32Array(want); let o = want;
-      for (let i = ring.length - 1; i >= 0 && o > 0; i--) { const c = ring[i]; const take = Math.min(c.length, o); all.set(c.subarray(c.length - take), o - take); o -= take; }
-      return await transcribe(await to16k(all, ringRate), lang, 64);
-    } catch (e) { return ''; } finally { rehearing = false; }
+    try { const a = await recent(seconds); return a ? await transcribeLong(a, lang) : ''; } catch (e) { return ''; } finally { rehearing = false; }
   }
-  return { supported, load, start, stop, transcribe, hear, identify, rehear, get ready() { return !!model; }, get mobile() { return MOBILE; } };
+  // Which language was the last `seconds`, judged on the whole stretch (much surer than the 2 s live guess).
+  async function judge(seconds, a, b) {
+    if (!model || !ring.length || rehearing) return null;
+    rehearing = true;
+    try { const au = await recent(Math.min(seconds, 28)); return au ? await identify(au, a, b) : null; } catch (e) { return null; } finally { rehearing = false; }
+  }
+  return { supported, load, start, stop, transcribe, hear, identify, rehear, judge, get ready() { return !!model; }, get mobile() { return MOBILE; } };
 })();
