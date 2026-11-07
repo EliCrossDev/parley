@@ -680,15 +680,27 @@ Object.assign(D["id"], {"setup.more": "Opsi"});
       if (!pick) return;
       const Q = { es: ['¿Prefieres Parley en español?', 'Sí, español', 'No'], 'es-AR': ['¿Querés Parley en español?', 'Sí, español', 'No'], th: ['ใช้ Parley เป็นภาษาไทยไหม', 'ใช้ภาษาไทย', 'ไม่'], id: ['Pakai Parley dalam Bahasa Indonesia?', 'Ya, Indonesia', 'Tidak'] }[pick];
       const show = () => {
-        const bar = document.createElement('div');
-        bar.setAttribute('role', 'dialog'); bar.style.cssText = 'position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 24px);padding:10px 12px 10px 16px;border-radius:999px;background:rgba(20,20,26,.92);color:#f5f5f2;font:600 15px/1.3 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.4);backdrop-filter:blur(10px)';
-        const msg = document.createElement('span'); msg.textContent = Q[0];
+        if (!document.getElementById('ui-suggest-css')) {
+          const st = document.createElement('style'); st.id = 'ui-suggest-css';
+          st.textContent = '.uisg{position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:90;margin:0 auto;max-width:440px;display:grid;grid-template-columns:auto 1fr;gap:12px 12px;align-items:center;padding:14px;border-radius:22px;background:rgba(18,18,24,.94);border:1px solid rgba(255,255,255,.12);color:#f5f5f2;box-shadow:0 18px 50px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);font:500 15px/1.35 system-ui,-apple-system,sans-serif;animation:uisgIn .35s ease-out both}'
+            + '.uisg-ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.1)}'
+            + '.uisg-msg{font-weight:600;letter-spacing:-.01em}'
+            + '.uisg-row{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px}'
+            + '.uisg button{height:44px;border-radius:14px;border:0;font:600 15px system-ui,-apple-system,sans-serif;cursor:pointer}'
+            + '.uisg .y{background:#f5f5f2;color:#111}.uisg .n{background:rgba(255,255,255,.08);color:#f5f5f2}'
+            + '@keyframes uisgIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}';
+          document.head.appendChild(st);
+        }
+        const bar = document.createElement('div'); bar.className = 'uisg'; bar.setAttribute('role', 'dialog');
+        const ic = document.createElement('span'); ic.className = 'uisg-ic'; ic.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>';
+        const msg = document.createElement('span'); msg.className = 'uisg-msg'; msg.textContent = Q[0];
+        const row = document.createElement('div'); row.className = 'uisg-row';
         const yes = document.createElement('button'), no = document.createElement('button');
-        const btn = 'border:0;border-radius:999px;padding:9px 14px;font:700 14px system-ui,sans-serif;cursor:pointer;';
-        yes.style.cssText = btn + 'background:#f5f5f2;color:#111'; no.style.cssText = btn + 'background:transparent;color:#f5f5f2'; yes.textContent = Q[1]; no.textContent = Q[2];
+        yes.className = 'y'; no.className = 'n'; yes.type = no.type = 'button'; yes.textContent = Q[1]; no.textContent = Q[2];
+        row.append(no, yes);
         const done = () => { try { localStorage.setItem('parley.uisuggest', '1'); } catch (e) {} bar.remove(); };
         yes.addEventListener('click', () => { done(); set(pick); }); no.addEventListener('click', done);
-        bar.append(msg, yes, no); document.body.appendChild(bar);
+        bar.append(ic, msg, row); document.body.appendChild(bar);
       };
       if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
     } catch (e) {}
