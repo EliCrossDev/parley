@@ -538,3 +538,8 @@ body.live .bubble.unsure { box-shadow: none; }
 .turns-mode button { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 6px 11px; border-radius: 999px; color: var(--fg-2); background: transparent; border: 0; cursor: pointer; }
 .turns-mode button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 .live-stage.tapmode .who-btn:not(.is-live) { opacity: .6; }
+/* Bottom bar: both language buttons the same width, mirrored around the stop button */
+.stage-bottom > .who-btn { justify-self: stretch; width: 100%; max-width: 230px; min-width: 0; justify-content: center; }
+.stage-bottom > .who-b { margin-left: auto; }
+.stage-bottom > .who-btn .who-lang { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 420px) { .stage-bottom { gap: 8px; } .stage-bottom > .who-btn { padding: 0 8px; gap: 6px; font-size: 12px; letter-spacing: 0; } .stage-bottom > .who-btn .who-lang { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.15; text-align: center; } }
